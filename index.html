@@ -384,6 +384,47 @@
   #stock-popup.fullscreen #stock-tab-content-orders > div {
     max-height: calc(100vh - 120px) !important;
   }
+
+  /* 👇👇 [여기서부터 새로 추가] 👇👇 */
+  .btn-memo-status {
+  width: 100%;
+  padding: 4px 2px; /* 💡 여백 축소 */
+  font-size: 11px;  /* 💡 글씨 크기 감소 (12px -> 11px) */
+  font-weight: 600; /* 💡 글씨 굵기 감소 (800 -> 600) */
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: #F4F6F8;
+  color: var(--ink-soft);
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.btn-memo-status.mint {
+  background: #00D29A !important;
+  color: #ffffff !important;
+  border-color: #00B383 !important;
+}
+.btn-memo-status.red {
+  background: var(--danger) !important;
+  color: #ffffff !important;
+  border-color: #A0423C !important;
+}
+.btn-memo-status.half {
+  background: linear-gradient(90deg, #00D29A 50%, #C0524A 50%) !important;
+  color: #ffffff !important;
+  border-color: #00B383 !important;
+}
+/* 💡 [킵] 깜빡임 애니메이션을 제거하고 일반 고정 점등으로 변경 */
+.status-badge.kp.on {
+  background: #FF9800 !important;
+  color: #fff !important;
+  border: 1px solid #E67E22 !important;
+}
+  /* 👆👆 [여기까지 추가] 👆👆 */
+
 </style>
 </head>
 <body>
@@ -555,7 +596,7 @@
       <table>
         <colgroup>
           <col style="width:38px;">
-          <col style="width:50px;"> <col style="width:39px;">  <col style="width:205px;"> <col style="width:65px;"> <col style="width:50px;"> <col style="width:95px;"> <col style="width:65px;">  <col style="width:65px;">  <col style="width:170px;"> <col style="width:90px;">  </colgroup>
+          <col style="width:50px;"> <col style="width:39px;">  <col style="width:205px;"> <col style="width:65px;"> <col style="width:50px;"> <col style="width:95px;"> <col style="width:65px;">  <col style="width:65px;">  <col style="width:85px;"> <col style="width:90px;">  </colgroup>
         <thead>
           <tr>
             <th>No.</th><th>날짜</th><th>품번</th><th>상품명</th><th>색상</th><th>사이즈</th><th>고객명</th><th style="text-align:right; padding-right:8px;">판매가</th><th style="text-align:right; padding-right:8px;">입금가</th><th>메모 / 상태</th><th>액션</th>
@@ -829,6 +870,33 @@
     <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 10px;">
       <!-- 저장 버튼 삭제, 닫기 버튼만 유지 -->
       <button class="btn btn-history" style="padding: 8px 16px;" onclick="closeGlobalMemoPopup()">닫기</button>
+    </div>
+  </div>
+</div>
+
+<!-- 👇👇 [여기 위치에 새로 추가] 👇👇 -->
+<div id="row-memo-modal" class="modal-overlay" onclick="closeRowMemoPopup()">
+  <div class="modal-content" onclick="event.stopPropagation()" style="max-width: 380px;">
+    <div class="modal-header">
+      <h3 id="row-memo-modal-title" style="display: flex; align-items: center; gap: 6px;">📝 메모 및 상태 설정</h3>
+      <button class="btn-close" onclick="closeRowMemoPopup()">×</button>
+    </div>
+    
+    <div style="display: flex; justify-content: space-around; align-items: center; padding: 12px; background: #FAFBFB; border-radius: 6px; border: 1px solid var(--line); margin-bottom: 10px;">
+      <span id="pop-badge-yt" class="status-badge yt" style="width: 32px; height: 32px; font-size: 12px;" onclick="toggleRowMemoTagInPopup('yt')">유</span>
+      <span id="pop-badge-tt" class="status-badge tt" style="width: 32px; height: 32px; font-size: 12px;" onclick="toggleRowMemoTagInPopup('tt')">틱</span>
+      <span id="pop-badge-fs" class="status-badge fs" style="width: 32px; height: 32px; font-size: 12px;" onclick="toggleRowMemoTagInPopup('fs')">무</span>
+      <span id="pop-badge-kp" class="status-badge kp" style="width: 32px; height: 32px; font-size: 12px;" onclick="toggleRowMemoTagInPopup('kp')">킵</span>
+    </div>
+
+    <div id="pop-memo-reward-info" style="font-size: 12px; font-weight: bold; margin-bottom: 8px; color: #27AE60; display: none;"></div>
+
+    <div style="padding: 2px 0;">
+      <textarea id="pop-memo-textarea" oninput="saveRowMemoFromPopup()" style="width: 100%; height: 110px; padding: 10px; border: 1px solid var(--line); border-radius: 6px; font-size: 13px; resize: none; font-family: inherit; line-height: 1.4; color: var(--ink);" placeholder="메모를 입력하세요..."></textarea>
+    </div>
+    
+    <div style="display: flex; justify-content: flex-end; margin-top: 10px;">
+      <button class="btn btn-purple" style="padding: 6px 18px; font-weight: bold;" onclick="closeRowMemoPopup()">완료</button>
     </div>
   </div>
 </div>
@@ -1169,22 +1237,33 @@ function acFilter(input, type) {
 
     const all = acGetOptions(type);
     const match = all.find(v => v.toLowerCase().startsWith(currentVal.toLowerCase()));
-    
+
     if (match && match.length > currentVal.length) {
       const origLen = currentVal.length; 
-      
+
       isProgrammaticFocus = true; 
       input.blur();
       input.focus();
       isProgrammaticFocus = false;
 
       input.value = match;      
-      
+
+      // 💡 현장 주문 입력 매트릭스 입력창 데이터 동기화
+      const orderContainer = input.closest('[id^="order-list-"]');
+      if (orderContainer) {
+        const key = orderContainer.id.replace('order-list-', '');
+        const inputs = Array.from(orderContainer.querySelectorAll('input'));
+        const idx = inputs.indexOf(input);
+        if (key && idx !== -1 && typeof onOrderInputChange === 'function') {
+          onOrderInputChange(key, idx, match);
+        }
+      }
+
       const field = input.getAttribute('data-field');
       const tr = input.closest('tr');
       if (tr && field) {
         const id = tr.id.replace('row-', '').replace('pop-', '').replace('settle-', '').replace('prod-', '');
-        
+
         if (tr.id.includes('prod-')) {
           const target = products.find(x => x.id === id);
           if (target) target[field] = match;
@@ -1196,7 +1275,7 @@ function acFilter(input, type) {
           }
         }
       }
-      
+
       input.setSelectionRange(origLen, match.length);
     }
   }, 220); 
@@ -1841,7 +1920,7 @@ window.viewLedgerDetail = function(nickname) {
 function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,5); }
 
 function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,5); }
-function createEmptySaleObject() { return { id: uid(), rowDate: '', prodNum: '', name: '', color: '', size: '', nickname: '', salePrice: '', depositPrice: '', memo: '', autoReward: 0, tags: { yt:false, tt:false, fs:false }, createdAt: Date.now(), highlighted: false, sent: false }; }
+function createEmptySaleObject() { return { id: uid(), rowDate: '', prodNum: '', name: '', color: '', size: '', nickname: '', salePrice: '', depositPrice: '', memo: '', autoReward: 0, tags: { yt:false, tt:false, fs:false, kp:false }, createdAt: Date.now(), highlighted: false, sent: false }; }
 
 function convertPrice(val) {
   if (val === undefined || val === null || val === '') return '';
@@ -2631,6 +2710,111 @@ if (settleView && settleView.style.display !== 'none') {
   document.head.appendChild(style);
 })();
 
+let activeRowMemoId = null;
+
+function getRowMemoStatus(s) {
+  const hasCheck = !!(s.tags?.yt || s.tags?.tt || s.tags?.fs || s.tags?.kp);
+  const hasMemoText = !!((s.memo && s.memo.trim() !== '') || s.autoReward > 0);
+
+  let classStr = '';
+  if (hasCheck && hasMemoText) {
+    classStr = 'half';
+  } else if (hasCheck) {
+    classStr = 'mint';
+  } else if (hasMemoText) {
+    classStr = 'red';
+  }
+
+  let tagsSummary = [];
+  if (s.tags?.yt) tagsSummary.push('유');
+  if (s.tags?.tt) tagsSummary.push('틱');
+  if (s.tags?.fs) tagsSummary.push('무');
+  if (s.tags?.kp) tagsSummary.push('킵');
+
+  let btnText = '메모';
+  if (hasCheck || hasMemoText) {
+    let parts = [];
+    if (tagsSummary.length > 0) parts.push(`[${tagsSummary.join(',')}]`);
+    if (s.autoReward > 0) parts.push(`적${fmt(s.autoReward)}`);
+    if (s.memo && s.memo.trim() !== '') parts.push(s.memo.trim());
+    btnText = parts.join(' ');
+  }
+
+  return { classStr, btnText };
+}
+
+function openRowMemoPopup(id) {
+  const s = sales.find(x => x.id === id);
+  if (!s) return;
+  activeRowMemoId = id;
+
+  if (!s.tags) s.tags = { yt: false, tt: false, fs: false, kp: false };
+
+  ['yt', 'tt', 'fs', 'kp'].forEach(tag => {
+    const el = document.getElementById(`pop-badge-${tag}`);
+    if (el) {
+      if (s.tags[tag]) el.classList.add('on');
+      else el.classList.remove('on');
+    }
+  });
+
+  const rewardInfoEl = document.getElementById('pop-memo-reward-info');
+  if (rewardInfoEl) {
+    if (s.autoReward > 0) {
+      rewardInfoEl.textContent = `💡 적립금 보유: ${fmt(s.autoReward)}원`;
+      rewardInfoEl.style.display = 'block';
+    } else {
+      rewardInfoEl.style.display = 'none';
+    }
+  }
+
+  const textarea = document.getElementById('pop-memo-textarea');
+  if (textarea) textarea.value = s.memo || '';
+
+  const modal = document.getElementById('row-memo-modal');
+  if (modal) modal.style.display = 'flex';
+}
+
+function closeRowMemoPopup() {
+  activeRowMemoId = null;
+  const modal = document.getElementById('row-memo-modal');
+  if (modal) modal.style.display = 'none';
+}
+
+function toggleRowMemoTagInPopup(tag) {
+  if (!activeRowMemoId) return;
+  const s = sales.find(x => x.id === activeRowMemoId);
+  if (!s) return;
+
+  saveState();
+  if (!s.tags) s.tags = { yt: false, tt: false, fs: false, kp: false };
+  s.tags[tag] = !s.tags[tag];
+  s.sent = false;
+
+  const el = document.getElementById(`pop-badge-${tag}`);
+  if (el) {
+    if (s.tags[tag]) el.classList.add('on');
+    else el.classList.remove('on');
+  }
+
+  saveToLocalStorage();
+  renderSales();
+}
+
+function saveRowMemoFromPopup() {
+  if (!activeRowMemoId) return;
+  const s = sales.find(x => x.id === activeRowMemoId);
+  if (!s) return;
+
+  const textarea = document.getElementById('pop-memo-textarea');
+  if (textarea) {
+    s.memo = textarea.value;
+    s.sent = false;
+    saveToLocalStorage();
+    renderSales();
+  }
+}
+
 function getRowHtml(s, index, isPopup = false, hasDivider = false) {
   const bYt = `<span tabindex="0" class="status-badge yt ${s.tags?.yt ? 'on':'off'}" onclick="toggleRowTag('${s.id}', 'yt')" onkeydown="if(event.key==='Enter') toggleRowTag('${s.id}', 'yt')">유</span>`;
   const bTt = `<span tabindex="0" class="status-badge tt ${s.tags?.tt ? 'on':'off'}" onclick="toggleRowTag('${s.id}', 'tt')" onkeydown="if(event.key==='Enter') toggleRowTag('${s.id}', 'tt')">틱</span>`;
@@ -2671,7 +2855,11 @@ function getRowHtml(s, index, isPopup = false, hasDivider = false) {
       <td><div class="cell-wrap" id="${prefix}-${s.id}-nickname" data-cell-id="${s.id}:::nickname" oncontextmenu="enterEditMode(event, '${s.id}', 'nickname', ${isPopup}, true)"><span class="${nickSpanClass}" style="font-weight:700;">${escapeHtml(s.nickname) || '&nbsp;'}</span><input type="text" class="${nickClass}" data-ac="nickname" style="background:#FDFBF7; font-weight:700;" value="${escapeHtml(s.nickname)}" data-field="nickname" onfocus="trackFocus('sale', '${s.id}', 'nickname', this)" onblur="exitEditMode('${s.id}', 'nickname', ${isPopup})" onkeydown="handleSaleKeydown(event, '${s.id}', ${isPopup})" oninput="updateRowField('${s.id}', 'nickname', this.value); checkNicknameBlank(this); acFilter(this,'nickname')" placeholder="고객명"><div class="drag-handle"></div></div></td>
       <td><div class="cell-wrap num-wrap" id="${prefix}-${s.id}-salePrice" data-cell-id="${s.id}:::salePrice" oncontextmenu="enterEditMode(event, '${s.id}', 'salePrice', ${isPopup}, true)"><span class="view-text${blankClass(s.salePrice)}" style="color:var(--purple-ink); font-weight:700;">${s.salePrice ? fmt(s.salePrice) : '&nbsp;'}</span><input type="text" class="inline-input num" value="${s.salePrice || ''}" data-field="salePrice" onfocus="trackFocus('sale', '${s.id}', 'salePrice', this)" onblur="exitEditMode('${s.id}', 'salePrice', ${isPopup})" onkeydown="handleSaleKeydown(event, '${s.id}', ${isPopup})" oninput="updateRowField('${s.id}', 'salePrice', this.value)" placeholder="0" style="color:var(--purple-ink); font-weight:700;"><div class="drag-handle"></div></div></td>
       <td><div class="cell-wrap num-wrap" id="${prefix}-${s.id}-depositPrice" data-cell-id="${s.id}:::depositPrice" oncontextmenu="enterEditMode(event, '${s.id}', 'depositPrice', ${isPopup}, true)"><span class="view-text${blankClass(s.depositPrice)}" style="color:var(--purple-ink); font-weight:700;">${s.depositPrice ? fmt(s.depositPrice) : '&nbsp;'}</span><input type="text" class="inline-input num" value="${s.depositPrice || ''}" data-field="depositPrice" onfocus="trackFocus('sale', '${s.id}', 'depositPrice', this)" onblur="exitEditMode('${s.id}', 'depositPrice', ${isPopup})" onkeydown="handleSaleKeydown(event, '${s.id}', ${isPopup})" oninput="updateRowField('${s.id}', 'depositPrice', this.value)" placeholder="0" style="color:var(--purple-ink); font-weight:700;"><div class="drag-handle"></div></div></td>
-      <td><div style="display:flex; align-items:center; gap:4px; width: 100%;">${bYt}${bTt}${bFs}<div class="cell-wrap" style="flex:1; min-width:0;" id="${prefix}-${s.id}-memo" data-cell-id="${s.id}:::memo" oncontextmenu="enterEditMode(event, '${s.id}', 'memo', ${isPopup}, true)" title="${hoverTitleAttr}"><span class="view-text${blankClass(s.memo)}" style="font-size:12px;">${fullMemoDisplay}</span><input type="text" class="inline-input" style="font-size:12px;" value="${escapeHtml(s.memo)}" data-field="memo" onfocus="trackFocus('sale', '${s.id}', 'memo', this)" onblur="exitEditMode('${s.id}', 'memo', ${isPopup})" onkeydown="handleSaleKeydown(event, '${s.id}', ${isPopup})" oninput="updateRowField('${s.id}', 'memo', this.value)" placeholder="memo"><div class="drag-handle"></div></div></div></td>
+      <td>
+  <button type="button" class="btn-memo-status ${getRowMemoStatus(s).classStr}" onclick="openRowMemoPopup('${s.id}')" title="${hoverTitleAttr}">
+    ${escapeHtml(getRowMemoStatus(s).btnText)}
+  </button>
+</td>
       <td><button class="action-text text-add-row" onclick="duplicateRow('${s.id}')">추가</button><button class="action-text text-del" onclick="deleteRow('${s.id}')">삭제</button></td>
     </tr>`;
 }
@@ -3522,7 +3710,7 @@ document.getElementById('btn-exp-full').addEventListener('click', () => {
       '고객명': s.nickname || '', 
       '판매가': s.salePrice || '', 
       '입금가': s.depositPrice || '', 
-      '태그/상태': `${s.tags?.yt?'[유튜브]':''}${s.tags?.tt?'[틱톡]':''}${s.tags?.fs?'[무배]':''}`, 
+      '태그/상태': `${s.tags?.yt?'[유튜브]':''}${s.tags?.tt?'[틱톡]':''}${s.tags?.fs?'[무배]':''}${s.tags?.kp?'[킵]':''}`, 
       '메모': combinedExcelMemo 
     };
   });
@@ -3819,7 +4007,7 @@ window.copyAllSalesData = async function() {
     let colorSize = [s.color, s.size].map(x => (x || '').trim()).filter(Boolean).join('/');
 
     // 4. 태그/상태 텍스트 구성
-    let tagsStatus = `${s.tags?.yt ? '[유튜브]' : ''}${s.tags?.tt ? '[틱톡]' : ''}${s.tags?.fs ? '[무배]' : ''}`;
+    let tagsStatus = `${s.tags?.yt ? '[유튜브]' : ''}${s.tags?.tt ? '[틱톡]' : ''}${s.tags?.fs ? '[무배]' : ''}${s.tags?.kp ? '[킵]' : ''}`;
 
     // 5. 태그/상태와 메모를 한 칸으로 결합
     let combinedStatusAndMemo = [tagsStatus, combinedExcelMemo].filter(Boolean).join(' ');
@@ -4519,6 +4707,7 @@ window.renderStockOrderMatrix = function(sd) {
               value="${escapeHtml(ord.name)}" 
               ${ord.registered ? 'disabled' : ''} 
               oninput="onOrderInputChange('${key}', ${oIdx}, this.value); acFilter(this, 'nickname')"
+              onblur="onOrderInputBlur('${key}', ${oIdx}, this.value)"
               onkeydown="handleOrderInputKeydown(event, '${key}', ${oIdx})">
             ${ord.registered ? '<span style="font-size:10px; color:#27AE60; font-weight:bold; padding:0 2px;">✓</span>' : `<button style="background:none; border:none; color:var(--danger); font-size:12px; cursor:pointer; padding:0 3px;" onclick="removeOrderInput('${key}', ${oIdx})">✕</button>`}
           </div>
@@ -4541,6 +4730,14 @@ window.renderStockOrderMatrix = function(sd) {
   updateMainStockStatus();
 };
 
+window.onOrderInputBlur = function(key, idx, val) {
+  if (isProgrammaticFocus) return; // 💡 자동완성 포커스 이동 중 표 재렌더링 방지
+  let sd = getActiveStockData();
+  if (!sd || !sd.orders || !sd.orders[key] || !sd.orders[key][idx]) return;
+  sd.orders[key][idx].name = val;
+  saveToLocalStorage();
+  renderStockOrderMatrix(sd);
+};
 // 💡 실시간 타이핑 입력 동기화
 window.onOrderInputChange = function(key, idx, val) {
   let sd = getActiveStockData();
