@@ -122,6 +122,47 @@
   .btn-purple{ background:var(--purple-bg); color:var(--purple-ink); font-size:12px; border-radius:4px; padding: 4px 8px; font-weight:800; border:1px solid #DCD0EE; cursor:pointer; }
   .btn-purple:hover{ background:var(--purple-hover); }
 
+/* 파스텔톤 진한 핑크 화살표 버튼 공통 스타일 */
+  .btn-pink {
+    background: #D86B8A; /* 파스텔톤 진한 핑크 */
+    color: #ffffff;
+    border: none;
+    font-size: 12px;
+    font-weight: 800;
+    cursor: pointer;
+    height: 28px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s ease, opacity 0.15s ease;
+  }
+  .btn-pink:hover { background: #B95270; } /* 마우스 오버 시 딥 핑크 */
+  .btn-pink:disabled { opacity: 0.4; cursor: not-allowed; background: #D86B8A; }
+
+  /* ◀ 왼쪽 화살표 도형 (되돌리기) */
+  .btn-undo {
+    clip-path: polygon(12px 0%, 100% 0%, 100% 100%, 12px 100%, 0% 50%);
+    padding: 0 10px 0 18px;
+  }
+
+  /* ▶ 오른쪽 화살표 도형 (다시실행) */
+  .btn-redo {
+    clip-path: polygon(0% 0%, calc(100% - 12px) 0%, 100% 50%, calc(100% - 12px) 100%, 0% 100%);
+    padding: 0 18px 0 10px;
+  }
+
+  /* ◀ 왼쪽 화살표 도형 (되돌리기) */
+  .btn-undo {
+    clip-path: polygon(12px 0%, 100% 0%, 100% 100%, 12px 100%, 0% 50%);
+    padding: 0 10px 0 18px;
+  }
+
+  /* ▶ 오른쪽 화살표 도형 (다시실행) */
+  .btn-redo {
+    clip-path: polygon(0% 0%, calc(100% - 12px) 0%, 100% 50%, calc(100% - 12px) 100%, 0% 100%);
+    padding: 0 18px 0 10px;
+  }
+
   .ac-dropdown {
     position: fixed; display: none; z-index: 5000; background: #fff; border: 1px solid var(--line);
     border-radius: 6px; box-shadow: 0 6px 18px rgba(0,0,0,0.14); max-height: 220px; overflow-y: auto; padding: 4px;
@@ -425,6 +466,38 @@
 }
   /* 👆👆 [여기까지 추가] 👆👆 */
 
+  /* 👇👇 [이 위치에 1번 CSS 코드를 붙여넣으세요] 👇👇 */
+  .row-num-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 30% 30%, #ffffff 0%, #e2e8f0 80%, #cbd5e1 100%);
+    border: 1px solid #94a3b8;
+    color: #1e293b;
+    font-weight: 900;
+    font-size: 11px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    box-shadow: 2px 2px 4px rgba(0,0,0,0.15), inset -2px -2px 4px rgba(0,0,0,0.1), inset 2px 2px 4px rgba(255,255,255,0.8);
+    cursor: pointer;
+    transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+    user-select: none;
+    margin: 0 auto;
+  }
+  .row-num-btn:hover {
+    transform: scale(1.15) translateY(-1px);
+    background: radial-gradient(circle at 30% 30%, #ffffff 0%, #e0e7ff 80%, #c7d2fe 100%);
+    border-color: #818cf8;
+    color: #4f46e5;
+    box-shadow: 2px 4px 6px rgba(79, 70, 229, 0.25), inset -2px -2px 4px rgba(0,0,0,0.05), inset 2px 2px 4px rgba(255,255,255,0.9);
+  }
+  .row-num-btn:active {
+    transform: scale(0.95);
+    box-shadow: inset 2px 2px 6px rgba(0,0,0,0.2);
+  }
+
 </style>
 </head>
 <body>
@@ -475,8 +548,8 @@
       </div>
       
       <div style="margin-left: auto; display: flex; gap: 4px;">
-        <button id="btn-undo" class="btn btn-history" onclick="execUndo()" disabled>↩️</button>
-        <button id="btn-redo" class="btn btn-history" onclick="execRedo()" disabled>↪️</button>
+        <button class="btn btn-pink btn-undo" onclick="execUndo()" disabled title="되돌리기">되돌리기</button>
+        <button class="btn btn-pink btn-redo" onclick="execRedo()" disabled title="다시실행">다시실행</button>
       </div>
     </div>
 
@@ -534,15 +607,14 @@
       </div>
       
       <!-- 🎨 강조 파레트 -->
-      <div class="color-picker-container">
-        <span style="font-size:14px; margin-right:2px;" title="강조 파레트">🎨</span>
-        <div class="color-chip active" style="background:#FFDD6B;" onclick="changeMasterHighlightColor('#FFDD6B')" title="진한 파스텔 노랑"></div>
-        <div class="color-chip" style="background:#FFA3A8;" onclick="changeMasterHighlightColor('#FFA3A8')" title="진한 파스텔 핑크"></div>
-        <div class="color-chip" style="background:#A2E8B4;" onclick="changeMasterHighlightColor('#A2E8B4')" title="진한 파스텔 녹색"></div>
-        <div class="color-chip" style="background:#D3A1FF;" onclick="changeMasterHighlightColor('#D3A1FF')" title="진한 파스텔 보라"></div>
-        <button class="btn-highlight-clear" onclick="clearAllHighlights()" style="background: #FFF0F0; border-color: #F5B0AD; color: var(--danger); margin-left: 6px;">전체취소</button>
-        <button class="btn-highlight-clear" onclick="applyHighlightToSelected('clear')">색취소</button>
-      </div>
+<div class="color-picker-container">
+  <span style="font-size:14px; margin-right:2px;" title="강조 파레트">🎨</span>
+  <div class="color-chip active" style="background:#FFDD6B;" onclick="toggleMasterHighlightColor('#FFDD6B')" title="진한 파스텔 노랑"></div>
+  <div class="color-chip" style="background:#FFA3A8;" onclick="toggleMasterHighlightColor('#FFA3A8')" title="진한 파스텔 핑크"></div>
+  <div class="color-chip" style="background:#A2E8B4;" onclick="toggleMasterHighlightColor('#A2E8B4')" title="진한 파스텔 녹색"></div>
+  <div class="color-chip" style="background:#D3A1FF;" onclick="toggleMasterHighlightColor('#D3A1FF')" title="진한 파스텔 보라"></div>
+  <button class="btn-highlight-clear" onclick="clearAllHighlights()" style="background: #FFF0F0; border-color: #F5B0AD; color: var(--danger); margin-left: 6px;">전체취소</button>
+</div>
       
       <!-- 우측 끝: 전체삭제 버튼만 남김 -->
       <div style="margin-left: auto; display: flex; align-items: center;">
@@ -580,6 +652,8 @@
           <button class="btn btn-history" onclick="clearSaleFilter()" style="padding: 6px 10px; height: 28px; font-weight: bold;" title="품번/상품명 필터 취소">✕</button>
         </div>
         <button class="btn btn-purple" onclick="sortSalesByContext()">판매내역 정렬</button>
+        <button class="btn btn-pink btn-undo" onclick="execUndo()" disabled title="되돌리기">되돌리기</button>
+        <button class="btn btn-pink btn-redo" onclick="execRedo()" disabled title="다시실행">다시실행</button>
       </div>
 
       <div style="display: flex; align-items: center; gap: 8px; margin-left: auto; padding-right: 200px;">
@@ -627,14 +701,13 @@
     </div>
 
 <div class="color-picker-container" style="margin-right: auto; margin-left: 10px;">
-      <span style="font-size:11px; font-weight:800; color:var(--ink-soft); margin-right:2px;">🎨 강조 파레트:</span>
-      <div class="color-chip active" style="background:#FFDD6B;" onclick="changeMasterHighlightColor('#FFDD6B')" title="진한 파스텔 노랑"></div>
-      <div class="color-chip" style="background:#FFA3A8;" onclick="changeMasterHighlightColor('#FFA3A8')" title="진한 파스텔 핑크"></div>
-      <div class="color-chip" style="background:#A2E8B4;" onclick="changeMasterHighlightColor('#A2E8B4')" title="진한 파스텔 녹색"></div>
-      <div class="color-chip" style="background:#D3A1FF;" onclick="changeMasterHighlightColor('#D3A1FF')" title="진한 파스텔 보라"></div>
-      <button class="btn-highlight-clear" onclick="clearAllHighlights()" style="background: #FFF0F0; border-color: #F5B0AD; color: var(--danger); margin-left: 6px;">전체취소</button>
-      <button class="btn-highlight-clear" onclick="applyHighlightToSelected('clear')">선택취소</button>
-    </div>
+  <span style="font-size:11px; font-weight:800; color:var(--ink-soft); margin-right:2px;">🎨 강조 파레트:</span>
+  <div class="color-chip active" style="background:#FFDD6B;" onclick="toggleMasterHighlightColor('#FFDD6B')" title="진한 파스텔 노랑"></div>
+  <div class="color-chip" style="background:#FFA3A8;" onclick="toggleMasterHighlightColor('#FFA3A8')" title="진한 파스텔 핑크"></div>
+  <div class="color-chip" style="background:#A2E8B4;" onclick="toggleMasterHighlightColor('#A2E8B4')" title="진한 파스텔 녹색"></div>
+  <div class="color-chip" style="background:#D3A1FF;" onclick="toggleMasterHighlightColor('#D3A1FF')" title="진한 파스텔 보라"></div>
+  <button class="btn-highlight-clear" onclick="clearAllHighlights()" style="background: #FFF0F0; border-color: #F5B0AD; color: var(--danger); margin-left: 6px;">전체취소</button>
+</div>
 
     <div style="display:flex; gap:6px; align-items: center;">
       <input type="text" id="wh-name-input" class="search-input" style="width: 140px; height: 28px; font-size: 12px; font-weight: bold; border-color: var(--line); padding: 4px 8px; border-radius: 4px;" placeholder="창고명 입력..." oninput="saveToLocalStorage()">
@@ -665,17 +738,17 @@
             <col style="width: 75px;">
           </colgroup>
           <thead>
-            <tr>
-              <th onclick="settleSetSort('prodNum')" style="cursor:pointer; padding-left:4px;">품번 ⇅</th>
-              <th onclick="settleSetSort('name')" style="cursor:pointer;">상품명 ⇅</th>
-              <th>색상</th>
-              <th>사이즈</th>
-              <th onclick="settleSetSort('nickname')" style="cursor:pointer;">고객명 ⇅</th>
-              <th onclick="settleSetSort('salePrice')" style="cursor:pointer; text-align:right;">판매가 ⇅</th>
-              <th onclick="settleSetSort('depositPrice')" style="cursor:pointer; text-align:right;">입금가 ⇅</th>
-              <th style="text-align:center;">액션</th>
-            </tr>
-          </thead>
+  <tr>
+    <th style="text-align:center; width:38px;">No.</th>
+    <th onclick="settleSetSort('name')" style="cursor:pointer;">상품명 (품번+상품명) ⇅</th>
+    <th>색상</th>
+    <th>사이즈</th>
+    <th onclick="settleSetSort('nickname')" style="cursor:pointer;">고객명 ⇅</th>
+    <th onclick="settleSetSort('salePrice')" style="cursor:pointer; text-align:right;">판매가 ⇅</th>
+    <th onclick="settleSetSort('depositPrice')" style="cursor:pointer; text-align:right;">입금가 ⇅</th>
+    <th style="text-align:center;">액션</th>
+  </tr>
+</thead>
           <tbody id="settle-left-body"></tbody>
         </table>
       </div>
@@ -807,23 +880,25 @@
     <div class="table-responsive table-scroll-deposit" style="flex: 1.3; overflow-y: auto; margin-bottom: 12px;">
       <table>
         <colgroup>
-          <col style="width: auto;">
-          <col style="width: 85px;">
-          <col style="width: 80px;">
-          <col style="width: 85px;">
-          <col style="width: 100px;">
-          <col style="width: 70px;">
-        </colgroup>
-        <thead>
-          <tr>
-            <th>고객명</th>
-            <th style="text-align: right;">청구금액</th>
-            <th style="text-align: center;">제외금액</th>
-            <th style="text-align: right;">입금액</th>
-            <th style="text-align: center;">정산 상태</th>
-            <th style="text-align: center;">액션</th>
-          </tr>
-        </thead>
+  <col style="width: 45px;">
+  <col style="width: auto;">
+  <col style="width: 85px;">
+  <col style="width: 80px;">
+  <col style="width: 85px;">
+  <col style="width: 100px;">
+  <col style="width: 70px;">
+</colgroup>
+<thead>
+  <tr>
+    <th style="text-align: center;">No.</th>
+    <th>고객명</th>
+    <th style="text-align: right;">청구금액</th>
+    <th style="text-align: center;">제외금액</th>
+    <th style="text-align: right;">입금액</th>
+    <th style="text-align: center;">정산 상태</th>
+    <th style="text-align: center;">액션</th>
+  </tr>
+</thead>
         <tbody id="deposit-analysis-body">
           <tr><td colspan="6" style="text-align: center; color: var(--ink-soft); padding: 40px 10px;">은행 데이터 파일이 로드되면 실시간 대조 분석을 시작합니다.</td></tr>
         </tbody>
@@ -1047,7 +1122,79 @@ let depositUnmatchedHighlights = {}; // 💡 미매칭 목록 완료체크 강�
 
 let selectedCells = new Set(); 
 let startCell = null; 
-let masterHighlightColor = '#FFDD6B'; 
+let activeHighlightColors = ['#FFDD6B']; // 선택된 강조색 배열 (기본: 노랑)
+
+// 💡 [신규 추가] 정산 우측 요약 그룹 독립 강조색 저장소 및 순환 함수
+let settleGroupHighlights = {};
+
+function cycleSettleGroupHighlight(groupKey) {
+  saveState();
+  if (!settleGroupHighlights) settleGroupHighlights = {};
+
+  if (activeHighlightColors.length === 0) {
+    delete settleGroupHighlights[groupKey];
+  } else {
+    const curColor = settleGroupHighlights[groupKey];
+    const curIdx = activeHighlightColors.indexOf(curColor);
+
+    if (curIdx === -1) {
+      settleGroupHighlights[groupKey] = activeHighlightColors[0];
+    } else if (curIdx < activeHighlightColors.length - 1) {
+      settleGroupHighlights[groupKey] = activeHighlightColors[curIdx + 1];
+    } else {
+      delete settleGroupHighlights[groupKey];
+    }
+  }
+
+  saveToLocalStorage();
+  renderSettleRightPanel();
+}
+
+// 파레트 색상 칩 클릭 시 다중 선택 토글 함수
+function toggleMasterHighlightColor(colorVal) {
+  const idx = activeHighlightColors.indexOf(colorVal);
+  if (idx > -1) {
+    if (activeHighlightColors.length > 1) {
+      activeHighlightColors.splice(idx, 1);
+    }
+  } else {
+    activeHighlightColors.push(colorVal);
+  }
+  saveToLocalStorage();
+  syncColorPickerUI();
+}
+
+// No. 클릭 시 다중 선택된 색상을 순차적으로 순환 적용하는 함수
+function cycleRowHighlight(id, listType = 'sale') {
+  saveState();
+  let target = null;
+  if (listType === 'sale') target = sales.find(x => x.id === id);
+  else if (listType === 'prod') target = products.find(x => x.id === id);
+
+  if (!target) return;
+
+  if (activeHighlightColors.length === 0) {
+    target.highlighted = false;
+  } else {
+    const curColor = target.highlighted;
+    const curIdx = activeHighlightColors.indexOf(curColor);
+    
+    if (curIdx === -1) {
+      // 색상이 없거나 파레트 외 색상일 때 -> 첫 번째 선택 색상 적용
+      target.highlighted = activeHighlightColors[0];
+    } else if (curIdx < activeHighlightColors.length - 1) {
+      // 다음 순번 색상으로 변경
+      target.highlighted = activeHighlightColors[curIdx + 1];
+    } else {
+      // 마지막 순번 다음은 색상 취소 (투명)
+      target.highlighted = false;
+    }
+  }
+
+  saveToLocalStorage();
+  if (listType === 'prod') renderProducts();
+  else { renderSales(); renderSettleDetail(); }
+}
 
 let lastAutofill = { id: null, field: null, dir: 'up' };
 
@@ -1672,13 +1819,15 @@ window.renderDepositAnalysisTable = function() {
     return nameMatch || potentialMatch;
   });
 
-  // -------------------------------------------------------------------------
+// -------------------------------------------------------------------------
   // 🔘 상단 파트: 지능형 대조 분석표 출력 루프 (장부 기입 대상자 전용)
   // -------------------------------------------------------------------------
   if (filteredLedger.length === 0) {
-    body.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--ink-soft); padding: 30px 10px;">대조 결과 매칭되는 내역이 존재하지 않습니다.</td></tr>`;
+    // 컬럼 수에 맞게 colspan을 7로 변경
+    body.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--ink-soft); padding: 30px 10px;">대조 결과 매칭되는 내역이 존재하지 않습니다.</td></tr>`;
   } else {
-    body.innerHTML = filteredLedger.map(row => {
+    // map 인자에 idx 추가
+    body.innerHTML = filteredLedger.map((row, idx) => {
       const deductAmt = depositDeductionMap[row.nickname] || 0;
       const finalLedgerAmt = row.ledgerAmount + depositGlobalShipping - deductAmt; 
       
@@ -1714,6 +1863,7 @@ window.renderDepositAnalysisTable = function() {
 
       return `
         <tr data-ledger-base="${row.ledgerAmount}" data-bank-amt="${row.bankAmount}" ${rowColor} onclick="handleDepositRowClick('${escapeHtml(row.nickname)}', event)">
+          <td class="num" style="text-align:center; font-weight:bold; color:var(--ink-soft);">${idx + 1}</td>
           <td style="font-weight:bold; color:var(--ink); cursor:pointer;">${displayName}${userBadgeHtml}</td>
           <td class="num final-ledger-cell" style="text-align:right; font-weight:700; color:var(--purple-ink);">${finalLedgerAmt > 0 ? fmt(finalLedgerAmt) : '-'}</td>
           <td style="text-align:center;">${deductInput}</td>
@@ -2056,6 +2206,7 @@ function saveToLocalStorage() {
   localStorage.setItem('live_deposit_row_highlights', JSON.stringify(depositRowHighlights));
   localStorage.setItem('live_deposit_unmatched_highlights', JSON.stringify(depositUnmatchedHighlights)); // 💡 복사해서 삽입
   localStorage.setItem('live_deposit_master_color', depositMasterHighlightColor);
+  localStorage.setItem('live_settle_group_highlights', JSON.stringify(settleGroupHighlights));
   localStorage.setItem('live_bank_records', JSON.stringify(bankRecords));
   localStorage.setItem('live_deposit_file_name', depositFileName);
 
@@ -2129,6 +2280,9 @@ function loadFromLocalStorage() {
   const storedDepMColor = localStorage.getItem('live_deposit_master_color');
   if (storedDepMColor) depositMasterHighlightColor = storedDepMColor;
 
+  const storedSettleGroupHigh = localStorage.getItem('live_settle_group_highlights');
+  if (storedSettleGroupHigh) settleGroupHighlights = JSON.parse(storedSettleGroupHigh);
+
   // 💡 [추가] 브라우저에 박혀있던 입금 레코드 및 업로드 파일명 정보 완전 원상복구
   const storedBankRecords = localStorage.getItem('live_bank_records');
   if (storedBankRecords) bankRecords = JSON.parse(storedBankRecords);
@@ -2155,8 +2309,8 @@ function saveState() {
 }
 
 function updateHistoryButtons() {
-  document.getElementById('btn-undo').disabled = historyStack.length === 0;
-  document.getElementById('btn-redo').disabled = redoStack.length === 0;
+  document.querySelectorAll('.btn-undo').forEach(btn => btn.disabled = historyStack.length === 0);
+  document.querySelectorAll('.btn-redo').forEach(btn => btn.disabled = redoStack.length === 0);
 }
 
 function scrollToRow(rowId) {
@@ -2280,7 +2434,10 @@ window.exitProdEditMode = function(id, field, isPopup = false) {
 };
 
 window.handleCellFilter = function(event, id, field) {
-  if (event) event.stopPropagation(); 
+  if (event) {
+    event.preventDefault(); // 💡 우클릭 브라우저 기본 메뉴 차단
+    event.stopPropagation();
+  }
   const target = sales.find(x => x.id === id); 
   if (!target) return;
   const value = String(target[field] || '').trim(); 
@@ -2297,13 +2454,15 @@ window.handleCellFilter = function(event, id, field) {
 };
 
 window.handleProdCellFilter = function(event, id, field) {
-  if (event) event.stopPropagation(); 
+  if (event) {
+    event.preventDefault(); // 💡 우클릭 브라우저 기본 메뉴 차단
+    event.stopPropagation();
+  }
   const target = products.find(x => x.id === id); 
   if (!target) return;
   const value = String(target[field] || '').trim(); 
   if (value === '') return;
 
-  // 💡 세부제원(specs) 항목 클릭 시 필터링 대신 3번째 기호 + 텍스트 복사
   if (field === 'specs') {
     const symSpecs = document.getElementById('symbol-specs')?.value ?? '📌';
     const textToCopy = `${symSpecs}${value}`;
@@ -2354,8 +2513,10 @@ function renderSaleFilterTags() {
         <span class="close-btn" onclick="removeSaleFilter('${k}')">✕</span>
       </span>`;
     });
-    html += `<button class="btn btn-history" onclick="clearAllSaleClickFilters()" style="padding:2px 8px; font-size:11px; font-weight:800; background:#FFF0F0; border-color:#F5B0AD; color:var(--danger); margin-left:6px;">전체 필터 해제 🔄</button>`;
-    html += `<button class="btn btn-purple" style="padding:4px 10px; font-size:11.5px; margin-left:14px; border-color:#2F80ED; color:#2F80ED; background:#E6F0FA; font-weight:800;" onclick="openMatrixFromFilteredSales()">📊 현재 필터 결과 입체 분석 (색상/사이즈)</button>`;
+    // 📊 필터 결과 표 분석 버튼
+    html += `<button class="btn btn-purple" style="padding:4px 10px; font-size:11.5px; margin-left:8px; border-color:#2F80ED; color:#2F80ED; background:#E6F0FA; font-weight:800;" onclick="openMatrixFromFilteredSales()">📊 필터 결과 표 분석</button>`;
+    // 🔄 필터 초기화 버튼 (표 분석 버튼 오른쪽에 생성)
+    html += `<button class="btn btn-history" style="padding:4px 10px; font-size:11.5px; margin-left:6px; background:#FFF0F0; border-color:#F5B0AD; color:var(--danger); font-weight:800;" onclick="clearAllSaleFilters()">필터 초기화 🔄</button>`;
   }
   container.innerHTML = html;
 }
@@ -2495,6 +2656,7 @@ window.openStockPopup = function(type, prodId = null) {
   let stockData = (type === 'new') ? currentNewStock : products.find(x => x.id === prodId)?.stock;
   if (stockData) { 
     renderStockMatrix(stockData); 
+    renderStockOrderMatrix(stockData); // 💡 [추가] 팝업을 열 때 현장 주문 입력 테이블도 즉시 빈 상태로 새로고침
   }
   document.getElementById('stock-popup').style.display = 'flex';
 };
@@ -2595,7 +2757,8 @@ function renderStockMatrix(sd) {
 }
 
 function renderProducts(){
-  const q = document.getElementById('search-prod').value.toLowerCase().trim(); const sorted = [...products];
+  const q = document.getElementById('search-prod').value.toLowerCase().trim(); 
+  const sorted = [...products];
   const filtered = sorted.filter(p => {
     const matchText = p.prodNum.toLowerCase().includes(q) || p.brand.toLowerCase().includes(q) || p.features.toLowerCase().includes(q);
     if (!matchText) return false;
@@ -2609,26 +2772,31 @@ function renderProducts(){
 
   document.getElementById('count-prod').textContent = `${products.length}개 등록됨 (필터결과: ${filtered.length}개)`; 
   const blankClass = (val) => (!val || val.trim() === '') ? ' prod-blank-cell' : '';
+  
   document.getElementById('list-prod').innerHTML = filtered.map((p, i) => {
     const reverseNo = filtered.length - i;
     const customBg = p.highlighted ? ` style="background-color: ${p.highlighted} !important;"` : '';
     return `<tr id="prod-row-${p.id}"${customBg}>
-      <td class="num" style="text-align:center; color:var(--ink-soft); font-weight:bold;">${reverseNo}</td>
-      <td><div class="cell-wrap" id="wrap-prod-${p.id}-prodNum" oncontextmenu="enterProdEditMode(event, '${p.id}', 'prodNum', false)"><span class="view-text${blankClass(p.prodNum)}">${escapeHtml(p.prodNum) || '&nbsp;'}</span><input type="text" class="inline-input" value="${escapeHtml(p.prodNum)}" data-field="prodNum" onfocus="trackFocus('product', '${p.id}', 'prodNum', this)" onblur="exitProdEditMode('${p.id}', 'prodNum', false)" onkeydown="handleProdKeydown(event, '${p.id}', false)" oninput="updateProdField('${p.id}', 'prodNum', this.value)" placeholder="품번"></div></td>
-      <td><div class="cell-wrap" id="wrap-prod-${p.id}-brand" oncontextmenu="enterProdEditMode(event, '${p.id}', 'brand', false)"><span class="view-text${blankClass(p.brand)}">${escapeHtml(p.brand) || '&nbsp;'}</span><input type="text" class="inline-input" data-ac="brand" value="${escapeHtml(p.brand)}" data-field="brand" onfocus="trackFocus('product', '${p.id}', 'brand', this)" onblur="exitProdEditMode('${p.id}', 'brand', false)" onkeydown="handleProdKeydown(event, '${p.id}', false)" oninput="updateProdField('${p.id}', 'brand', this.value); acFilter(this,'brand')" placeholder="브랜드명"></div></td>
+      <!-- 💡 No. 셀 클릭 시 상품 강조색 순환 적용 -->
+      <td style="text-align:center;"><div class="row-num-btn" onclick="cycleRowHighlight('${p.id}', 'prod')" title="클릭 시 순차 강조색 변경/취소">${reverseNo}</div></td>
+      <td><div class="cell-wrap" id="wrap-prod-${p.id}-prodNum" data-cell-id="${p.id}:::prodNum" oncontextmenu="handleProdCellFilter(event, '${p.id}', 'prodNum')" ondblclick="enterProdEditMode(event, '${p.id}', 'prodNum', false)"><span class="view-text${blankClass(p.prodNum)}">${escapeHtml(p.prodNum) || '&nbsp;'}</span><input type="text" class="inline-input" value="${escapeHtml(p.prodNum)}" data-field="prodNum" onfocus="trackFocus('product', '${p.id}', 'prodNum', this)" onblur="exitProdEditMode('${p.id}', 'prodNum', false)" onkeydown="handleProdKeydown(event, '${p.id}', false)" oninput="updateProdField('${p.id}', 'prodNum', this.value)" placeholder="품번"></div></td>
+      <td><div class="cell-wrap" id="wrap-prod-${p.id}-brand" data-cell-id="${p.id}:::brand" oncontextmenu="handleProdCellFilter(event, '${p.id}', 'brand')" ondblclick="enterProdEditMode(event, '${p.id}', 'brand', false)"><span class="view-text${blankClass(p.brand)}">${escapeHtml(p.brand) || '&nbsp;'}</span><input type="text" class="inline-input" data-ac="brand" value="${escapeHtml(p.brand)}" data-field="brand" onfocus="trackFocus('product', '${p.id}', 'brand', this)" onblur="exitProdEditMode('${p.id}', 'brand', false)" onkeydown="handleProdKeydown(event, '${p.id}', false)" oninput="updateProdField('${p.id}', 'brand', this.value); acFilter(this,'brand')" placeholder="브랜드명"></div></td>
       <td style="text-align:center;"><button class="btn-purple" onclick="applyProductToSale('${p.id}')" style="padding:2px 4px; font-size:11px; font-weight:bold;">적용</button></td>
-      <td><div class="cell-wrap" id="wrap-prod-${p.id}-features" oncontextmenu="enterProdEditMode(event, '${p.id}', 'features', false)"><span class="view-text${blankClass(p.features)}">${escapeHtml(p.features) || '&nbsp;'}</span><input type="text" class="inline-input" value="${escapeHtml(p.features)}" data-field="features" onfocus="trackFocus('product', '${p.id}', 'features', this)" onblur="exitProdEditMode('${p.id}', 'features', false)" onkeydown="handleProdKeydown(event, '${p.id}', false)" oninput="updateProdField('${p.id}', 'features', this.value)" placeholder="특징 (소재 등)"></div></td>
-      <td><div class="cell-wrap" id="wrap-prod-${p.id}-color" oncontextmenu="enterProdEditMode(event, '${p.id}', 'color', false)"><span class="view-text reduced-font${blankClass(p.color)}">${escapeHtml(p.color) || '&nbsp;'}</span><input type="text" class="inline-input reduced-font" value="${escapeHtml(p.color)}" data-field="color" onfocus="trackFocus('product', '${p.id}', 'color', this)" onblur="exitProdEditMode('${p.id}', 'color', false)" onkeydown="handleProdKeydown(event, '${p.id}', false)" oninput="updateProdField('${p.id}', 'color', this.value)" placeholder="색상"></div></td>
-      <td><div class="cell-wrap" id="wrap-prod-${p.id}-size" oncontextmenu="enterProdEditMode(event, '${p.id}', 'size', false)"><span class="view-text reduced-font${blankClass(p.size)}">${escapeHtml(p.size) || '&nbsp;'}</span><input type="text" class="inline-input reduced-font" value="${escapeHtml(p.size)}" data-field="size" onfocus="trackFocus('product', '${p.id}', 'size', this)" onblur="exitProdEditMode('${p.id}', 'size', false)" onkeydown="handleProdKeydown(event, '${p.id}', false)" oninput="updateProdField('${p.id}', 'size', this.value)" placeholder="사이즈"></div></td>
-      <td><div class="cell-wrap num-wrap" id="wrap-prod-${p.id}-price" oncontextmenu="enterProdEditMode(event, '${p.id}', 'price', false)"><span class="view-text${blankClass(p.price)}">${p.price ? escapeHtml(p.price) : '&nbsp;'}</span><input type="text" class="inline-input num" value="${p.price || ''}" data-field="price" onfocus="trackFocus('product', '${p.id}', 'price', this)" onblur="exitProdEditMode('${p.id}', 'price', false)" onkeydown="handleProdKeydown(event, '${p.id}', false)" oninput="updateProdField('${p.id}', 'price', this.value)" placeholder="0"></div></td>
-      <td><div class="cell-wrap" id="wrap-prod-${p.id}-specs" oncontextmenu="enterProdEditMode(event, '${p.id}', 'specs', false)"><span class="view-text reduced-font${blankClass(p.specs)}">${escapeHtml(p.specs) || '&nbsp;'}</span><input type="text" class="inline-input reduced-font" value="${escapeHtml(p.specs)}" data-field="specs" onfocus="trackFocus('product', '${p.id}', 'specs', this)" onblur="exitProdEditMode('${p.id}', 'specs', false)" onkeydown="handleProdKeydown(event, '${p.id}', false)" oninput="updateProdField('${p.id}', 'specs', this.value)" placeholder="세부 제원 치수"></div></td>
+      <td><div class="cell-wrap" id="wrap-prod-${p.id}-features" data-cell-id="${p.id}:::features" oncontextmenu="handleProdCellFilter(event, '${p.id}', 'features')" ondblclick="enterProdEditMode(event, '${p.id}', 'features', false)"><span class="view-text${blankClass(p.features)}">${escapeHtml(p.features) || '&nbsp;'}</span><input type="text" class="inline-input" value="${escapeHtml(p.features)}" data-field="features" onfocus="trackFocus('product', '${p.id}', 'features', this)" onblur="exitProdEditMode('${p.id}', 'features', false)" onkeydown="handleProdKeydown(event, '${p.id}', false)" oninput="updateProdField('${p.id}', 'features', this.value)" placeholder="특징 (소재 등)"></div></td>
+      <td><div class="cell-wrap" id="wrap-prod-${p.id}-color" data-cell-id="${p.id}:::color" oncontextmenu="handleProdCellFilter(event, '${p.id}', 'color')" ondblclick="enterProdEditMode(event, '${p.id}', 'color', false)"><span class="view-text reduced-font${blankClass(p.color)}">${escapeHtml(p.color) || '&nbsp;'}</span><input type="text" class="inline-input reduced-font" value="${escapeHtml(p.color)}" data-field="color" onfocus="trackFocus('product', '${p.id}', 'color', this)" onblur="exitProdEditMode('${p.id}', 'color', false)" onkeydown="handleProdKeydown(event, '${p.id}', false)" oninput="updateProdField('${p.id}', 'color', this.value)" placeholder="색상"></div></td>
+      <td><div class="cell-wrap" id="wrap-prod-${p.id}-size" data-cell-id="${p.id}:::size" oncontextmenu="handleProdCellFilter(event, '${p.id}', 'size')" ondblclick="enterProdEditMode(event, '${p.id}', 'size', false)"><span class="view-text reduced-font${blankClass(p.size)}">${escapeHtml(p.size) || '&nbsp;'}</span><input type="text" class="inline-input reduced-font" value="${escapeHtml(p.size)}" data-field="size" onfocus="trackFocus('product', '${p.id}', 'size', false)" onblur="exitProdEditMode('${p.id}', 'size', false)" onkeydown="handleProdKeydown(event, '${p.id}', false)" oninput="updateProdField('${p.id}', 'size', this.value)" placeholder="사이즈"></div></td>
+      <td><div class="cell-wrap num-wrap" id="wrap-prod-${p.id}-price" data-cell-id="${p.id}:::price" oncontextmenu="handleProdCellFilter(event, '${p.id}', 'price')" ondblclick="enterProdEditMode(event, '${p.id}', 'price', false)"><span class="view-text${blankClass(p.price)}">${p.price ? escapeHtml(p.price) : '&nbsp;'}</span><input type="text" class="inline-input num" value="${p.price || ''}" data-field="price" onfocus="trackFocus('product', '${p.id}', 'price', this)" onblur="exitProdEditMode('${p.id}', 'price', false)" onkeydown="handleProdKeydown(event, '${p.id}', false)" oninput="updateProdField('${p.id}', 'price', this.value)" placeholder="0"></div></td>
+      <td><div class="cell-wrap" id="wrap-prod-${p.id}-specs" data-cell-id="${p.id}:::specs" oncontextmenu="handleProdCellFilter(event, '${p.id}', 'specs')" ondblclick="enterProdEditMode(event, '${p.id}', 'specs', false)"><span class="view-text reduced-font${blankClass(p.specs)}">${escapeHtml(p.specs) || '&nbsp;'}</span><input type="text" class="inline-input reduced-font" value="${escapeHtml(p.specs)}" data-field="specs" onfocus="trackFocus('product', '${p.id}', 'specs', false)" onblur="exitProdEditMode('${p.id}', 'specs', false)" onkeydown="handleProdKeydown(event, '${p.id}', false)" oninput="updateProdField('${p.id}', 'specs', this.value)" placeholder="세부 제원 치수"></div></td>
       <td><button id="btn-stock-${p.id}" class="btn" style="padding:4px 8px; font-size:11px; font-weight:bold; border:1px solid var(--line); background:#fff; color:var(--ink);" onclick="openStockPopup('edit', '${p.id}')">테이블</button></td>
       <td><div style="display:flex; gap:4px;"><button class="action-text text-add-row" onclick="copyProductToClipboard('${p.id}')">복사</button><button class="action-text text-del" onclick="deleteProdRow('${p.id}')">삭제</button></div></td>
     </tr>`}).join('');
+    
   if (currentEditingCell && currentEditingCell.type === 'product' && !currentEditingCell.isPopup) {
     const { id, field } = currentEditingCell; const wrap = document.getElementById(`wrap-prod-${id}-${field}`);
     if (wrap) { wrap.classList.add('editing'); const input = wrap.querySelector('input'); if (input && document.activeElement !== input) { input.focus(); input.select(); } }
   }
+  
+  updateCellSelectionVisuals();
   updateMainStockStatus(); 
   renderProdFilterTags();
   adjustLongTexts();
@@ -2819,16 +2987,17 @@ function getRowHtml(s, index, isPopup = false, hasDivider = false) {
   const bYt = `<span tabindex="0" class="status-badge yt ${s.tags?.yt ? 'on':'off'}" onclick="toggleRowTag('${s.id}', 'yt')" onkeydown="if(event.key==='Enter') toggleRowTag('${s.id}', 'yt')">유</span>`;
   const bTt = `<span tabindex="0" class="status-badge tt ${s.tags?.tt ? 'on':'off'}" onclick="toggleRowTag('${s.id}', 'tt')" onkeydown="if(event.key==='Enter') toggleRowTag('${s.id}', 'tt')">틱</span>`;
   const bFs = `<span tabindex="0" class="status-badge fs ${s.tags?.fs ? 'on':'off'}" onclick="toggleRowTag('${s.id}', 'fs')" onkeydown="if(event.key==='Enter') toggleRowTag('${s.id}', 'fs')">무</span>`;
-  const nickClass = s.nickname.trim() === '' ? 'inline-input blank-alert' : 'inline-input'; const nickSpanClass = s.nickname.trim() === '' ? 'view-text blank-alert-span' : 'view-text';
+  const nickClass = s.nickname.trim() === '' ? 'inline-input blank-alert' : 'inline-input'; 
+  const nickSpanClass = s.nickname.trim() === '' ? 'view-text blank-alert-span' : 'view-text';
   const trClasses = []; if (hasDivider) trClasses.push('group-divider');
-  const classStr = trClasses.length > 0 ? `class="${trClasses.join(' ')}"` : ''; const prefix = isPopup ? 'wrap-pop' : 'wrap'; const blankClass = (val) => (!val || String(val).trim() === '') ? ' sale-blank-cell' : '';
+  const classStr = trClasses.length > 0 ? `class="${trClasses.join(' ')}"` : ''; 
+  const prefix = isPopup ? 'wrap-pop' : 'wrap'; 
+  const blankClass = (val) => (!val || String(val).trim() === '') ? ' sale-blank-cell' : '';
 
   let memoParts = [];
-  let hoverTooltipParts = []; // 💡 마우스 오버 시 보여줄 순수 텍스트 배열
+  let hoverTooltipParts = [];
   
-  // 유튜브, 틱톡, 무배 코드는 삭제하고 적립금 코드만 남깁니다.
   if (s.autoReward > 0) {
-    // 💡 '적립금'을 '적'으로 수정했습니다
     memoParts.push(`<b style="color:#27AE60;">적 ${fmt(s.autoReward)}원</b>`);
     hoverTooltipParts.push(`적 ${fmt(s.autoReward)}원`);
   }
@@ -2837,7 +3006,6 @@ function getRowHtml(s, index, isPopup = false, hasDivider = false) {
   let userMemoText = escapeHtml(s.memo);
   let fullMemoDisplay = badgeMemoText && userMemoText ? `${badgeMemoText} | ${userMemoText}` : (badgeMemoText || userMemoText || '&nbsp;');
 
-  // 💡 사용자가 직접 입력한 메모가 있다면 툴팁에도 추가
   if (s.memo && s.memo.trim() !== '') {
     hoverTooltipParts.push(s.memo);
   }
@@ -2846,20 +3014,20 @@ function getRowHtml(s, index, isPopup = false, hasDivider = false) {
   const customBg = s.highlighted ? ` style="background-color: ${s.highlighted} !important;"` : '';
 
   return `<tr id="${isPopup ? 'pop-' : ''}row-${s.id}" ${classStr}${customBg}>
-      <td class="num" style="text-align:center; color:var(--ink-soft); font-weight:bold; cursor:ns-resize;">${isPopup ? '•' : index}</td>
-      <td><div class="cell-wrap" id="${prefix}-${s.id}-rowDate" data-cell-id="${s.id}:::rowDate" oncontextmenu="enterEditMode(event, '${s.id}', 'rowDate', ${isPopup}, true)"><span class="view-text${blankClass(s.rowDate)}">${escapeHtml(s.rowDate) || '&nbsp;'}</span><input type="text" class="inline-input" value="${escapeHtml(s.rowDate)}" data-field="rowDate" onfocus="trackFocus('sale', '${s.id}', 'rowDate', this)" onblur="exitEditMode('${s.id}', 'rowDate', ${isPopup})" onkeydown="handleSaleKeydown(event, '${s.id}', ${isPopup})" oninput="updateRowField('${s.id}', 'rowDate', this.value)" placeholder="날짜"><div class="drag-handle"></div></div></td>
-      <td><div class="cell-wrap" id="${prefix}-${s.id}-prodNum" data-cell-id="${s.id}:::prodNum" oncontextmenu="enterEditMode(event, '${s.id}', 'prodNum', ${isPopup}, true)"><span class="view-text${blankClass(s.prodNum)}">${escapeHtml(s.prodNum) || '&nbsp;'}</span><input type="text" class="inline-input" value="${escapeHtml(s.prodNum)}" data-field="prodNum" onfocus="trackFocus('sale', '${s.id}', 'prodNum', this)" onblur="exitEditMode('${s.id}', 'prodNum', ${isPopup})" onkeydown="handleSaleKeydown(event, '${s.id}', ${isPopup})" oninput="updateRowField('${s.id}', 'prodNum', this.value)" placeholder="품번"><div class="drag-handle"></div></div></td>
-      <td><div class="cell-wrap" id="${prefix}-${s.id}-name" data-cell-id="${s.id}:::name" oncontextmenu="enterEditMode(event, '${s.id}', 'name', ${isPopup}, true)"><span class="view-text${blankClass(s.name)}" style="font-weight:700;">${escapeHtml(s.name) || '&nbsp;'}</span><input type="text" class="inline-input" style="font-weight:700;" value="${escapeHtml(s.name)}" data-field="name" onfocus="trackFocus('sale', '${s.id}', 'name', this)" onblur="exitEditMode('${s.id}', 'name', ${isPopup})" onkeydown="handleSaleKeydown(event, '${s.id}', ${isPopup})" oninput="updateRowField('${s.id}', 'name', this.value); acFilter(this, 'name')" placeholder="상품명"><div class="drag-handle"></div></div></td>
-      <td><div class="cell-wrap" id="${prefix}-${s.id}-color" data-cell-id="${s.id}:::color" oncontextmenu="enterEditMode(event, '${s.id}', 'color', ${isPopup}, true)"><span class="view-text${blankClass(s.color)}" style="font-size:12px;">${escapeHtml(s.color) || '&nbsp;'}</span><input type="text" class="inline-input" style="font-size:12px;" value="${escapeHtml(s.color)}" data-field="color" onfocus="trackFocus('sale', '${s.id}', 'color', this)" onblur="exitEditMode('${s.id}', 'color', ${isPopup})" onkeydown="handleSaleKeydown(event, '${s.id}', ${isPopup})" oninput="updateRowField('${s.id}', 'color', this.value); acFilter(this, 'color')" placeholder="색상"><div class="drag-handle"></div></div></td>
-<td><div class="cell-wrap" id="${prefix}-${s.id}-size" data-cell-id="${s.id}:::size" oncontextmenu="enterEditMode(event, '${s.id}', 'size', ${isPopup}, true)"><span class="view-text${blankClass(s.size)}" style="font-size:12px;">${escapeHtml(s.size) || '&nbsp;'}</span><input type="text" class="inline-input" style="font-size:12px;" value="${escapeHtml(s.size)}" data-field="size" onfocus="trackFocus('sale', '${s.id}', 'size', this)" onblur="exitEditMode('${s.id}', 'size', ${isPopup})" onkeydown="handleSaleKeydown(event, '${s.id}', ${isPopup})" oninput="updateRowField('${s.id}', 'size', this.value); acFilter(this, 'size')" placeholder="사이즈"><div class="drag-handle"></div></div></td>
-      <td><div class="cell-wrap" id="${prefix}-${s.id}-nickname" data-cell-id="${s.id}:::nickname" oncontextmenu="enterEditMode(event, '${s.id}', 'nickname', ${isPopup}, true)"><span class="${nickSpanClass}" style="font-weight:700;">${escapeHtml(s.nickname) || '&nbsp;'}</span><input type="text" class="${nickClass}" data-ac="nickname" style="background:#FDFBF7; font-weight:700;" value="${escapeHtml(s.nickname)}" data-field="nickname" onfocus="trackFocus('sale', '${s.id}', 'nickname', this)" onblur="exitEditMode('${s.id}', 'nickname', ${isPopup})" onkeydown="handleSaleKeydown(event, '${s.id}', ${isPopup})" oninput="updateRowField('${s.id}', 'nickname', this.value); checkNicknameBlank(this); acFilter(this,'nickname')" placeholder="고객명"><div class="drag-handle"></div></div></td>
-      <td><div class="cell-wrap num-wrap" id="${prefix}-${s.id}-salePrice" data-cell-id="${s.id}:::salePrice" oncontextmenu="enterEditMode(event, '${s.id}', 'salePrice', ${isPopup}, true)"><span class="view-text${blankClass(s.salePrice)}" style="color:var(--purple-ink); font-weight:700;">${s.salePrice ? fmt(s.salePrice) : '&nbsp;'}</span><input type="text" class="inline-input num" value="${s.salePrice || ''}" data-field="salePrice" onfocus="trackFocus('sale', '${s.id}', 'salePrice', this)" onblur="exitEditMode('${s.id}', 'salePrice', ${isPopup})" onkeydown="handleSaleKeydown(event, '${s.id}', ${isPopup})" oninput="updateRowField('${s.id}', 'salePrice', this.value)" placeholder="0" style="color:var(--purple-ink); font-weight:700;"><div class="drag-handle"></div></div></td>
-      <td><div class="cell-wrap num-wrap" id="${prefix}-${s.id}-depositPrice" data-cell-id="${s.id}:::depositPrice" oncontextmenu="enterEditMode(event, '${s.id}', 'depositPrice', ${isPopup}, true)"><span class="view-text${blankClass(s.depositPrice)}" style="color:var(--purple-ink); font-weight:700;">${s.depositPrice ? fmt(s.depositPrice) : '&nbsp;'}</span><input type="text" class="inline-input num" value="${s.depositPrice || ''}" data-field="depositPrice" onfocus="trackFocus('sale', '${s.id}', 'depositPrice', this)" onblur="exitEditMode('${s.id}', 'depositPrice', ${isPopup})" onkeydown="handleSaleKeydown(event, '${s.id}', ${isPopup})" oninput="updateRowField('${s.id}', 'depositPrice', this.value)" placeholder="0" style="color:var(--purple-ink); font-weight:700;"><div class="drag-handle"></div></div></td>
+      <td style="text-align:center;"><div class="row-num-btn" onclick="cycleRowHighlight('${s.id}', 'sale')" title="클릭 시 순차 강조색 변경/취소">${isPopup ? '•' : index}</div></td>
+      <td><div class="cell-wrap" id="${prefix}-${s.id}-rowDate" data-cell-id="${s.id}:::rowDate" oncontextmenu="handleCellFilter(event, '${s.id}', 'rowDate')" ondblclick="enterEditMode(event, '${s.id}', 'rowDate', ${isPopup}, true)"><span class="view-text${blankClass(s.rowDate)}">${escapeHtml(s.rowDate) || '&nbsp;'}</span><input type="text" class="inline-input" value="${escapeHtml(s.rowDate)}" data-field="rowDate" onfocus="trackFocus('sale', '${s.id}', 'rowDate', this)" onblur="exitEditMode('${s.id}', 'rowDate', ${isPopup})" onkeydown="handleSaleKeydown(event, '${s.id}', ${isPopup})" oninput="updateRowField('${s.id}', 'rowDate', this.value)" placeholder="날짜"><div class="drag-handle"></div></div></td>
+      <td><div class="cell-wrap" id="${prefix}-${s.id}-prodNum" data-cell-id="${s.id}:::prodNum" oncontextmenu="handleCellFilter(event, '${s.id}', 'prodNum')" ondblclick="enterEditMode(event, '${s.id}', 'prodNum', ${isPopup}, true)"><span class="view-text${blankClass(s.prodNum)}">${escapeHtml(s.prodNum) || '&nbsp;'}</span><input type="text" class="inline-input" value="${escapeHtml(s.prodNum)}" data-field="prodNum" onfocus="trackFocus('sale', '${s.id}', 'prodNum', this)" onblur="exitEditMode('${s.id}', 'prodNum', ${isPopup})" onkeydown="handleSaleKeydown(event, '${s.id}', ${isPopup})" oninput="updateRowField('${s.id}', 'prodNum', this.value)" placeholder="품번"><div class="drag-handle"></div></div></td>
+      <td><div class="cell-wrap" id="${prefix}-${s.id}-name" data-cell-id="${s.id}:::name" oncontextmenu="handleCellFilter(event, '${s.id}', 'name')" ondblclick="enterEditMode(event, '${s.id}', 'name', ${isPopup}, true)"><span class="view-text${blankClass(s.name)}" style="font-weight:700;">${escapeHtml(s.name) || '&nbsp;'}</span><input type="text" class="inline-input" style="font-weight:700;" value="${escapeHtml(s.name)}" data-field="name" onfocus="trackFocus('sale', '${s.id}', 'name', this)" onblur="exitEditMode('${s.id}', 'name', ${isPopup})" onkeydown="handleSaleKeydown(event, '${s.id}', ${isPopup})" oninput="updateRowField('${s.id}', 'name', this.value); acFilter(this, 'name')" placeholder="상품명"><div class="drag-handle"></div></div></td>
+      <td><div class="cell-wrap" id="${prefix}-${s.id}-color" data-cell-id="${s.id}:::color" oncontextmenu="handleCellFilter(event, '${s.id}', 'color')" ondblclick="enterEditMode(event, '${s.id}', 'color', ${isPopup}, true)"><span class="view-text${blankClass(s.color)}" style="font-size:12px;">${escapeHtml(s.color) || '&nbsp;'}</span><input type="text" class="inline-input" style="font-size:12px;" value="${escapeHtml(s.color)}" data-field="color" onfocus="trackFocus('sale', '${s.id}', 'color', this)" onblur="exitEditMode('${s.id}', 'color', ${isPopup})" onkeydown="handleSaleKeydown(event, '${s.id}', ${isPopup})" oninput="updateRowField('${s.id}', 'color', this.value); acFilter(this, 'color')" placeholder="색상"><div class="drag-handle"></div></div></td>
+      <td><div class="cell-wrap" id="${prefix}-${s.id}-size" data-cell-id="${s.id}:::size" oncontextmenu="handleCellFilter(event, '${s.id}', 'size')" ondblclick="enterEditMode(event, '${s.id}', 'size', ${isPopup}, true)"><span class="view-text${blankClass(s.size)}" style="font-size:12px;">${escapeHtml(s.size) || '&nbsp;'}</span><input type="text" class="inline-input" style="font-size:12px;" value="${escapeHtml(s.size)}" data-field="size" onfocus="trackFocus('sale', '${s.id}', 'size', this)" onblur="exitEditMode('${s.id}', 'size', ${isPopup})" onkeydown="handleSaleKeydown(event, '${s.id}', ${isPopup})" oninput="updateRowField('${s.id}', 'size', this.value); acFilter(this, 'size')" placeholder="사이즈"><div class="drag-handle"></div></div></td>
+      <td><div class="cell-wrap" id="${prefix}-${s.id}-nickname" data-cell-id="${s.id}:::nickname" oncontextmenu="handleCellFilter(event, '${s.id}', 'nickname')" ondblclick="enterEditMode(event, '${s.id}', 'nickname', ${isPopup}, true)"><span class="${nickSpanClass}" style="font-weight:700;">${escapeHtml(s.nickname) || '&nbsp;'}</span><input type="text" class="${nickClass}" data-ac="nickname" style="background:#FDFBF7; font-weight:700;" value="${escapeHtml(s.nickname)}" data-field="nickname" onfocus="trackFocus('sale', '${s.id}', 'nickname', this)" onblur="exitEditMode('${s.id}', 'nickname', ${isPopup})" onkeydown="handleSaleKeydown(event, '${s.id}', ${isPopup})" oninput="updateRowField('${s.id}', 'nickname', this.value); checkNicknameBlank(this); acFilter(this,'nickname')" placeholder="고객명"><div class="drag-handle"></div></div></td>
+      <td><div class="cell-wrap num-wrap" id="${prefix}-${s.id}-salePrice" data-cell-id="${s.id}:::salePrice" oncontextmenu="handleCellFilter(event, '${s.id}', 'salePrice')" ondblclick="enterEditMode(event, '${s.id}', 'salePrice', ${isPopup}, true)"><span class="view-text${blankClass(s.salePrice)}" style="color:var(--purple-ink); font-weight:700;">${s.salePrice ? fmt(s.salePrice) : '&nbsp;'}</span><input type="text" class="inline-input num" value="${s.salePrice || ''}" data-field="salePrice" onfocus="trackFocus('sale', '${s.id}', 'salePrice', this)" onblur="exitEditMode('${s.id}', 'salePrice', ${isPopup})" onkeydown="handleSaleKeydown(event, '${s.id}', ${isPopup})" oninput="updateRowField('${s.id}', 'salePrice', this.value)" placeholder="0" style="color:var(--purple-ink); font-weight:700;"><div class="drag-handle"></div></div></td>
+      <td><div class="cell-wrap num-wrap" id="${prefix}-${s.id}-depositPrice" data-cell-id="${s.id}:::depositPrice" oncontextmenu="handleCellFilter(event, '${s.id}', 'depositPrice')" ondblclick="enterEditMode(event, '${s.id}', 'depositPrice', ${isPopup}, true)"><span class="view-text${blankClass(s.depositPrice)}" style="color:var(--purple-ink); font-weight:700;">${s.depositPrice ? fmt(s.depositPrice) : '&nbsp;'}</span><input type="text" class="inline-input num" value="${s.depositPrice || ''}" data-field="depositPrice" onfocus="trackFocus('sale', '${s.id}', 'depositPrice', this)" onblur="exitEditMode('${s.id}', 'depositPrice', ${isPopup})" onkeydown="handleSaleKeydown(event, '${s.id}', ${isPopup})" oninput="updateRowField('${s.id}', 'depositPrice', this.value)" placeholder="0" style="color:var(--purple-ink); font-weight:700;"><div class="drag-handle"></div></div></td>
       <td>
-  <button type="button" class="btn-memo-status ${getRowMemoStatus(s).classStr}" onclick="openRowMemoPopup('${s.id}')" title="${hoverTitleAttr}">
-    ${escapeHtml(getRowMemoStatus(s).btnText)}
-  </button>
-</td>
+        <button type="button" class="btn-memo-status ${getRowMemoStatus(s).classStr}" onclick="openRowMemoPopup('${s.id}')" title="${hoverTitleAttr}">
+          ${escapeHtml(getRowMemoStatus(s).btnText)}
+        </button>
+      </td>
       <td><button class="action-text text-add-row" onclick="duplicateRow('${s.id}')">추가</button><button class="action-text text-del" onclick="deleteRow('${s.id}')">삭제</button></td>
     </tr>`;
 }
@@ -2925,19 +3093,45 @@ function settleSortList(list, key) {
 }
 
 function getSettleRowHtml(s, index, hasDivider = false) {
-  const nickClass = s.nickname.trim() === '' ? 'inline-input blank-alert' : 'inline-input'; const nickSpanClass = s.nickname.trim() === '' ? 'view-text blank-alert-span' : 'view-text';
+  const nickClass = s.nickname.trim() === '' ? 'inline-input blank-alert' : 'inline-input'; 
+  const nickSpanClass = s.nickname.trim() === '' ? 'view-text blank-alert-span' : 'view-text';
   const trClasses = []; if (hasDivider) trClasses.push('group-divider');
-  const classStr = trClasses.length > 0 ? `class="${trClasses.join(' ')}"` : ''; const prefix = 'wrap-settle'; const blankClass = (val) => (!val || String(val).trim() === '') ? ' sale-blank-cell' : '';
+  const classStr = trClasses.length > 0 ? `class="${trClasses.join(' ')}"` : ''; 
+  const prefix = 'wrap-settle'; 
+  const blankClass = (val) => (!val || String(val).trim() === '') ? ' sale-blank-cell' : '';
   const customBg = s.highlighted ? ` style="background-color: ${s.highlighted} !important;"` : '';
 
+  // 💡 [신규] 품번 + 상품명 결합 표기 로직
+  let combinedName = (s.name || '').trim();
+  let pNum = (s.prodNum || '').trim();
+  if (pNum !== '') {
+    if (/^\d+$/.test(pNum)) pNum += '번';
+    combinedName = `[${pNum}] ${combinedName}`.trim();
+  }
+
   return `<tr id="settle-row-${s.id}" ${classStr}${customBg}>
-      <td><div class="cell-wrap" id="${prefix}-${s.id}-prodNum" data-cell-id="${s.id}:::prodNum" oncontextmenu="enterSettleEditMode(event, '${s.id}', 'prodNum')"><span class="view-text${blankClass(s.prodNum)}">${escapeHtml(s.prodNum) || '&nbsp;'}</span><input type="text" class="inline-input" value="${escapeHtml(s.prodNum)}" data-field="prodNum" onfocus="trackFocus('sale', '${s.id}', 'prodNum', this)" onblur="exitSettleEditMode('${s.id}', 'prodNum')" onkeydown="handleSettleKeydown(event, '${s.id}')" oninput="updateSettleRowField('${s.id}', 'prodNum', this.value)" placeholder="품번"><div class="drag-handle"></div></div></td>
-      <td><div class="cell-wrap" id="${prefix}-${s.id}-name" data-cell-id="${s.id}:::name" oncontextmenu="enterSettleEditMode(event, '${s.id}', 'name')"><span class="view-text${blankClass(s.name)}" style="font-weight:700;">${escapeHtml(s.name) || '&nbsp;'}</span><input type="text" class="inline-input" style="font-weight:700;" value="${escapeHtml(s.name)}" data-field="name" onfocus="trackFocus('sale', '${s.id}', 'name', this)" onblur="exitSettleEditMode('${s.id}', 'name')" onkeydown="handleSettleKeydown(event, '${s.id}')" oninput="updateSettleRowField('${s.id}', 'name', this.value); acFilter(this, 'name')" placeholder="상품명"><div class="drag-handle"></div></div></td>
-      <td><div class="cell-wrap" id="${prefix}-${s.id}-color" data-cell-id="${s.id}:::color" oncontextmenu="enterSettleEditMode(event, '${s.id}', 'color')"><span class="view-text${blankClass(s.color)}" style="font-size:12px;">${escapeHtml(s.color) || '&nbsp;'}</span><input type="text" class="inline-input" style="font-size:12px;" value="${escapeHtml(s.color)}" data-field="color" onfocus="trackFocus('sale', '${s.id}', 'color', this)" onblur="exitSettleEditMode('${s.id}', 'color')" onkeydown="handleSettleKeydown(event, '${s.id}')" oninput="updateSettleRowField('${s.id}', 'color', this.value)" placeholder="색상"><div class="drag-handle"></div></div></td>
-      <td><div class="cell-wrap" id="${prefix}-${s.id}-size" data-cell-id="${s.id}:::size" oncontextmenu="enterSettleEditMode(event, '${s.id}', 'size')"><span class="view-text${blankClass(s.size)}" style="font-size:12px;">${escapeHtml(s.size) || '&nbsp;'}</span><input type="text" class="inline-input" style="font-size:12px;" value="${escapeHtml(s.size)}" data-field="size" onfocus="trackFocus('sale', '${s.id}', 'size', this)" onblur="exitSettleEditMode('${s.id}', 'size')" onkeydown="handleSettleKeydown(event, '${s.id}')" oninput="updateSettleRowField('${s.id}', 'size', this.value)" placeholder="사이즈"><div class="drag-handle"></div></div></td>
-      <td><div class="cell-wrap" id="${prefix}-${s.id}-nickname" data-cell-id="${s.id}:::nickname" oncontextmenu="enterSettleEditMode(event, '${s.id}', 'nickname')"><span class="${nickSpanClass}" style="font-weight:700;">${escapeHtml(s.nickname) || '&nbsp;'}</span><input type="text" class="${nickClass}" data-ac="nickname" style="background:#FDFBF7; font-weight:700;" value="${escapeHtml(s.nickname)}" data-field="nickname" onfocus="trackFocus('sale', '${s.id}', 'nickname', this)" onblur="exitSettleEditMode('${s.id}', 'nickname')" onkeydown="handleSettleKeydown(event, '${s.id}')" oninput="updateSettleRowField('${s.id}', 'nickname', this.value); checkNicknameBlank(this); acFilter(this,'nickname')" placeholder="고객명"><div class="drag-handle"></div></div></td>
-      <td><div class="cell-wrap num-wrap" id="${prefix}-${s.id}-salePrice" data-cell-id="${s.id}:::salePrice" oncontextmenu="enterSettleEditMode(event, '${s.id}', 'salePrice')"><span class="view-text${blankClass(s.salePrice)}" style="color:var(--purple-ink); font-weight:700;">${s.salePrice ? fmt(s.salePrice) : '&nbsp;'}</span><input type="text" class="inline-input num" value="${s.salePrice || ''}" data-field="salePrice" onfocus="trackFocus('sale', '${s.id}', 'salePrice', this)" onblur="exitSettleEditMode('${s.id}', 'salePrice')" onkeydown="handleSettleKeydown(event, '${s.id}')" oninput="updateSettleRowField('${s.id}', 'salePrice', this.value)" placeholder="0" style="color:var(--purple-ink); font-weight:700;"><div class="drag-handle"></div></div></td>
-      <td><div class="cell-wrap num-wrap" id="${prefix}-${s.id}-depositPrice" data-cell-id="${s.id}:::depositPrice" oncontextmenu="enterSettleEditMode(event, '${s.id}', 'depositPrice')"><span class="view-text${blankClass(s.depositPrice)}" style="color:var(--purple-ink); font-weight:700;">${s.depositPrice ? fmt(s.depositPrice) : '&nbsp;'}</span><input type="text" class="inline-input num" value="${s.depositPrice || ''}" data-field="depositPrice" onfocus="trackFocus('sale', '${s.id}', 'depositPrice', this)" onblur="exitSettleEditMode('${s.id}', 'depositPrice')" onkeydown="handleSettleKeydown(event, '${s.id}')" oninput="updateSettleRowField('${s.id}', 'depositPrice', this.value)" placeholder="0" style="color:var(--purple-ink); font-weight:700;"><div class="drag-handle"></div></div></td>
+      <!-- 1. 맨 앞 No. 순번 (클릭 시 강조색 순환 토글) -->
+      <td style="text-align:center;"><div class="row-num-btn" onclick="cycleRowHighlight('${s.id}', 'sale')" title="클릭 시 순차 강조색 변경/취소">${index}</div></td>
+      
+      <!-- 2. 품번+상품명 통합 컬럼 -->
+      <td><div class="cell-wrap" id="${prefix}-${s.id}-name" data-cell-id="${s.id}:::name" oncontextmenu="handleCellFilter(event, '${s.id}', 'name')" ondblclick="enterSettleEditMode(event, '${s.id}', 'name')"><span class="view-text${blankClass(combinedName)}" style="font-weight:700;">${escapeHtml(combinedName) || '&nbsp;'}</span><input type="text" class="inline-input" style="font-weight:700;" value="${escapeHtml(s.name)}" data-field="name" onfocus="trackFocus('sale', '${s.id}', 'name', this)" onblur="exitSettleEditMode('${s.id}', 'name')" onkeydown="handleSettleKeydown(event, '${s.id}')" oninput="updateSettleRowField('${s.id}', 'name', this.value); acFilter(this, 'name')" placeholder="상품명"><div class="drag-handle"></div></div></td>
+      
+      <!-- 3. 색상 -->
+      <td><div class="cell-wrap" id="${prefix}-${s.id}-color" data-cell-id="${s.id}:::color" oncontextmenu="handleCellFilter(event, '${s.id}', 'color')" ondblclick="enterSettleEditMode(event, '${s.id}', 'color')"><span class="view-text${blankClass(s.color)}" style="font-size:12px;">${escapeHtml(s.color) || '&nbsp;'}</span><input type="text" class="inline-input" style="font-size:12px;" value="${escapeHtml(s.color)}" data-field="color" onfocus="trackFocus('sale', '${s.id}', 'color', this)" onblur="exitSettleEditMode('${s.id}', 'color')" onkeydown="handleSettleKeydown(event, '${s.id}')" oninput="updateSettleRowField('${s.id}', 'color', this.value)" placeholder="색상"><div class="drag-handle"></div></div></td>
+      
+      <!-- 4. 사이즈 -->
+      <td><div class="cell-wrap" id="${prefix}-${s.id}-size" data-cell-id="${s.id}:::size" oncontextmenu="handleCellFilter(event, '${s.id}', 'size')" ondblclick="enterSettleEditMode(event, '${s.id}', 'size')"><span class="view-text${blankClass(s.size)}" style="font-size:12px;">${escapeHtml(s.size) || '&nbsp;'}</span><input type="text" class="inline-input" style="font-size:12px;" value="${escapeHtml(s.size)}" data-field="size" onfocus="trackFocus('sale', '${s.id}', 'size', this)" onblur="exitSettleEditMode('${s.id}', 'size')" onkeydown="handleSettleKeydown(event, '${s.id}')" oninput="updateSettleRowField('${s.id}', 'size', this.value)" placeholder="사이즈"><div class="drag-handle"></div></div></td>
+      
+      <!-- 5. 고객명 -->
+      <td><div class="cell-wrap" id="${prefix}-${s.id}-nickname" data-cell-id="${s.id}:::nickname" oncontextmenu="handleCellFilter(event, '${s.id}', 'nickname')" ondblclick="enterSettleEditMode(event, '${s.id}', 'nickname')"><span class="${nickSpanClass}" style="font-weight:700;">${escapeHtml(s.nickname) || '&nbsp;'}</span><input type="text" class="${nickClass}" data-ac="nickname" style="background:#FDFBF7; font-weight:700;" value="${escapeHtml(s.nickname)}" data-field="nickname" onfocus="trackFocus('sale', '${s.id}', 'nickname', this)" onblur="exitSettleEditMode('${s.id}', 'nickname')" onkeydown="handleSettleKeydown(event, '${s.id}')" oninput="updateSettleRowField('${s.id}', 'nickname', this.value); checkNicknameBlank(this); acFilter(this,'nickname')" placeholder="고객명"><div class="drag-handle"></div></div></td>
+      
+      <!-- 6. 판매가 -->
+      <td><div class="cell-wrap num-wrap" id="${prefix}-${s.id}-salePrice" data-cell-id="${s.id}:::salePrice" oncontextmenu="handleCellFilter(event, '${s.id}', 'salePrice')" ondblclick="enterSettleEditMode(event, '${s.id}', 'salePrice')"><span class="view-text${blankClass(s.salePrice)}" style="color:var(--purple-ink); font-weight:700;">${s.salePrice ? fmt(s.salePrice) : '&nbsp;'}</span><input type="text" class="inline-input num" value="${s.salePrice || ''}" data-field="salePrice" onfocus="trackFocus('sale', '${s.id}', 'salePrice', this)" onblur="exitSettleEditMode('${s.id}', 'salePrice')" onkeydown="handleSettleKeydown(event, '${s.id}')" oninput="updateSettleRowField('${s.id}', 'salePrice', this.value)" placeholder="0" style="color:var(--purple-ink); font-weight:700;"><div class="drag-handle"></div></div></td>
+      
+      <!-- 7. 입금가 -->
+      <td><div class="cell-wrap num-wrap" id="${prefix}-${s.id}-depositPrice" data-cell-id="${s.id}:::depositPrice" oncontextmenu="handleCellFilter(event, '${s.id}', 'depositPrice')" ondblclick="enterSettleEditMode(event, '${s.id}', 'depositPrice')"><span class="view-text${blankClass(s.depositPrice)}" style="color:var(--purple-ink); font-weight:700;">${s.depositPrice ? fmt(s.depositPrice) : '&nbsp;'}</span><input type="text" class="inline-input num" value="${s.depositPrice || ''}" data-field="depositPrice" onfocus="trackFocus('sale', '${s.id}', 'depositPrice')" onblur="exitSettleEditMode('${s.id}', 'depositPrice')" onkeydown="handleSettleKeydown(event, '${s.id}')" oninput="updateSettleRowField('${s.id}', 'depositPrice', this.value)" placeholder="0" style="color:var(--purple-ink); font-weight:700;"><div class="drag-handle"></div></div></td>
+      
+      <!-- 8. 액션 버튼 -->
       <td><button class="action-text text-add-row" onclick="duplicateSettleRow('${s.id}')">추가</button><button class="action-text text-del" onclick="settleDeleteRow('${s.id}')">삭제</button></td>
     </tr>`;
 }
@@ -3171,9 +3365,11 @@ function settleGetGroups() {
 }
 
 function renderSettleRightPanel() {
+  if (typeof settleGroupHighlights === 'undefined') window.settleGroupHighlights = {};
+
   const label = SETTLE_GROUP_LABEL[settleGroupKey]; 
   
-  // 🆕 현재 그룹 기준(상품명, 고객명 등)에 맞추어 검색창 안내 메시지(Placeholder) 동적 변경
+  // 그룹 기준에 맞추어 검색창 안내 메시지(Placeholder) 동적 변경
   const groupSearchInput = document.getElementById('search-settle-group');
   if (groupSearchInput) {
     groupSearchInput.placeholder = `${label} 검색...`;
@@ -3181,26 +3377,54 @@ function renderSettleRightPanel() {
   
   let groups = settleGetGroups(); 
   
-  // 🆕 검색창에 텍스트가 있을 경우 해당 검색어가 그룹 키값에 포함되는 항목만 필터링
+  // 검색창 입력 필터링
   const groupQuery = (groupSearchInput ? groupSearchInput.value : '').toLowerCase().trim();
   if (groupQuery) {
     groups = groups.filter(g => g.key.toLowerCase().includes(groupQuery));
   }
   
   document.getElementById('settle-group-label').textContent = `${label} [총 ${groups.length}개 그룹]`;
-  const head = document.getElementById('settle-right-head'); const body = document.getElementById('settle-right-body');
+  const head = document.getElementById('settle-right-head'); 
+  const body = document.getElementById('settle-right-body');
   
+  // ----------------------------------------------------
+  // 1. [상품명] 기준 그룹별 요약 표
+  // ----------------------------------------------------
   if (settleGroupKey === 'name') {
-    head.innerHTML = `<tr><th style="width:32px; text-align:center;">No.</th><th style="width:50px;">품번</th><th>상품명</th><th style="width:55px; text-align:right;">입금가</th><th style="width:36px; text-align:center;">수량</th><th style="width:68px; text-align:right;">총입금</th><th style="width:55px; text-align:right;">판매가</th><th style="width:68px; text-align:right;">총판매</th><th style="width:48px; text-align:center;">액션</th></tr>`;
+    head.innerHTML = `<tr>
+      <th style="width:38px; text-align:center;">No.</th>
+      <th>상품명 (품번+상품명)</th>
+      <th style="width:65px; text-align:right;">입금가</th>
+      <th style="width:40px; text-align:center;">수량</th>
+      <th style="width:75px; text-align:right;">총입금</th>
+      <th style="width:65px; text-align:right;">판매가</th>
+      <th style="width:75px; text-align:right;">총판매</th>
+      <th style="width:50px; text-align:center;">액션</th>
+    </tr>`;
+
     body.innerHTML = groups.map((g, gIdx) => {
-      const repSale = g.items.find(it => it.salePrice)?.salePrice || ''; const repDep = g.items.find(it => it.depositPrice)?.depositPrice || '';
-      const totalSale = g.items.reduce((a, it) => a + (Number(it.salePrice) || 0), 0); const totalDep = g.items.reduce((a, it) => a + (Number(it.depositPrice) || 0), 0);
-      const ids = g.items.map(it => it.id).join(','); const isFiltered = settleFilterValue === g.key;
-      const activeFilterStyle = isFiltered ? ' style="background-color: #E6F0FA;"' : '';
-      return `<tr data-group="${escapeHtml(g.key)}"${activeFilterStyle}>
-          <td class="num" style="text-align:center; font-weight:bold; color:var(--ink-soft);">${gIdx + 1}</td>
-          <td><input type="text" class="settle-input" value="${escapeHtml(g.prodNum)}" onchange="settleGroupRename('${encodeURIComponent(ids)}','prodNum',this.value)"></td>
-          <td><input type="text" class="settle-input" style="font-weight:700;" value="${escapeHtml(g.name)}" onchange="settleGroupRename('${encodeURIComponent(ids)}','name',this.value)"></td>
+      const repSale = g.items.find(it => it.salePrice)?.salePrice || ''; 
+      const repDep = g.items.find(it => it.depositPrice)?.depositPrice || '';
+      const totalSale = g.items.reduce((a, it) => a + (Number(it.salePrice) || 0), 0); 
+      const totalDep = g.items.reduce((a, it) => a + (Number(it.depositPrice) || 0), 0);
+      const ids = g.items.map(it => it.id).join(','); 
+      
+      const isFiltered = settleFilterValue === g.key;
+      const activeFilterBg = isFiltered ? 'background-color: #E6F0FA;' : '';
+      const groupBg = settleGroupHighlights[g.key] ? `background-color: ${settleGroupHighlights[g.key]} !important;` : '';
+      const styleAttr = (activeFilterBg || groupBg) ? ` style="${activeFilterBg}${groupBg}"` : '';
+
+      // 품번 + 상품명 결합 표기
+      let prodDisplayName = g.name || '';
+      if (g.prodNum) {
+        let pNum = g.prodNum.trim();
+        if (/^\d+$/.test(pNum)) pNum += '번';
+        prodDisplayName = `[${pNum}] ${prodDisplayName}`;
+      }
+
+      return `<tr data-group="${escapeHtml(g.key)}"${styleAttr}>
+          <td style="text-align:center;"><div class="row-num-btn" onclick="cycleSettleGroupHighlight('${escapeHtml(g.key)}')" title="클릭 시 그룹 강조색 순환/취소">${gIdx + 1}</div></td>
+          <td><input type="text" class="settle-input" style="font-weight:700;" value="${escapeHtml(prodDisplayName)}" onchange="settleGroupRename('${encodeURIComponent(ids)}','name',this.value)"></td>
           <td><input type="text" class="settle-input num" value="${repDep}" onchange="settleGroupBulkSet('${encodeURIComponent(ids)}','depositPrice',this.value)"></td>
           <td class="num" style="text-align:center; font-weight:bold; color:var(--blue);">${g.items.length}</td>
           <td class="num" style="text-align:right; padding-right:4px; color:var(--danger); font-weight:700;">${fmt(totalDep)}</td>
@@ -3210,17 +3434,27 @@ function renderSettleRightPanel() {
             <button class="btn btn-purple" style="padding:2px 8px; font-size:11px; white-space:nowrap;" onclick="toggleSettleGroupFilter('${escapeHtml(g.key)}', event)">필터</button>
           </td>
         </tr>`;
-    }).join('') || `<tr><td colspan="9" style="text-align:center; color:var(--ink-soft); padding:20px;">데이터가 없습니다.</td></tr>`;
+    }).join('') || `<tr><td colspan="8" style="text-align:center; color:var(--ink-soft); padding:20px;">데이터가 없습니다.</td></tr>`;
   } 
+  // ----------------------------------------------------
+  // 2. [고객명] 기준 그룹별 요약 표
+  // ----------------------------------------------------
   else if (settleGroupKey === 'nickname') {
     head.innerHTML = `<tr><th style="width:38px; text-align:center;">No.</th><th>고객명</th><th style="width:60px; text-align:center;">구매수량</th><th style="width:110px; text-align:right;">총 판매금액</th><th style="width:110px; text-align:right;">총 입금금액</th><th style="width:52px; text-align:center;">액션</th></tr>`;
     body.innerHTML = groups.map((g, gIdx) => {
       const totalSale = g.items.reduce((a, it) => a + (Number(it.salePrice) || 0), 0);
       const totalDep = g.items.reduce((a, it) => a + (Number(it.depositPrice) || 0), 0);
-      const ids = g.items.map(it => it.id).join(','); const isFiltered = settleFilterValue === g.key;
-      const activeFilterStyle = isFiltered ? ' style="background-color: #E6F0FA;"' : '';
-      return `<tr data-group="${escapeHtml(g.key)}"${activeFilterStyle}>
-          <td class="num" style="text-align:center; font-weight:bold; color:var(--ink-soft);">${gIdx + 1}</td>
+      const ids = g.items.map(it => it.id).join(','); 
+      
+      const isFiltered = settleFilterValue === g.key;
+      const activeFilterBg = isFiltered ? 'background-color: #E6F0FA;' : '';
+      const groupBg = settleGroupHighlights[g.key] ? `background-color: ${settleGroupHighlights[g.key]} !important;` : '';
+      const styleAttr = (activeFilterBg || groupBg) ? ` style="${activeFilterBg}${groupBg}"` : '';
+
+      return `<tr data-group="${escapeHtml(g.key)}"${styleAttr}>
+          <td class="num" style="text-align:center; font-weight:bold; color:var(--ink-soft); cursor:pointer;" 
+              onclick="cycleSettleGroupHighlight('${escapeHtml(g.key)}')" 
+              title="클릭 시 그룹 강조색 순환/취소">${gIdx + 1}</td>
           <td><input type="text" class="settle-input" style="font-weight:700;" value="${escapeHtml(g.key)}" onchange="settleGroupRename('${encodeURIComponent(ids)}','nickname',this.value)"></td>
           <td class="num" style="text-align:center; font-weight:bold; color:var(--blue);">${g.items.length}</td>
           <td class="num" style="text-align:right; padding-right:6px; color:var(--purple-ink); font-weight:700;">${fmt(totalSale)}</td>
@@ -3231,14 +3465,26 @@ function renderSettleRightPanel() {
         </tr>`;
     }).join('') || `<tr><td colspan="6" style="text-align:center; color:var(--ink-soft); padding:20px;">데이터가 없습니다.</td></tr>`;
   }
+  // ----------------------------------------------------
+  // 3. [판매가 / 입금가] 기준 그룹별 요약 표
+  // ----------------------------------------------------
   else {
-    const field = settleGroupKey; const totalLabel = field === 'salePrice' ? '총판매가' : '총입금가';
+    const field = settleGroupKey; 
+    const totalLabel = field === 'salePrice' ? '총판매가' : '총입금가';
     head.innerHTML = `<tr><th style="width:38px; text-align:center;">No.</th><th style="text-align:right; padding-right:8px;">${label}</th><th style="width:60px; text-align:center;">수량</th><th style="width:140px; text-align:right; padding-right:8px;">${totalLabel}</th><th style="width:52px; text-align:center;">액션</th></tr>`;
     body.innerHTML = groups.map((g, gIdx) => {
-      const total = g.items.reduce((a, it) => a + (Number(it[field]) || 0), 0); const ids = g.items.map(it => it.id).join(','); const isFiltered = settleFilterValue === g.key;
-      const activeFilterStyle = isFiltered ? ' style="background-color: #E6F0FA;"' : '';
-      return `<tr data-group="${escapeHtml(g.key)}"${activeFilterStyle}>
-          <td class="num" style="text-align:center; font-weight:bold; color:var(--ink-soft);">${gIdx + 1}</td>
+      const total = g.items.reduce((a, it) => a + (Number(it[field]) || 0), 0); 
+      const ids = g.items.map(it => it.id).join(','); 
+      
+      const isFiltered = settleFilterValue === g.key;
+      const activeFilterBg = isFiltered ? 'background-color: #E6F0FA;' : '';
+      const groupBg = settleGroupHighlights[g.key] ? `background-color: ${settleGroupHighlights[g.key]} !important;` : '';
+      const styleAttr = (activeFilterBg || groupBg) ? ` style="${activeFilterBg}${groupBg}"` : '';
+
+      return `<tr data-group="${escapeHtml(g.key)}"${styleAttr}>
+          <td class="num" style="text-align:center; font-weight:bold; color:var(--ink-soft); cursor:pointer;" 
+              onclick="cycleSettleGroupHighlight('${escapeHtml(g.key)}')" 
+              title="클릭 시 그룹 강조색 순환/취소">${gIdx + 1}</td>
           <td><input type="text" class="settle-input num" value="${g.key}" onchange="settleGroupRename('${encodeURIComponent(ids)}','${field}',this.value)"></td>
           <td class="num" style="text-align:center; font-weight:bold; color:var(--blue);">${g.items.length}</td>
           <td class="num" style="text-align:right; padding-right:4px; font-weight:700;">${fmt(total)}</td>
@@ -3606,20 +3852,22 @@ window.applyHighlightToSelected = function(action) {
 // 💡 여기에 4번 함수(전체취소 기능)가 자연스럽게 이어지도록 붙였습니다.
 // ----------------------------------------------------
 window.clearAllHighlights = function() {
-  const hasAnyHighlight = products.some(p => p.highlighted) || sales.some(s => s.highlighted);
+  const hasAnyHighlight = products.some(p => p.highlighted) || sales.some(s => s.highlighted) || Object.keys(settleGroupHighlights || {}).length > 0;
   if (!hasAnyHighlight) {
     toast('⚠️ 현재 장부에 지울 강조색이 없습니다.');
     return;
   }
 
-  if (!confirm('🚨 실시간 판매 내역과 상품 대장의 모든 강조색을 완전히 삭제하시겠습니까?')) return;
+  if (!confirm('🚨 실시간 판매 내역, 상품 대장, 정산 그룹 요약의 모든 강조색을 완전히 삭제하시겠습니까?')) return;
   
   saveState();
   products.forEach(p => p.highlighted = false);
   sales.forEach(s => s.highlighted = false);
+  settleGroupHighlights = {};
   
   renderProducts(); 
   renderSales();
+  renderSettleRightPanel();
   saveToLocalStorage();
   toast('💥 장부의 모든 강조색이 깨끗하게 초기화되었습니다.');
 };
@@ -3637,17 +3885,23 @@ window.changeMasterHighlightColor = function(colorVal) {
 };
 
 function syncColorPickerUI() {
-  // 💡 전체취소 버튼으로 변경되었으므로 파레트 색상 강제 연동 코드는 제거합니다.
-  document.querySelectorAll('.color-picker-container').forEach(container => {
+  // 💡 [수정] 입금정산(#view-deposit) 탭 제외: 메인 장부와 정산 탭 파레트만 동기화
+  document.querySelectorAll('#view-dash .color-picker-container, #view-settle .color-picker-container').forEach(container => {
     container.querySelectorAll('.color-chip').forEach(chip => {
-      const chipBg = chip.style.backgroundColor; let isMatch = false;
-      if (chipBg.startsWith('rgb')) {
-        let canvas = document.createElement('canvas'); canvas.width = 1; canvas.height = 1;
-        let ctx = canvas.getContext('2d'); ctx.fillStyle = masterHighlightColor; ctx.fillRect(0,0,1,1);
-        let d = ctx.getImageData(0,0,1,1).data; isMatch = (chipBg === `rgb(${d[0]}, ${d[1]}, ${d[2]})`);
-      } else {
-        isMatch = (chipBg.toLowerCase() === masterHighlightColor.toLowerCase());
-      }
+      const chipBg = chip.style.backgroundColor;
+      let isMatch = false;
+      
+      activeHighlightColors.forEach(colorVal => {
+        if (chipBg.startsWith('rgb')) {
+          let canvas = document.createElement('canvas'); canvas.width = 1; canvas.height = 1;
+          let ctx = canvas.getContext('2d'); ctx.fillStyle = colorVal; ctx.fillRect(0,0,1,1);
+          let d = ctx.getImageData(0,0,1,1).data;
+          if (chipBg === `rgb(${d[0]}, ${d[1]}, ${d[2]})`) isMatch = true;
+        } else if (chipBg.toLowerCase() === colorVal.toLowerCase()) {
+          isMatch = true;
+        }
+      });
+      
       chip.classList.toggle('active', isMatch);
     });
   });
@@ -3662,23 +3916,44 @@ function updateCellSelectionVisuals() {
 
 async function copySelectedCellsToClipboard() {
   if (selectedCells.size === 0) return;
-  const fields = ['rowDate', 'prodNum', 'name', 'color', 'size', 'nickname', 'salePrice', 'depositPrice', 'memo'];
-  const rowElements = Array.from(document.querySelectorAll('#list-sale tr, #settle-left-body tr')).filter(tr => tr.id.includes('row-'));
-  const rowOrder = rowElements.map(tr => tr.id.replace('row-', '').replace('settle-row-', '').replace('pop-', ''));
+  
+  const saleFields = ['rowDate', 'prodNum', 'name', 'color', 'size', 'nickname', 'salePrice', 'depositPrice', 'memo'];
+  const prodFields = ['prodNum', 'brand', 'features', 'color', 'size', 'price', 'specs'];
+  
+  const rowElements = Array.from(document.querySelectorAll('#list-sale tr, #settle-left-body tr, #list-prod tr')).filter(tr => tr.id.includes('row-'));
+  const rowOrder = rowElements.map(tr => tr.id.replace('prod-row-', '').replace('row-', '').replace('settle-row-', '').replace('pop-', ''));
   const uniqueRowsInSelection = rowOrder.filter(id => Array.from(selectedCells).some(c => c.startsWith(id + ':::')));
   
   let tsvLines = [];
   uniqueRowsInSelection.forEach(rId => {
-    const saleItem = sales.find(x => x.id === rId); if (!saleItem) return;
-    let lineCells = []; let hasValidCell = false;
-    fields.forEach(f => {
-      if (selectedCells.has(`${rId}:::${f}`)) { lineCells.push(saleItem[f] !== undefined ? saleItem[f] : ''); hasValidCell = true; }
-    });
+    const saleItem = sales.find(x => x.id === rId);
+    const prodItem = products.find(x => x.id === rId);
+    
+    let lineCells = []; 
+    let hasValidCell = false;
+    
+    if (saleItem) {
+      saleFields.forEach(f => {
+        if (selectedCells.has(`${rId}:::${f}`)) { 
+          lineCells.push(saleItem[f] !== undefined ? saleItem[f] : ''); 
+          hasValidCell = true; 
+        }
+      });
+    } else if (prodItem) {
+      prodFields.forEach(f => {
+        if (selectedCells.has(`${rId}:::${f}`)) { 
+          lineCells.push(prodItem[f] !== undefined ? prodItem[f] : ''); 
+          hasValidCell = true; 
+        }
+      });
+    }
+    
     if (hasValidCell) tsvLines.push(lineCells.join('\t'));
   });
   
   if (tsvLines.length > 0) {
-    const textToCopy = tsvLines.join('\n'); await navigator.clipboard.writeText(textToCopy);
+    const textToCopy = tsvLines.join('\n'); 
+    await navigator.clipboard.writeText(textToCopy);
   }
 }
 
@@ -4191,17 +4466,110 @@ window.addEventListener('keydown', function(e) {
   if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); addEmptySaleRow(); }
   if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') { e.preventDefault(); execUndo(); }
   if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y') { e.preventDefault(); execRedo(); }
-  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'c') { if (document.activeElement.tagName !== 'INPUT' && selectedCells.size > 0) { e.preventDefault(); copySelectedCellsToClipboard(); } }
+  
+  // 💡 [수정된 부분] Ctrl + C 눌렀을 때 커서 위치와 상관없이 셀 선택이 되어있다면 복사 실행
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'c') { 
+    if (selectedCells.size > 0) { 
+      e.preventDefault(); 
+      copySelectedCellsToClipboard(); 
+      toast('📋 선택한 셀들이 복사되었습니다. (엑셀에 Ctrl+V 하세요)');
+    } 
+  }
+  
+  // 💡 [수정] Delete 키 누를 때 포커스 상태와 상관없이 선택된 모든 셀 지우기
   if (e.key === 'Delete') {
-    if (document.activeElement.tagName !== 'INPUT' && selectedCells.size > 0) {
-      e.preventDefault(); saveState();
+    if (selectedCells.size > 0) {
+      e.preventDefault(); 
+      saveState();
+      let isProductDeleted = false;
+      let isSaleDeleted = false;
+
       selectedCells.forEach(cellKey => {
-        const [rowId, fieldName] = cellKey.split(':::'); const match = sales.find(x => x.id === rowId); if (match) { match[fieldName] = ''; match.sent = false; }
+        const [rowId, fieldName] = cellKey.split(':::'); 
+        const saleMatch = sales.find(x => x.id === rowId); 
+        const prodMatch = products.find(x => x.id === rowId);
+
+        if (saleMatch) { saleMatch[fieldName] = ''; saleMatch.sent = false; isSaleDeleted = true; }
+        if (prodMatch) { prodMatch[fieldName] = ''; isProductDeleted = true; }
       });
-      renderSales();
+
+      // 입력창 포커스를 해제하여 남아있는 커서 제거
+      if (document.activeElement && document.activeElement.tagName === 'INPUT') {
+        document.activeElement.blur();
+      }
+
+      if (isSaleDeleted) renderSales();
+      if (isProductDeleted) renderProducts();
     }
   }
-});
+
+  // --------------------------------------------------
+  // 2. [신규 추가] 셀 선택 상태에서 타이핑 시 바로 수정 모드 진입 (상품등록/판매장부 모두 지원)
+  // --------------------------------------------------
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+  if (e.ctrlKey || e.altKey || e.metaKey) return;
+  if (['Tab', 'Enter', 'Escape', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Delete', 'Backspace', 'F2'].includes(e.key)) return;
+
+  // --------------------------------------------------
+  // 셀 선택 상태에서 타이핑 시 바로 수정 모드 진입
+  // --------------------------------------------------
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+  if (e.ctrlKey || e.altKey || e.metaKey) return;
+  if (['Tab', 'Enter', 'Escape', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Delete', 'Backspace', 'F2'].includes(e.key)) return;
+
+  if (e.key.length === 1 && selectedCells.size > 0) {
+    e.preventDefault(); // 스페이스바 스크롤 등 브라우저 기본 동작 방지
+
+    const firstCellKey = Array.from(selectedCells)[0];
+    const [rowId, fieldName] = firstCellKey.split(':::');
+
+    const isDash = document.getElementById('view-dash').style.display !== 'none';
+    const isSettle = document.getElementById('view-settle').style.display !== 'none';
+
+    const isProduct = products.some(p => p.id === rowId);
+    const isSale = sales.some(s => s.id === rowId);
+
+    if (isDash || isSettle) {
+      saveState();
+
+      // 셀 선택 파란 테두리 해제 (편집 모드 충돌 방지)
+      selectedCells.clear();
+      updateCellSelectionVisuals();
+
+      if (isProduct) {
+        updateProdField(rowId, fieldName, ''); // 실제 데이터 배열도 비우기
+        enterProdEditMode(null, rowId, fieldName, false);
+        
+        const wrap = document.getElementById(`wrap-prod-${rowId}-${fieldName}`);
+        if (wrap) {
+          const input = wrap.querySelector('input');
+          if (input) {
+            input.value = '';
+            input.focus();
+          }
+        }
+      } else if (isSale) {
+        updateRowField(rowId, fieldName, ''); // 실제 데이터 배열도 비우기
+
+        if (isDash) {
+          enterEditMode(null, rowId, fieldName, false, true);
+        } else if (isSettle) {
+          enterSettleEditMode(null, rowId, fieldName);
+        }
+
+        const prefix = isSettle ? 'wrap-settle' : 'wrap';
+        const wrap = document.getElementById(`${prefix}-${rowId}-${fieldName}`);
+        if (wrap) {
+          const input = wrap.querySelector('input');
+          if (input) {
+            input.value = '';
+            input.focus();
+          } // 1. if (input) 닫기
+        }   // 2. if (wrap) 닫기
+      }     // 3. else if (isSale) 닫기
+    }       // 4. if (isDash || isSettle) 닫기
+  }         // 5. if (e.key.length === 1 ...) 닫기
+});         // 6. 맨 위 window.addEventListener('keydown', ...) 함수 완전히 닫기 (추가)
 
 window.addEventListener('mousedown', function(e) {
   if (e.target.tagName === 'INPUT' && lastFocusedInput && lastFocusedInput.element === e.target) { lastFocusedInput.isAuto = false; }
@@ -4220,38 +4588,69 @@ window.addEventListener('mousemove', function(e) {
 });
 
 window.addEventListener('paste', function(e) {
-  const text = e.clipboardData.getData('text/plain'); if (!text || (!text.includes('\t') && !text.includes('\n'))) return; 
-  if (document.activeElement && document.activeElement.tagName === 'INPUT' && currentEditingCell) return;
-  e.preventDefault(); saveState();
+  const text = e.clipboardData.getData('text/plain'); 
+  if (!text || (!text.includes('\t') && !text.includes('\n'))) return;
+  
+  // 💡 커서가 input에 있어도 탭/줄바꿈이 포함된 다중 셀 데이터면 브라우저 기본 동작 차단
+  e.preventDefault(); 
+  saveState();
+  
+  // 포커스되어 있던 input의 포커스 해제 (편집 모드 종료)
+  if (document.activeElement && document.activeElement.tagName === 'INPUT') {
+    document.activeElement.blur();
+  }
+
   const rows = text.split(/\r?\n/).map(row => row.split('\t'));
   if (rows.length > 0 && rows[rows.length - 1].length === 1 && rows[rows.length - 1][0] === '') rows.pop(); 
-  let startRowId = null; let startField = null; let startFieldIndex = 0; const fields = ['rowDate', 'prodNum', 'name', 'color', 'size', 'nickname', 'salePrice', 'depositPrice', 'memo'];
+  
+  let startRowId = null; 
+  let startField = null; 
+  let startFieldIndex = 0; 
+  const fields = ['rowDate', 'prodNum', 'name', 'color', 'size', 'nickname', 'salePrice', 'depositPrice', 'memo'];
+  
   if (selectedCells.size > 0) {
-    const firstCell = Array.from(selectedCells)[0]; [startRowId, startField] = firstCell.split(':::'); startFieldIndex = fields.indexOf(startField);
+    const firstCell = Array.from(selectedCells)[0]; 
+    [startRowId, startField] = firstCell.split(':::'); 
+    startFieldIndex = fields.indexOf(startField);
   } else if (lastFocusedInput && lastFocusedInput.type === 'sale') {
-    startRowId = lastFocusedInput.id; startFieldIndex = fields.indexOf(lastFocusedInput.field);
+    startRowId = lastFocusedInput.id; 
+    startFieldIndex = fields.indexOf(lastFocusedInput.field);
   }
+  
   if (!startRowId && sales.length > 0) startRowId = sales[0].id;
-  let currentIdx = sales.findIndex(x => x.id === startRowId); if (currentIdx === -1) currentIdx = 0;
+  let currentIdx = sales.findIndex(x => x.id === startRowId); 
+  if (currentIdx === -1) currentIdx = 0;
+
   rows.forEach((rowData, rOffset) => {
-    let targetIdx = currentIdx + rOffset; while (targetIdx >= sales.length) sales.push(createEmptySaleObject());
-    const saleItem = sales[targetIdx]; saleItem.sent = false;
+    let targetIdx = currentIdx + rOffset; 
+    while (targetIdx >= sales.length) sales.push(createEmptySaleObject());
+    const saleItem = sales[targetIdx]; 
+    saleItem.sent = false;
+    
     rowData.forEach((cellValue, cOffset) => {
       let fieldIdx = startFieldIndex + cOffset;
       if (fieldIdx < fields.length) {
-        const fieldName = fields[fieldIdx]; let val = cellValue.trim();
+        const fieldName = fields[fieldIdx]; 
+        let val = cellValue.trim();
         if (fieldName === 'salePrice' || fieldName === 'depositPrice') val = convertPrice(val);
         saleItem[fieldName] = val;
       }
     });
   });
+  
   renderSales();
 });
+
+// 💡 [신규] 빠른 연타 시 미세 떨림 보정용 대기 상태 변수
+window.dragStartX = 0;
+window.dragStartY = 0;
+window.isDragPending = false;
 
 function setupUnifiedListEvents(elementId, prefixStr, dataArray, renderCallback) {
   const targetContainer = document.getElementById(elementId); if (!targetContainer) return;
   targetContainer.addEventListener('mousedown', function(e) {
-    if (e.target.closest('button') || e.target.closest('.status-badge') || e.target.tagName === 'INPUT') return;
+    // 💡 [수정] || e.target.tagName === 'INPUT' 구문을 제거하여 커서가 들어가 있는 상태에서도 드래그 감지
+    if (e.target.closest('button') || e.target.closest('.status-badge')) return;
     
     const dragHandle = e.target.closest('.drag-handle');
     const cellWrap = e.target.closest('.cell-wrap'); const tr = e.target.closest('tr'); if (!tr) return;
@@ -4263,7 +4662,7 @@ function setupUnifiedListEvents(elementId, prefixStr, dataArray, renderCallback)
       if (cellId) {
         const [rId, fieldName] = cellId.split(':::');
         startCell = { id: rId, field: fieldName };
-        const sourceItem = sales.find(x => x.id === rId);
+        const sourceItem = sales.find(x => x.id === rId) || products.find(x => x.id === rId);
         startCell.value = sourceItem ? sourceItem[fieldName] : ''; 
         document.body.classList.add('dragging-mode');
       }
@@ -4272,12 +4671,25 @@ function setupUnifiedListEvents(elementId, prefixStr, dataArray, renderCallback)
       return;
     }
 
-    if (cellWrap && elementId !== 'list-prod') {
-      isDragging = true; const cellId = cellWrap.getAttribute('data-cell-id');
+    if (cellWrap) {
+      window.dragStartX = e.clientX;
+      window.dragStartY = e.clientY;
+      window.isDragPending = true;
+
+      const cellId = cellWrap.getAttribute('data-cell-id');
       if (cellId) {
         const [rId, fieldName] = cellId.split(':::'); startCell = { id: rId, field: fieldName };
-        document.body.classList.add('dragging-mode'); if (!e.ctrlKey && !e.metaKey) selectedCells.clear();
+        if (!e.ctrlKey && !e.metaKey) selectedCells.clear();
         selectedCells.add(cellId); updateCellSelectionVisuals();
+
+        // 💡 클릭 즉시 입력창에 커서를 넣어 첫 글자 한글 씹힘 방지
+        if (elementId === 'list-prod') {
+          enterProdEditMode(e, rId, fieldName, false);
+        } else if (elementId === 'list-sale') {
+          enterEditMode(e, rId, fieldName, false, true);
+        } else if (elementId === 'settle-left-body') {
+          enterSettleEditMode(e, rId, fieldName);
+        }
       }
     }
   });
@@ -4291,18 +4703,6 @@ function setupUnifiedListEvents(elementId, prefixStr, dataArray, renderCallback)
         if (elementId === 'list-sale' || elementId === 'settle-left-body') { e.preventDefault(); e.stopPropagation(); executeAutofill(targetRowId, targetField); return; }
       }
     }
-    if (e.target.classList.contains('view-text')) {
-  const cellWrap = e.target.closest('.cell-wrap');
-  if (cellWrap && !cellWrap.classList.contains('editing')) {
-    const parts = cellWrap.id.split('-');
-    if (cellWrap.id.startsWith('wrap-prod')) handleProdCellFilter(e, parts[2], parts[3]);
-    else {
-      // parts[1]이 'pop'이거나 'settle'인 경우 모두 parts[2]를 실제 데이터 ID로 추출합니다.
-      const rowId = (parts[1] === 'pop' || parts[1] === 'settle') ? parts[2] : parts[1];
-      handleCellFilter(e, rowId, parts[parts.length - 1]);
-    }
-  }
-}
   });
 }
 
@@ -4388,7 +4788,6 @@ setTimeout(() => {
       if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON') return;
       e = e || window.event; e.preventDefault(); pos3 = e.clientX; pos4 = e.clientY;
 
-      // 드래그 시작 시 중앙 정렬 transform 속성을 해제하고 absolute px 단위로 전환 (위치 튀는 문제 해결)
       const rect = popup.getBoundingClientRect();
       popup.style.transform = 'none';
       popup.style.top = rect.top + 'px';
@@ -4407,7 +4806,9 @@ setTimeout(() => {
 }, 200);
 
 window.addEventListener('mouseup', function() { 
-  // [1] 우측 하단 핸들(+) 드래그를 통한 복사 채우기 완료 처리
+  // 💡 [수정 3번] 드래그 대기 상태 리셋
+  window.isDragPending = false;
+
   if (isFillDragging && startCell) {
     const field = startCell.field;
     const startVal = startCell.value;
@@ -4427,7 +4828,6 @@ window.addEventListener('mouseup', function() {
           targetSale.sent = false;
           fillCount++;
           
-          // 강제 덮어쓰기 완료된 셀에 플래시 애니메이션 효과 부여
           wrap.classList.add('flash-overwrite-active');
           setTimeout(() => {
             wrap.classList.remove('flash-overwrite-active');
@@ -4447,7 +4847,6 @@ window.addEventListener('mouseup', function() {
     document.body.classList.remove('dragging-mode');
   }
 
-  // [2] 일반 다중 선택 드래그(isDragging)는 값을 복사하지 않고 단순히 드래그 상태만 해제합니다.
   if (isDragging) { 
     isDragging = false; 
     startCell = null; 
@@ -4459,7 +4858,31 @@ window.addEventListener('mouseup', function() {
     dragScrollInterval = null; 
   }
 });
-window.addEventListener('resize', adjustLongTexts);
+
+// 💡 [수정 2번] 3px 이상 실제로 이동했을 때만 드래그 모드로 전환하는 mousemove
+window.addEventListener('mousemove', function(e) {
+  if (window.isDragPending) {
+    const dist = Math.hypot(e.clientX - window.dragStartX, e.clientY - window.dragStartY);
+    if (dist > 3) {
+      isDragging = true;
+      window.isDragPending = false;
+      
+      // 💡 [추가] 실제로 마우스 드래그가 시작되면 input 포커스를 풀어 글자 굵기 지정과 셀 선택이 겹치지 않게 처리
+      if (document.activeElement && document.activeElement.tagName === 'INPUT') {
+        document.activeElement.blur();
+      }
+      
+      document.body.classList.add('dragging-mode');
+    }
+  }
+
+  if (!isDragging && !isFillDragging) { if (dragScrollInterval) { clearInterval(dragScrollInterval); dragScrollInterval = null; } return; }
+  const saleScroll = document.querySelector('.table-scroll-sale'); const settleScroll = document.querySelector('#view-settle .table-responsive');
+  let container = (document.getElementById('view-dash').style.display !== 'none') ? saleScroll : settleScroll; if (!container) return;
+  const rect = container.getBoundingClientRect(); const threshold = 40; clearInterval(dragScrollInterval); dragScrollInterval = null;
+  if (e.clientY > rect.bottom - threshold && e.clientY < rect.bottom + 20) { dragScrollInterval = setInterval(() => { container.scrollTop += 8; }, 16); } 
+  else if (e.clientY < rect.top + threshold && e.clientY > rect.top - 20) { dragScrollInterval = setInterval(() => { container.scrollTop -= 8; }, 16); }
+});
 
 (function initPanelResizeHandle(){
   const handle = document.getElementById('prod-resize-handle'); const target = document.querySelector('.table-scroll-prod'); if(!handle || !target) return;
@@ -4563,6 +4986,7 @@ function initDefaultDate() {
 
 loadFromLocalStorage(); loadAutocompleteCache(); renderProducts(); renderSales(); updateHistoryButtons();
 loadAutocompleteData(true); syncColorPickerUI(); loadCopySymbols();
+changeDepositHighlightColor(depositMasterHighlightColor);
 
 // 💡 [추가] 마지막으로 쓰던 탭 기억해서 그대로 복원 및 입금정산 표 첫 화면 자동 렌더링 기믹
 const storedActiveTabId = localStorage.getItem('live_active_tab_id');
@@ -4903,20 +5327,73 @@ window.registerStockOrdersToSales = function() {
   });
 
   if (newSalesCount > 0 || updatedCount > 0 || deletedCount > 0) {
-    renderSales();
-    renderStockOrderMatrix(sd);
-    saveToLocalStorage();
-    
-    let msgParts = [];
-    if (newSalesCount > 0) msgParts.push(`신규 ${newSalesCount}건`);
-    if (updatedCount > 0) msgParts.push(`수정 ${updatedCount}건`);
-    if (deletedCount > 0) msgParts.push(`삭제 ${deletedCount}건`);
-    
-    toast(`🎉 판매 장부가 업데이트되었습니다! (${msgParts.join(', ')})`);
-  } else {
-    toast('⚠️ 변경되거나 등록할 주문 내용이 없습니다.');
-  }
-};
+
+        // 💡 [신규 추가] 고정입력 패널 테이블에서 등록을 누른 경우 (activeStockContext.type === 'new')
+        // 상품등록 목록에 자동 등록하고 고정입력 패널을 초기화합니다.
+        if (activeStockContext.type === 'new') {
+          const pNumInput = document.getElementById('new-prod-num').value.trim(); 
+          const brandInput = document.getElementById('new-prod-brand').value.trim(); 
+          const featuresInput = document.getElementById('new-prod-features').value.trim();
+          const colorInput = document.getElementById('new-prod-color').value.trim(); 
+          const sizeInput = document.getElementById('new-prod-size').value.trim(); 
+          const priceInput = document.getElementById('new-prod-price').value.trim(); 
+          const specsInput = document.getElementById('new-prod-specs').value.trim();
+
+          // 1) 고정 패널의 정보를 기반으로 신규 상품 객체 생성 및 목록(products)에 추가
+          const stockToSave = currentNewStock ? JSON.parse(JSON.stringify(currentNewStock)) : null;
+          const newProd = { 
+            id: uid(), 
+            prodNum: pNumInput, 
+            brand: brandInput, 
+            features: featuresInput, 
+            color: colorInput, 
+            size: sizeInput, 
+            price: priceInput, 
+            specs: specsInput, 
+            createdAt: Date.now(), 
+            stock: stockToSave, 
+            highlighted: false 
+          };
+          products.unshift(newProd);
+
+          // 2) 고정 입력 패널의 입력 창 및 임시 데이터 초기화
+          currentNewStock = null;
+          document.getElementById('new-prod-num').value = ''; 
+          document.getElementById('new-prod-brand').value = ''; 
+          document.getElementById('new-prod-features').value = ''; 
+          document.getElementById('new-prod-color').value = ''; 
+          document.getElementById('new-prod-size').value = ''; 
+          document.getElementById('new-prod-price').value = ''; 
+          document.getElementById('new-prod-specs').value = '';
+
+          // 3) 팝업 창 닫기 및 테이블 상태 완전 초기화 (수정된 부분)
+          closeStockPopup();
+
+          // 4) 상품등록 목록 UI 업데이트 및 자동완성 목록 동기화
+          renderProducts();
+          populateAutocompleteLists();
+          updateMainStockStatus();
+        }
+
+        renderSales();
+        
+        // 💡 [수정된 부분] 고정입력 패널이 아닐 때(기존 상품 수정 중일 때)만 테이블을 리렌더링 유지
+        if (activeStockContext.type === 'edit') {
+          renderStockOrderMatrix(sd);
+        }
+        
+        saveToLocalStorage();
+        
+        let msgParts = [];
+        if (newSalesCount > 0) msgParts.push(`신규 ${newSalesCount}건`);
+        if (updatedCount > 0) msgParts.push(`수정 ${updatedCount}건`);
+        if (deletedCount > 0) msgParts.push(`삭제 ${deletedCount}건`);
+        
+        toast(`🎉 판매 장부가 업데이트되었습니다! (${msgParts.join(', ')})`);
+      } else {
+        toast('⚠️ 변경되거나 등록할 주문 내용이 없습니다.');
+      }
+    };
 
 // 💡 매트릭스 내 주문고객 전체 초기화
 window.clearAllStockOrders = function() {
