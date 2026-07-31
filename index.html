@@ -3058,7 +3058,10 @@ function getRowHtml(s, index, isPopup = false, hasDivider = false) {
     </tr>`;
 }
 
-let settleLeftSortKey = 'name'; let settleGroupKey = 'name'; const SETTLE_GROUP_LABEL = { name: '상품명', salePrice: '판매가', depositPrice: '입금가', nickname: '고객명' };
+let settleLeftSortKey = 'name'; 
+let settleLeftSortAsc = true; // 👈 이 줄을 새로 추가합니다! (true: 오름차순, false: 내림차순)
+let settleGroupKey = 'name'; 
+const SETTLE_GROUP_LABEL = { name: '상품명', salePrice: '판매가', depositPrice: '입금가', nickname: '고객명' };
 function settleValidSales() { return sales.filter(s => s.prodNum || s.name || s.nickname || s.salePrice || s.depositPrice); }
 
 function renderSettleDetail() {
@@ -3112,8 +3115,14 @@ window.toggleProfitDisplay = function() {
 function settleSortList(list, key) {
   const arr = list.slice();
   arr.sort((a, b) => {
-    if (key === 'salePrice' || key === 'depositPrice') { return (Number(a[key]) || 0) - (Number(b[key]) || 0); }
-    return (a[key] || '').toString().localeCompare((b[key] || '').toString(), 'ko-KR', { numeric: true });
+    let result = 0;
+    if (key === 'salePrice' || key === 'depositPrice') { 
+      result = (Number(a[key]) || 0) - (Number(b[key]) || 0); 
+    } else {
+      result = (a[key] || '').toString().localeCompare((b[key] || '').toString(), 'ko-KR', { numeric: true });
+    }
+    // 💡 settleLeftSortAsc가 false(내림차순)면 결과를 반대로(-result) 반환
+    return settleLeftSortAsc ? result : -result;
   });
   return arr;
 }
@@ -3341,11 +3350,17 @@ window.settleDeleteRow = function(id) {
 };
 
 window.settleSetSort = function(key) { 
-  settleLeftSortKey = key; 
+  // 💡 같은 항목 클릭 시 오름차순 ⇄ 내림차순 토글, 다른 항목 클릭 시 오름차순으로 리셋
+  if (settleLeftSortKey === key) {
+    settleLeftSortAsc = !settleLeftSortAsc;
+  } else {
+    settleLeftSortKey = key;
+    settleLeftSortAsc = true;
+  }
+
   if (SETTLE_GROUP_LABEL[key] || key === 'prodNum') { 
     if(key !== 'prodNum') {
       settleGroupKey = key;
-      // 🆕 좌측 테이블의 헤더를 클릭해서 그룹 기준을 바꿀 때도 검색창 초기화
       const groupSearchInput = document.getElementById('search-settle-group');
       if (groupSearchInput) groupSearchInput.value = '';
     }
@@ -3431,7 +3446,7 @@ function renderSettleRightPanel() {
   if (settleGroupKey === 'name') {
     head.innerHTML = `<tr>
       <th style="width:38px; text-align:center;">No.</th>
-      <th>상품명 ⇅</th>
+      <th>상품명</th>
       <th style="width:65px; text-align:right;">입금가</th>
       <th style="width:40px; text-align:center;">수량</th>
       <th style="width:75px; text-align:right;">총입금</th>
