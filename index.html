@@ -2381,14 +2381,27 @@ function trackFocus(type, id, field, element) {
 }
 
 window.enterEditMode = function(event, id, field, isPopup = false, isUserInitiated = false) {
-  if (event) event.preventDefault(); currentEditingCell = { type: 'sale', id, field, isPopup };
-  const prefix = isPopup ? 'wrap-pop' : 'wrap'; const wrap = document.getElementById(`${prefix}-${id}-${field}`); if (!wrap) return;
-  wrap.classList.add('editing'); const input = wrap.querySelector('input'); if (input) { 
+  const prefix = isPopup ? 'wrap-pop' : 'wrap'; 
+  const wrap = document.getElementById(`${prefix}-${id}-${field}`); 
+  if (!wrap) return;
+
+  // 이미 셀이 선택되어 편집 중인 상태라면 전체 선택을 재실행하지 않고 브라우저 기본 개별 커서 동작 허용
+  if (wrap.classList.contains('editing')) {
+    return;
+  }
+
+  if (event) event.preventDefault(); 
+  currentEditingCell = { type: 'sale', id, field, isPopup };
+  wrap.classList.add('editing'); 
+  const input = wrap.querySelector('input'); 
+  if (input) { 
     if (isUserInitiated) {
       sessionStartField = field; 
     }
     isProgrammaticFocus = true; 
-    input.focus(); input.select(); trackFocus('sale', id, field, input); 
+    input.focus(); 
+    input.select(); // 처음 셀에 진입할 때만 전체 선택
+    trackFocus('sale', id, field, input); 
     isProgrammaticFocus = false;
   }
 };
@@ -2412,11 +2425,24 @@ window.exitEditMode = function(id, field, isPopup = false) {
 };
 
 window.enterProdEditMode = function(event, id, field, isPopup = false) {
-  if (event) event.preventDefault(); currentEditingCell = { type: 'product', id, field, isPopup };
-  const prefix = isPopup ? 'wrap-prod-pop' : 'wrap-prod'; const wrap = document.getElementById(`${prefix}-${id}-${field}`); if (!wrap) return;
-  wrap.classList.add('editing'); const input = wrap.querySelector('input'); if (input) { 
+  const prefix = isPopup ? 'wrap-prod-pop' : 'wrap-prod'; 
+  const wrap = document.getElementById(`${prefix}-${id}-${field}`); 
+  if (!wrap) return;
+
+  // 이미 편집 중인 경우 조기 종료
+  if (wrap.classList.contains('editing')) {
+    return;
+  }
+
+  if (event) event.preventDefault(); 
+  currentEditingCell = { type: 'product', id, field, isPopup };
+  wrap.classList.add('editing'); 
+  const input = wrap.querySelector('input'); 
+  if (input) { 
     isProgrammaticFocus = true;
-    input.focus(); input.select(); trackFocus('product', id, field, input); 
+    input.focus(); 
+    input.select(); // 처음 셀에 진입할 때만 전체 선택
+    trackFocus('product', id, field, input); 
     isProgrammaticFocus = false;
   }
 };
@@ -3200,11 +3226,23 @@ function renderSettleLeftPanel() {
 }
 
 window.enterSettleEditMode = function(event, id, field) {
-  if (event) event.preventDefault(); currentEditingCell = { type: 'settle', id, field };
-  const wrap = document.getElementById(`wrap-settle-${id}-${field}`); if (!wrap) return;
-  wrap.classList.add('editing'); const input = wrap.querySelector('input'); if (input) { 
+  const wrap = document.getElementById(`wrap-settle-${id}-${field}`); 
+  if (!wrap) return;
+
+  // 이미 편집 중인 경우 조기 종료
+  if (wrap.classList.contains('editing')) {
+    return;
+  }
+
+  if (event) event.preventDefault(); 
+  currentEditingCell = { type: 'settle', id, field };
+  wrap.classList.add('editing'); 
+  const input = wrap.querySelector('input'); 
+  if (input) { 
     isProgrammaticFocus = true;
-    input.focus(); input.select(); trackFocus('sale', id, field, input); 
+    input.focus(); 
+    input.select(); // 처음 셀에 진입할 때만 전체 선택
+    trackFocus('sale', id, field, input); 
     isProgrammaticFocus = false;
   }
 };
