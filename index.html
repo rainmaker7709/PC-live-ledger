@@ -4704,11 +4704,10 @@ window.renderStockOrderMatrix = function(sd) {
         inputsHtml += `
           <div style="display: flex; align-items: center; gap: 2px; margin-bottom: 3px;">
             <input type="text" class="inline-input" data-ac="nickname" style="${borderStyle} ${bgStyle} padding: 3px 5px; font-size: 11.5px; border-radius: 3px; flex: 1;" 
-              value="${escapeHtml(ord.name)}" 
-              ${ord.registered ? 'disabled' : ''} 
-              oninput="onOrderInputChange('${key}', ${oIdx}, this.value); acFilter(this, 'nickname')"
-              onblur="onOrderInputBlur('${key}', ${oIdx}, this.value)"
-              onkeydown="handleOrderInputKeydown(event, '${key}', ${oIdx})">
+               value="${escapeHtml(ord.name)}" 
+               oninput="onOrderInputChange('${key}', ${oIdx}, this.value); acFilter(this, 'nickname')"
+               onblur="onOrderInputBlur('${key}', ${oIdx}, this.value)"
+               onkeydown="handleOrderInputKeydown(event, '${key}', ${oIdx})">
             ${ord.registered ? '<span style="font-size:10px; color:#27AE60; font-weight:bold; padding:0 2px;">✓</span>' : `<button style="background:none; border:none; color:var(--danger); font-size:12px; cursor:pointer; padding:0 3px;" onclick="removeOrderInput('${key}', ${oIdx})">✕</button>`}
           </div>
         `;
@@ -4789,6 +4788,17 @@ window.removeOrderInput = function(key, idx) {
   let sd = getActiveStockData();
   if (!sd || !sd.orders || !sd.orders[key]) return;
 
+  const targetOrd = sd.orders[key][idx];
+  
+  // 이미 판매 장부에 등록된 항목이면 장부(sales)에서도 삭제
+  if (targetOrd && targetOrd.saleId) {
+    const targetIndex = sales.findIndex(s => s.id === targetOrd.saleId);
+    if (targetIndex !== -1) {
+      sales.splice(targetIndex, 1);
+      renderSales();
+    }
+  }
+
   sd.orders[key].splice(idx, 1);
   if (sd.orders[key].length === 0) {
     sd.orders[key] = [{ name: '', registered: false }];
@@ -4805,7 +4815,9 @@ window.registerStockOrdersToSales = function() {
     return;
   }
 
+  let updatedCount = 0;
   let newSalesCount = 0;
+  let deletedCount = 0;
   saveState();
 
   let prodNum = '';
@@ -4833,16 +4845,56 @@ window.registerStockOrdersToSales = function() {
       const orderList = sd.orders[key] || [];
 
       orderList.forEach(ord => {
-        if (!ord.registered && ord.name.trim() !== '') {
+        const trimmedName = (ord.name || '').trim();
+
+        // 1) 기존 등록된 항목이 있는 경우
+        if (ord.saleId) {
+          const targetSaleIndex = sales.findIndex(s => s.id === ord.saleId);
+
+          if (trimmedName === '') {
+            // 고객명을 비운 경우 -> 장부에서 삭제
+            if (targetSaleIndex !== -1) {
+              sales.splice(targetSaleIndex, 1);
+              deletedCount++;
+            }
+            ord.registered = false;
+            delete ord.saleId;
+          } else {
+            // 고객명을 변경한 경우 -> 장부 고객명 업데이트
+            if (targetSaleIndex !== -1) {
+              if (sales[targetSaleIndex].nickname !== trimmedName) {
+                sales[targetSaleIndex].nickname = trimmedName;
+                sales[targetSaleIndex].sent = false;
+                updatedCount++;
+              }
+            } else {
+              // 장부에서 지워졌던 경우 재등록
+              const newSale = createEmptySaleObject();
+              newSale.prodNum = prodNum;
+              newSale.name = prodName;
+              newSale.color = col.trim();
+              newSale.size = sz.trim();
+              newSale.nickname = trimmedName;
+              newSale.salePrice = prodPrice;
+              sales.push(newSale);
+              ord.saleId = newSale.id;
+              ord.registered = true;
+              newSalesCount++;
+            }
+          }
+        } 
+        // 2) 신규 고객 항목인 경우
+        else if (trimmedName !== '') {
           const newSale = createEmptySaleObject();
           newSale.prodNum = prodNum;
           newSale.name = prodName;
           newSale.color = col.trim();
           newSale.size = sz.trim();
-          newSale.nickname = ord.name.trim();
+          newSale.nickname = trimmedName;
           newSale.salePrice = prodPrice;
 
           sales.push(newSale);
+          ord.saleId = newSale.id;
           ord.registered = true;
           newSalesCount++;
         }
@@ -4850,13 +4902,19 @@ window.registerStockOrdersToSales = function() {
     });
   });
 
-  if (newSalesCount > 0) {
+  if (newSalesCount > 0 || updatedCount > 0 || deletedCount > 0) {
     renderSales();
     renderStockOrderMatrix(sd);
     saveToLocalStorage();
-    toast(`🎉 ${newSalesCount}건의 신규 주문이 실시간 판매 내역에 성공적으로 등록되었습니다!`);
+    
+    let msgParts = [];
+    if (newSalesCount > 0) msgParts.push(`신규 ${newSalesCount}건`);
+    if (updatedCount > 0) msgParts.push(`수정 ${updatedCount}건`);
+    if (deletedCount > 0) msgParts.push(`삭제 ${deletedCount}건`);
+    
+    toast(`🎉 판매 장부가 업데이트되었습니다! (${msgParts.join(', ')})`);
   } else {
-    toast('⚠️ 등록할 미등록 고객이 없습니다. (모두 이미 등록되었거나 공란입니다)');
+    toast('⚠️ 변경되거나 등록할 주문 내용이 없습니다.');
   }
 };
 
