@@ -2112,21 +2112,30 @@ window.execRedo = function() {
 };
 
 function switchTab(targetId, btn) {
-  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active');
+  // 1. 탭 버튼 활성화 및 화면 표시 전환 (즉시 반응)
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active')); 
+  btn.classList.add('active');
+  
   document.getElementById('view-dash').style.display = 'none'; 
   document.getElementById('view-settle').style.display = 'none';
   document.getElementById('view-deposit').style.display = 'none';
   
-  document.getElementById(targetId).style.display = 'flex';
-  if(targetId === 'view-dash') {
-    renderSales();
-  } else if(targetId === 'view-settle') {
-    renderSettleDetail();
-  } else if(targetId === 'view-deposit') {
-    // [신규 추가] 입금정산 탭 클릭 시 실시간 대조 데이터 원격 동기화 컴파일
-    renderDepositAnalysisTable();
+  const targetView = document.getElementById(targetId);
+  if (targetView) {
+    targetView.style.display = 'flex';
   }
-  saveToLocalStorage();
+
+  // 2. 대량 데이터 렌더링 연산을 0.01초 뒤로 미루어 버튼 클릭 반응속도를 최우선 확보
+  setTimeout(() => {
+    if(targetId === 'view-dash') {
+      renderSales();
+    } else if(targetId === 'view-settle') {
+      renderSettleDetail();
+    } else if(targetId === 'view-deposit') {
+      renderDepositAnalysisTable();
+    }
+    saveToLocalStorage();
+  }, 10);
 }
 
 function toast(msg){ const t = document.getElementById('toast'); t.innerHTML = msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'), 2500); }
@@ -2598,7 +2607,11 @@ function renderSales(){
     const { id, field } = currentEditingCell; const wrap = document.getElementById(`wrap-${id}-${field}`);
     if (wrap) { wrap.classList.add('editing'); const input = wrap.querySelector('input'); if (input && document.activeElement !== input) { input.focus(); input.select(); } }
   }
-  if(document.getElementById('settle-left-body')) { renderSettleLeftPanel(); renderSettleSummaryAndRight(); }
+  const settleView = document.getElementById('view-settle');
+if (settleView && settleView.style.display !== 'none') {
+  renderSettleLeftPanel();
+  renderSettleSummaryAndRight();
+}
   renderSaleFilterTags();
   adjustLongTexts();
 }
@@ -3533,13 +3546,35 @@ document.getElementById('btn-exp-full').addEventListener('click', () => {
 });
 
 document.getElementById('btn-exp-wh').addEventListener('click', () => {
-  const targets = sales.filter(s => s.prodNum || s.name || s.nickname); if(targets.length === 0){ toast('데이터가 없습니다.'); return; }
-  const summary = {}; targets.forEach(s => {
+  const targets = sales.filter(s => s.prodNum || s.name || s.nickname); 
+  if(targets.length === 0){ toast('데이터가 없습니다.'); return; }
+  
+  const summary = {}; 
+  targets.forEach(s => {
     const key = `${s.prodNum || '미분류'}_${s.name || '무명'}_${s.color||''}_${s.size||''}`;
-    if(!summary[key]) { summary[key] = { '품번': s.prodNum, '상품명': s.name, '색상': s.color, '사이즈': s.size, '수량': 0, '정산액합계(원가)': 0 }; }
-    summary[key]['수량'] += 1; summary[key]['정산액합계(원가)'] += (Number(s.depositPrice) || 0);
+    if(!summary[key]) { 
+      summary[key] = { '품번': s.prodNum, '상품명': s.name, '색상': s.color, '사이즈': s.size, '수량': 0, '정산액합계(원가)': 0 }; 
+    }
+    summary[key]['수량'] += 1; 
+    summary[key]['정산액합계(원가)'] += (Number(s.depositPrice) || 0);
   });
-  const ws = XLSX.utils.json_to_sheet(Object.values(summary)); const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, '창고정산요약'); 
+  
+  // 👇 이 부분이 새롭게 추가된 부분입니다. (합계 계산 후 마지막 줄에 삽입)
+  const summaryData = Object.values(summary);
+  
+  const totalQty = summaryData.reduce((sum, item) => sum + item['수량'], 0);
+  const totalAmt = summaryData.reduce((sum, item) => sum + item['정산액합계(원가)'], 0);
+  
+  summaryData.push({ 
+    '품번': '총계', 
+    '상품명': '-', 
+    '색상': '-', 
+    '사이즈': '-', 
+    '수량': totalQty, 
+    '정산액합계(원가)': totalAmt 
+  });
+  
+  const ws = XLSX.utils.json_to_sheet(summaryData); const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, '창고정산요약'); 
   
   const dateVal = (document.getElementById('ledger-date')?.value || '').trim();
   const whVal = (document.getElementById('wh-name-input')?.value || '').trim();
