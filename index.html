@@ -3648,40 +3648,6 @@ window.updateRowField = function(id, field, value) {
     target[field] = value; 
     target.sent = false; 
 
-    // 💡 품번이나 상품명 입력 시 실시간 기입된 장부(sales)를 참고하여 색상/사이즈 자동 완성
-    if (field === 'prodNum' || field === 'name') {
-      const val = String(value || '').trim();
-      if (val) {
-        const match = sales.find(s => s.id !== id && (
-          (field === 'prodNum' && (s.prodNum || '').trim() === val) ||
-          (field === 'name' && (s.name || '').trim() === val)
-        ) && (s.color || s.size));
-
-        if (match) {
-          if (!target.color && match.color) {
-            target.color = match.color;
-            const cWrap = document.getElementById(`wrap-${id}-color`) || document.getElementById(`wrap-pop-${id}-color`) || document.getElementById(`wrap-settle-${id}-color`);
-            if (cWrap) {
-              const inp = cWrap.querySelector('input');
-              const span = cWrap.querySelector('.view-text');
-              if (inp) inp.value = match.color;
-              if (span) { span.textContent = match.color; span.classList.remove('sale-blank-cell'); }
-            }
-          }
-          if (!target.size && match.size) {
-            target.size = match.size;
-            const sWrap = document.getElementById(`wrap-${id}-size`) || document.getElementById(`wrap-pop-${id}-size`) || document.getElementById(`wrap-settle-${id}-size`);
-            if (sWrap) {
-              const inp = sWrap.querySelector('input');
-              const span = sWrap.querySelector('.view-text');
-              if (inp) inp.value = match.size;
-              if (span) { span.textContent = match.size; span.classList.remove('sale-blank-cell'); }
-            }
-          }
-        }
-      }
-    }
-
     saveToLocalStorage(); // ★ 데이터 유실 방지 (타이핑 즉시 자동 저장)
   } 
 };
