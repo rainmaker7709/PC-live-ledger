@@ -426,35 +426,55 @@
     max-height: calc(100vh - 120px) !important;
   }
 
-  /* 👇👇 [여기서부터 새로 추가] 👇👇 */
-  .btn-memo-status {
-  width: 100%;
-  padding: 4px 2px; /* 💡 여백 축소 */
-  font-size: 11px;  /* 💡 글씨 크기 감소 (12px -> 11px) */
-  font-weight: 600; /* 💡 글씨 굵기 감소 (800 -> 600) */
-  border: 1px solid var(--line);
-  border-radius: 4px;
-  cursor: pointer;
-  transition: all 0.2s;
-  background: #F4F6F8;
-  color: var(--ink-soft);
+ /* 📝 메모 버튼 전용 디자인 입체화 스타일 */
+.btn-memo-status {
+  width: calc(100% - 6px) !important; /* 셀 테두리와 간격을 두어 입체감 형성 */
+  margin: 0 auto;
+  display: block;
+  padding: 4px 2px !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  border-radius: 12px !important;      /* 둥근 알약 모양으로 셀(네모)과 차별화 */
+  border: 1px solid #CBD5E1 !important;
+  background: #FFFFFF !important;
+  color: var(--ink-soft) !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important; /* 떠있는 듯한 그림자 효과 */
+  transition: all 0.15s ease-in-out !important;
   text-align: center;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  cursor: pointer;
 }
+
+/* 마우스 호버 & 클릭 시 물리 버튼 반응 효과 */
+.btn-memo-status:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15) !important;
+  border-color: #94A3B8 !important;
+}
+
+.btn-memo-status:active {
+  transform: translateY(0);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.15) !important;
+}
+
+/* 🎨 상태별 강조 색상 (기존 분기 조건 완벽 유지) */
 .btn-memo-status.mint {
   background: #00D29A !important;
   color: #ffffff !important;
   border-color: #00B383 !important;
 }
+
 .btn-memo-status.red {
-  background: var(--danger) !important;
+  background: #D86B8A !important;
   color: #ffffff !important;
-  border-color: #A0423C !important;
+  border-color: #B95270 !important;
 }
+
+/* 🎨 체크박스 + 텍스트 메모 모두 있을 때 (민트 / 진한 핑크 반반) */
 .btn-memo-status.half {
-  background: linear-gradient(90deg, #00D29A 50%, #C0524A 50%) !important;
+  background: linear-gradient(90deg, #00D29A 50%, #D86B8A 50%) !important;
   color: #ffffff !important;
   border-color: #00B383 !important;
 }
@@ -496,6 +516,54 @@
   .row-num-btn:active {
     transform: scale(0.95);
     box-shadow: inset 2px 2px 6px rgba(0,0,0,0.2);
+  }
+
+  /* 👇 여기에 복사한 코드를 붙여넣어 주세요! */
+  .status-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border-radius: 50% !important;
+    border: 2px solid #CBD5E1 !important;
+    background: #FFFFFF !important;
+    color: #64748B !important;
+    font-size: 11px;
+    font-weight: 800;
+    cursor: pointer;
+    user-select: none;
+    flex-shrink: 0;
+    box-sizing: border-box;
+    transition: all 0.15s ease-in-out;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+  }
+
+  .status-badge:hover {
+    border-color: #94A3B8 !important;
+    background: #F8FAFC !important;
+    transform: scale(1.1);
+  }
+
+  .status-badge.yt.on {
+    background: var(--danger) !important;
+    border-color: var(--danger) !important;
+    color: #ffffff !important;
+  }
+  .status-badge.tt.on {
+    background: #111111 !important;
+    border-color: #111111 !important;
+    color: #ffffff !important;
+  }
+  .status-badge.fs.on {
+    background: var(--blue) !important;
+    border-color: var(--blue) !important;
+    color: #ffffff !important;
+  }
+  .status-badge.kp.on {
+    background: #FF9800 !important;
+    border-color: #E67E22 !important;
+    color: #ffffff !important;
   }
 
 </style>
@@ -641,14 +709,14 @@
       <!-- 오른쪽 그룹 -->
       <div style="display: flex; align-items: center; gap: 6px;">
         <button class="btn btn-history" onclick="copyAllSalesData()" style="padding: 6px 10px; height: 28px; font-weight: bold; border-color:#2F80ED; color:#2F80ED;" title="실시간 판매내역 전체를 클립보드에 복사합니다">📋 전체 복사</button>
-        <button class="btn btn-primary" onclick="sendSalesToSheet()" style="padding: 6px 12px; height: 28px; font-weight: 800;" title="구글시트 출력결과 시트로 전송하고, 동시에 클립보드에도 복사합니다">☁️ 구글시트 전송 (+복사)</button>
+        <button class="btn btn-primary" onclick="sendSalesToSheet()" style="padding: 6px 12px; height: 28px; font-weight: 800;" title="구글시트 출력결과 시트로 전송하고, 동시에 클립보드에도 복사합니다">☁️ API 전송 & 복사</button>
       </div>
     </div>
     
     <div class="search-container" style="display: flex; justify-content: space-between; align-items: center; width: 100%; flex-wrap: wrap;">
       <div style="display: flex; align-items: center; gap: 8px;">
         <div style="display: flex; align-items: center; gap: 4px;">
-          <input type="text" id="search-sale" class="search-input" style="width: 170px;" placeholder="🔍 품번, 상품명, 가격..." oninput="renderSales()">
+          <input type="text" id="search-sale" class="search-input" style="width: 150px;" placeholder="🔍 품번, 상품명, 가격..." oninput="renderSales()">
           <button class="btn btn-history" onclick="clearSaleFilter()" style="padding: 6px 10px; height: 28px; font-weight: bold;" title="품번/상품명 필터 취소">✕</button>
         </div>
         <button class="btn btn-purple" onclick="sortSalesByContext()">판매내역 정렬</button>
@@ -658,7 +726,7 @@
 
       <div style="display: flex; align-items: center; gap: 8px; margin-left: auto; padding-right: 200px;">
         <div style="display: flex; align-items: center; gap: 4px;">
-          <input type="text" id="search-sale-nick" class="search-input" style="width: 150px; background: #FFFDF9; border-color: #E2D9C8;" placeholder="🔍 고객명 검색..." oninput="renderSales()">
+          <input type="text" id="search-sale-nick" class="search-input" style="width: 120px; background: #FFFDF9; border-color: #E2D9C8;" placeholder="🔍 고객명 검색..." oninput="renderSales()">
           <button class="btn btn-history" onclick="clearSaleNickFilter(event)" style="padding: 6px 10px; height: 28px; font-weight: bold; color: var(--danger); border-color: #F5D3D1;" title="고객명 필터 취소">✕</button>
         </div>
       </div>
