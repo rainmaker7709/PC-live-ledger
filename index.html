@@ -589,12 +589,11 @@
 <body>
 
 <header>
-  <h1><span style="color:var(--accent);">●</span> 라이브 통합 장부</h1>
+  <h1 style="display:flex; align-items:center; gap:8px;">
+    <img src="./icon-vl.ico" alt="VeraLedger Logo" style="width:26px; height:26px; object-fit:contain; vertical-align:middle;">
+    <span>VeraLedger</span>
+  </h1>
   <nav>
-    <button class="tab-btn tab-dash active" onclick="switchTab('view-dash', this)">실시간 판매 내역</button>
-    <button class="tab-btn tab-settle" onclick="switchTab('view-settle', this)">정산 & 내보내기</button>
-    <button class="tab-btn tab-deposit" onclick="switchTab('view-deposit', this)">입금정산</button>
-  </nav>
 </header>
 
 <div id="view-dash" class="view">
@@ -4111,10 +4110,14 @@ document.getElementById('btn-exp-full').addEventListener('click', () => {
     return;
   }
 
+  // 필터 조건 확장 (가격, 날짜, 메모 등이 있는 항목 포함)
   const targets = sales.filter(s => s.prodNum || s.name || s.nickname || s.salePrice || s.depositPrice || s.memo || s.rowDate); 
   if(targets.length === 0){ toast('다운로드할 판매 내역이 없습니다.'); return; }
   
   try {
+    let totalSalePrice = 0;
+    let totalDepositPrice = 0;
+
     const data = targets.map((s, idx) => {
       let excelMemoParts = [];
       if (s.autoReward > 0) excelMemoParts.push(`적립금 ${fmt(s.autoReward)}원`); 
@@ -4130,6 +4133,10 @@ document.getElementById('btn-exp-full').addEventListener('click', () => {
       
       let colorSize = [s.color, s.size].map(x => (x || '').trim()).filter(Boolean).join('/');
 
+      // 합계 누적 연산
+      totalSalePrice += Number(s.salePrice) || 0;
+      totalDepositPrice += Number(s.depositPrice) || 0;
+
       return { 
         'No': idx + 1,
         '날짜': (s.rowDate || '').replace(/\s+/g, ''),
@@ -4141,6 +4148,19 @@ document.getElementById('btn-exp-full').addEventListener('click', () => {
         '태그/상태': `${s.tags?.yt ? '[유튜브]' : ''}${s.tags?.tt ? '[틱톡]' : ''}${s.tags?.fs ? '[무배]' : ''}${s.tags?.kp ? '[킵]' : ''}`, 
         '메모': combinedExcelMemo 
       };
+    });
+    
+    // 💡 [추가] 마지막 줄에 합계 행 삽입
+    data.push({
+      'No': '총계',
+      '날짜': '-',
+      '품번&상품명': '-',
+      '색상/사이즈': '-',
+      '고객명': `총 ${targets.length}건`, // 총 수량 표시
+      '판매가': totalSalePrice,
+      '입금가': totalDepositPrice,
+      '태그/상태': '-',
+      '메모': '-'
     });
     
     const ws = XLSX.utils.json_to_sheet(data); 

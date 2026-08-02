@@ -1,63 +1,49 @@
-const CACHE_NAME = 'live-ledger-v3'; // 버전 업그레이드로 캐시 초기화
+const CACHE_NAME = 'live-ledger-v3';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
-  './xlsx.full.min.js'
+  './xlsx.full.min.js',
+  './icon-vl.ico' // 👈 오프라인 캐시에 이미지 파일 추가[cite: 2]
 ];
 
-// 설치 단계: 필수 파일 개별 캐싱
+// 설치 단계: 필수 파일 캐싱[cite: 2]
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then(async (cache) => {
-      for (const asset of ASSETS_TO_CACHE) {
-        try {
-          await cache.add(asset);
-        } catch (err) {
-          console.warn('캐시 실패 파일:', asset, err);
-        }
-      }
+    caches.open(CACHE_NAME).then((cache) => {
+      return cache.addAll(ASSETS_TO_CACHE); //[cite: 2]
     })
   );
-  self.skipWaiting();
+  self.skipWaiting(); //[cite: 2]
 });
 
-// 활성화 단계: 이전 캐시 완전 삭제
+// 활성화 단계: 이전 캐시 정리[cite: 2]
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((keys) => {
       return Promise.all(
         keys.map((key) => {
           if (key !== CACHE_NAME) {
-            return caches.delete(key);
+            return caches.delete(key); //[cite: 2]
           }
         })
       );
     })
   );
-  self.clients.claim();
+  self.clients.claim(); //[cite: 2]
 });
 
-// 요청 가로채기: 오프라인 모드 최우선 처리
+// 요청 가로채기: 네트워크 연결 안 될 경우 캐시된 파일 제공[cite: 2]
 self.addEventListener('fetch', (event) => {
-  // 구글 앱스 스크립트(GAS) API는 캐시에서 제외
-  if (event.request.url.includes('script.google.com')) {
-    return;
+  if (event.request.url.includes('script.google.com')) { //[cite: 2]
+    return; //[cite: 2]
   }
 
   event.respondWith(
     caches.match(event.request).then((cachedResponse) => {
       if (cachedResponse) {
-        return cachedResponse;
+        return cachedResponse; //[cite: 2]
       }
-
-      // 새로고침(페이지 이동) 시 캐시가 없으면 기본 index.html 제공
-      if (event.request.mode === 'navigate') {
-        return caches.match('./index.html') || caches.match('./');
-      }
-
-      return fetch(event.request).catch(() => {
-        /* 오프라인 연결 실패 시 에러 방지 */
-      });
+      return fetch(event.request); //[cite: 2]
     })
   );
 });
