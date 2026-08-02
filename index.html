@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>판매장부 - 방송 현장 최적화 (v4.0)</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="./xlsx.full.min.js"></script>
 <style>
   :root{
     --bg:#EDF0F2;
@@ -5505,6 +5505,16 @@ window.clearAllStockOrders = function() {
   saveToLocalStorage();
   toast('🧹 주문고객 매트릭스가 깨끗하게 초기화되었습니다.');
 };
+
+/* 👇👇👇 여기서부터 복사해서 붙여넣으세요 👇👇👇 */
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js')
+      .then((reg) => console.log('Service Worker 등록 성공:', reg.scope))
+      .catch((err) => console.error('Service Worker 등록 실패:', err));
+  });
+}
+/* 👆👆👆 여기까지 복사해서 붙여넣으세요 👆👆👆 */
 
 </script>
 </body>
