@@ -1197,6 +1197,7 @@ function saveGlobalMemo() {
   }
 }
 
+let masterHighlightColor = '#FFDD6B'; // 👈 [추가] 메인 장부 기본 강조색 전역 변수
 let bankRecords = [];       // 엑셀에서 파싱된 입금 기록 오브젝트 배열
 let depositFileName = "";    // 업로드된 엑셀 파일명 브리핑 전용 변수
 let depositGlobalShipping = 0;   // 상단 일괄 적용 배송비
@@ -1204,7 +1205,7 @@ let depositDeductionMap = {};     // 고객별 수동 차감 제외금액 저장
 let depositRowHighlights = {};    // 고객별 완료체크 강조색 오브젝트
 let depositMasterHighlightColor = '#FFDD6B'; // 입금정산 탭 선택 강조색
 let depositShippingMap = {}; // 고객별 수동 배송비 입력값 저장소
-let depositUnmatchedHighlights = {}; // 💡 미매칭 목록 완료체크 강조색 저장소 (신규 추가)
+let depositUnmatchedHighlights = {}; // 미매칭 목록 완료체크 강조색 저장소
 
 let selectedCells = new Set(); 
 let startCell = null; 
@@ -2152,8 +2153,6 @@ window.viewLedgerDetail = function(nickname) {
     calculateDetailCheckedTotal();
   }
 };
-
-function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,5); }
 
 function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,5); }
 function createEmptySaleObject() { return { id: uid(), rowDate: '', prodNum: '', name: '', color: '', size: '', nickname: '', salePrice: '', depositPrice: '', memo: '', autoReward: 0, tags: { yt:false, tt:false, fs:false, kp:false }, createdAt: Date.now(), highlighted: false, sent: false }; }
@@ -3654,7 +3653,7 @@ window.handleProdKeydown = function(e, id, isPopup = false) {
     e.preventDefault(); const tr = input.closest('tr'); const tbody = input.closest('tbody'); const rows = Array.from(tbody.querySelectorAll('tr')); const currRowIdx = rows.indexOf(tr);
     const fields = ['prodNum', 'brand', 'features', 'color', 'size', 'price', 'specs']; let currFieldIdx = fields.indexOf(field);
     let nextFieldIdx = currFieldIdx + (e.shiftKey ? -1 : 1); let nextRowIdx = currRowIdx;
-    if (nextFieldIdx >= fields.length) { nextFieldIdx = 0; nextRowIdx += 1; } else if (nextFieldIdx < 0) { fields.length - 1; nextRowIdx -= 1; }
+    if (nextFieldIdx >= fields.length) { nextFieldIdx = 0; nextRowIdx += 1; } else if (nextFieldIdx < 0) { nextFieldIdx = fields.length - 1; nextRowIdx -= 1; }
     if (nextRowIdx >= 0 && nextRowIdx < rows.length) { const targetId = rows[nextRowIdx].id.replace('prod-row-', '').replace('pop-prod-row-', ''); enterProdEditMode(null, targetId, fields[nextFieldIdx], isPopup); }
     return;
   }
