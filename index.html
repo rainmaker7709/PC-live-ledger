@@ -4,7 +4,15 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>판매장부 - 방송 현장 최적화 (v4.0)</title>
+<!-- 1. 오프라인 지원: 로컬 폴더의 xlsx.full.min.js를 먼저 불러옴 -->
 <script src="./xlsx.full.min.js"></script>
+
+<!-- 2. 예비 안전장치: 로컬 파일이 없어서 XLSX가 로드되지 않았다면 CDN에서 불러옴 -->
+<script>
+  if (typeof XLSX === 'undefined') {
+    document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"><\/script>');
+  }
+</script>
 <style>
   :root{
     --bg:#EDF0F2;
@@ -124,31 +132,33 @@
 
 /* 파스텔톤 진한 핑크 화살표 버튼 공통 스타일 */
   .btn-pink {
-    background: #D86B8A; /* 파스텔톤 진한 핑크 */
+    background: #D86B8A;
     color: #ffffff;
     border: none;
-    font-size: 12px;
+    font-size: 11px; /* 기존 12px에서 축소 */
     font-weight: 800;
     cursor: pointer;
-    height: 28px;
+    height: 23px; /* 기존 28px에서 약 20% 축소 */
     display: inline-flex;
     align-items: center;
     justify-content: center;
     transition: background 0.15s ease, opacity 0.15s ease;
   }
-  .btn-pink:hover { background: #B95270; } /* 마우스 오버 시 딥 핑크 */
+  .btn-pink:hover { background: #B95270; }
   .btn-pink:disabled { opacity: 0.4; cursor: not-allowed; background: #D86B8A; }
 
   /* ◀ 왼쪽 화살표 도형 (되돌리기) */
   .btn-undo {
-    clip-path: polygon(12px 0%, 100% 0%, 100% 100%, 12px 100%, 0% 50%);
-    padding: 0 10px 0 18px;
+    /* 화살표 뾰족한 부분의 크기를 12px -> 10px로 축소 */
+    clip-path: polygon(10px 0%, 100% 0%, 100% 100%, 10px 100%, 0% 50%);
+    /* 좌우 패딩을 10px, 18px -> 8px, 15px로 축소 */
+    padding: 0 8px 0 15px; 
   }
 
   /* ▶ 오른쪽 화살표 도형 (다시실행) */
   .btn-redo {
-    clip-path: polygon(0% 0%, calc(100% - 12px) 0%, 100% 50%, calc(100% - 12px) 100%, 0% 100%);
-    padding: 0 18px 0 10px;
+    clip-path: polygon(0% 0%, calc(100% - 10px) 0%, 100% 50%, calc(100% - 10px) 100%, 0% 100%);
+    padding: 0 15px 0 8px;
   }
 
   /* ◀ 왼쪽 화살표 도형 (되돌리기) */
@@ -721,24 +731,24 @@
       </div>
     </div>
     
-    <div class="search-container" style="display: flex; justify-content: space-between; align-items: center; width: 100%; flex-wrap: wrap;">
-      <div style="display: flex; align-items: center; gap: 8px;">
-        <div style="display: flex; align-items: center; gap: 4px;">
-          <input type="text" id="search-sale" class="search-input" style="width: 150px;" placeholder="🔍 품번, 상품명, 가격..." oninput="renderSales()">
-          <button class="btn btn-history" onclick="clearSaleFilter()" style="padding: 6px 10px; height: 28px; font-weight: bold;" title="품번/상품명 필터 취소">✕</button>
-        </div>
-        <button class="btn btn-purple" onclick="sortSalesByContext()">판매내역 정렬</button>
-        <button class="btn btn-pink btn-undo" onclick="execUndo()" disabled title="되돌리기">되돌리기</button>
-        <button class="btn btn-pink btn-redo" onclick="execRedo()" disabled title="다시실행">다시실행</button>
-      </div>
-
-      <div style="display: flex; align-items: center; gap: 8px; margin-left: auto; padding-right: 200px;">
-        <div style="display: flex; align-items: center; gap: 4px;">
-          <input type="text" id="search-sale-nick" class="search-input" style="width: 120px; background: #FFFDF9; border-color: #E2D9C8;" placeholder="🔍 고객명 검색..." oninput="renderSales()">
-          <button class="btn btn-history" onclick="clearSaleNickFilter(event)" style="padding: 6px 10px; height: 28px; font-weight: bold; color: var(--danger); border-color: #F5D3D1;" title="고객명 필터 취소">✕</button>
-        </div>
-      </div>
+    <div class="search-container" style="display: flex; justify-content: space-between; align-items: center; width: 100%; flex-wrap: nowrap; gap: 8px;">
+  <!-- 좌측: 검색창 및 버튼 그룹 (화면이 줄어도 형태 고정) -->
+  <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
+    <div style="display: flex; align-items: center; gap: 4px;">
+      <input type="text" id="search-sale" class="search-input" style="width: 150px;" placeholder="🔍 품번, 상품명, 가격..." oninput="renderSales()">
+      <button class="btn btn-history" onclick="clearSaleFilter()" style="padding: 6px 10px; height: 28px; font-weight: bold;" title="품번/상품명 필터 취소">✕</button>
     </div>
+    <button class="btn" style="background: #896BB5; color: #ffffff; border: 1px solid #75599C; padding: 4px 10px; font-size: 12px; font-weight: 800; transition: 0.15s;" onclick="sortSalesByContext()" onmouseover="this.style.background='#75599C'" onmouseout="this.style.background='#896BB5'">✨ 띄어쓰기 통일 ✨</button>
+    <button class="btn btn-pink btn-undo" onclick="execUndo()" disabled title="되돌리기">되돌리기</button>
+    <button class="btn btn-pink btn-redo" onclick="execRedo()" disabled title="다시실행">다시실행</button>
+  </div>
+
+  <!-- 우측: 고객명 검색 그룹 (우측 200px 여백 제거 및 공간 부족 시 자율 축소) -->
+  <div style="display: flex; align-items: center; gap: 4px; margin-left: auto; flex-shrink: 1; min-width: 80px;">
+    <input type="text" id="search-sale-nick" class="search-input" style="width: 100%; max-width: 120px; min-width: 50px; background: #FFFDF9; border-color: #E2D9C8;" placeholder="🔍 고객명 검색..." oninput="renderSales()">
+    <button class="btn btn-history" onclick="clearSaleNickFilter(event)" style="padding: 6px 10px; height: 28px; font-weight: bold; color: var(--danger); border-color: #F5D3D1; flex-shrink: 0;" title="고객명 필터 취소">✕</button>
+  </div>
+</div>
 
     <div id="sale-filter-tags" style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; align-items: center;"></div>
 
@@ -3902,12 +3912,17 @@ window.sortProductsByContext = function() {
 
 window.sortSalesByContext = function() {
   saveState(); 
+
+  // 1. 커서 지정 정렬 또는 기본 우선순위(품번 > 상품명) 정렬
   if (lastFocusedInput && lastFocusedInput.type === 'sale' && lastFocusedInput.field) {
     const field = lastFocusedInput.field; 
-    sales.sort((a, b) => { let vA = a[field] || '', vB = b[field] || ''; if(!isNaN(vA) && !isNaN(vB) && vA !== '' && vB !== '') return Number(vA) - Number(vB); return String(vA).localeCompare(String(vB), 'ko-KR', {numeric:true}); }); 
-    toast(`📊 활성화된 커서 [${field}] 열을 기준으로 실시간 정렬 완료!`);
+    sales.sort((a, b) => { 
+      let vA = a[field] || '', vB = b[field] || ''; 
+      if (!isNaN(vA) && !isNaN(vB) && vA !== '' && vB !== '') return Number(vA) - Number(vB); 
+      return String(vA).localeCompare(String(vB), 'ko-KR', { numeric: true }); 
+    }); 
   } else {
-    // ★ 품번 -> 상품명 순으로 정확하게 그룹화 정렬
+    // 띄어쓰기를 무시하고 정렬 기준 비교
     sales.sort((a, b) => { 
       const aEmpty = !a.prodNum && !a.name && !a.nickname;
       const bEmpty = !b.prodNum && !b.name && !b.nickname;
@@ -3915,15 +3930,44 @@ window.sortSalesByContext = function() {
       if (!aEmpty && bEmpty) return -1;
       if (aEmpty && bEmpty) return 0;
       
-      const numA = a.prodNum || ''; const numB = b.prodNum || '';
-      if (numA !== numB) return numA.localeCompare(numB, 'ko-KR', {numeric: true});
+      const numA = (a.prodNum || '').replace(/\s+/g, ''); 
+      const numB = (b.prodNum || '').replace(/\s+/g, '');
+      if (numA !== numB) return numA.localeCompare(numB, 'ko-KR', { numeric: true });
       
-      const nameA = a.name || ''; const nameB = b.name || '';
-      return nameA.localeCompare(nameB, 'ko-KR', {numeric: true});
+      const nameA = (a.name || '').replace(/\s+/g, ''); 
+      const nameB = (b.name || '').replace(/\s+/g, '');
+      return nameA.localeCompare(nameB, 'ko-KR', { numeric: true });
     }); 
-    toast('📊 기본 우선순위(품번 > 상품명) 기준으로 자동 정렬했습니다.');
   }
+
+  // 2. 띄어쓰기를 제외했을 때 동일한 품번/상품명을 상단(최초) 표기 기준으로 통일
+  const canonicalProdNumMap = new Map();
+  const canonicalNameMap = new Map();
+
+  sales.forEach(s => {
+    // 품번 통일
+    if (s.prodNum && s.prodNum.trim() !== '') {
+      const keyNum = s.prodNum.replace(/\s+/g, '');
+      if (!canonicalProdNumMap.has(keyNum)) {
+        canonicalProdNumMap.set(keyNum, s.prodNum);
+      } else {
+        s.prodNum = canonicalProdNumMap.get(keyNum);
+      }
+    }
+    // 상품명 통일
+    if (s.name && s.name.trim() !== '') {
+      const keyName = s.name.replace(/\s+/g, '');
+      if (!canonicalNameMap.has(keyName)) {
+        canonicalNameMap.set(keyName, s.name);
+      } else {
+        s.name = canonicalNameMap.get(keyName);
+      }
+    }
+  });
+
+  saveToLocalStorage();
   renderSales();
+  toast('📊 판매내역 정렬 및 동일 품번/상품명 띄어쓰기 통일이 완료되었습니다.');
 };
 
 window.applyHighlightToSelected = function(action) {
@@ -4060,94 +4104,116 @@ async function copySelectedCellsToClipboard() {
   }
 }
 
+// 📄 전체 판매 내역 다운로드
 document.getElementById('btn-exp-full').addEventListener('click', () => {
-  const targets = sales.filter(s => s.prodNum || s.name || s.nickname); 
+  if (typeof XLSX === 'undefined') {
+    toast('⚠️ 엑셀 라이브러리(XLSX)를 불러오지 못했습니다. 인터넷 연결을 확인하세요.');
+    return;
+  }
+
+  const targets = sales.filter(s => s.prodNum || s.name || s.nickname || s.salePrice || s.depositPrice || s.memo || s.rowDate); 
   if(targets.length === 0){ toast('다운로드할 판매 내역이 없습니다.'); return; }
   
-  const data = targets.map((s, idx) => {
-    let excelMemoParts = [];
-    if (s.autoReward > 0) excelMemoParts.push(`적립금 ${fmt(s.autoReward)}원`); 
-    // 유튜브, 틱톡, 무배 추가 코드를 삭제합니다.
-    if (s.memo && s.memo.trim() !== '') excelMemoParts.push(s.memo);
-    let combinedExcelMemo = excelMemoParts.join(', ');
+  try {
+    const data = targets.map((s, idx) => {
+      let excelMemoParts = [];
+      if (s.autoReward > 0) excelMemoParts.push(`적립금 ${fmt(s.autoReward)}원`); 
+      if (s.memo && s.memo.trim() !== '') excelMemoParts.push(s.memo);
+      let combinedExcelMemo = excelMemoParts.join(', ');
 
-    let combinedName = (s.name || '').trim();
-    let pNum = (s.prodNum || '').trim();
-    if (pNum !== '') {
-      if (/^\d+$/.test(pNum)) pNum += '번';
-      combinedName = (pNum + ' ' + combinedName).trim();
-    }
+      let combinedName = (s.name || '').trim();
+      let pNum = (s.prodNum || '').trim();
+      if (pNum !== '') {
+        if (/^\d+$/.test(pNum)) pNum += '번';
+        combinedName = (pNum + ' ' + combinedName).trim();
+      }
+      
+      let colorSize = [s.color, s.size].map(x => (x || '').trim()).filter(Boolean).join('/');
+
+      return { 
+        'No': idx + 1,
+        '날짜': (s.rowDate || '').replace(/\s+/g, ''),
+        '품번&상품명': combinedName, 
+        '색상/사이즈': colorSize,
+        '고객명': s.nickname || '', 
+        '판매가': s.salePrice || '', 
+        '입금가': s.depositPrice || '', 
+        '태그/상태': `${s.tags?.yt ? '[유튜브]' : ''}${s.tags?.tt ? '[틱톡]' : ''}${s.tags?.fs ? '[무배]' : ''}${s.tags?.kp ? '[킵]' : ''}`, 
+        '메모': combinedExcelMemo 
+      };
+    });
     
-    let colorSize = [s.color, s.size].map(x => (x || '').trim()).filter(Boolean).join('/');
-
-    return { 
-      'No': idx + 1,
-      '날짜': s.rowDate || '', 
-      '품번&상품명': combinedName, 
-      '색상/사이즈': colorSize,
-      '고객명': s.nickname || '', 
-      '판매가': s.salePrice || '', 
-      '입금가': s.depositPrice || '', 
-      '태그/상태': `${s.tags?.yt?'[유튜브]':''}${s.tags?.tt?'[틱톡]':''}${s.tags?.fs?'[무배]':''}${s.tags?.kp?'[킵]':''}`, 
-      '메모': combinedExcelMemo 
-    };
-  });
-  
-  const ws = XLSX.utils.json_to_sheet(data); 
-  const wb = XLSX.utils.book_new(); 
-  XLSX.utils.book_append_sheet(wb, ws, '실시간장부_전체'); 
-  
-  const dateVal = (document.getElementById('ledger-date')?.value || '').trim();
-  const sessionVal = (document.getElementById('ledger-session')?.value || '').trim();
-  const whVal = (document.getElementById('wh-name-input')?.value || '').trim();
-  
-  // 파일명 조합 로직
-  let fileNameBase = [];
-  if (dateVal) fileNameBase.push(dateVal);
-  if (sessionVal) fileNameBase.push(sessionVal);
-  if (whVal) fileNameBase.push(`[${whVal}]`);
-  const prefix = fileNameBase.length > 0 ? fileNameBase.join(' ') + ' ' : '';
-  
-  XLSX.writeFile(wb, `${prefix}판매내역.xlsx`);
+    const ws = XLSX.utils.json_to_sheet(data); 
+    const wb = XLSX.utils.book_new(); 
+    XLSX.utils.book_append_sheet(wb, ws, '실시간장부_전체'); 
+    
+    const dateVal = (document.getElementById('ledger-date')?.value || '').trim();
+    const sessionVal = (document.getElementById('ledger-session')?.value || '').trim();
+    const whVal = (document.getElementById('wh-name-input')?.value || '').trim();
+    
+    let fileNameBase = [];
+    if (dateVal) fileNameBase.push(dateVal);
+    if (sessionVal) fileNameBase.push(sessionVal);
+    if (whVal) fileNameBase.push(`[${whVal}]`);
+    const prefix = fileNameBase.length > 0 ? fileNameBase.join(' ') + ' ' : '';
+    
+    XLSX.writeFile(wb, `${prefix}판매내역.xlsx`);
+    toast('✅ 전체 판매 내역 엑셀 다운로드가 완료되었습니다.');
+  } catch (err) {
+    console.error('엑셀 생성 중 오류:', err);
+    toast('⚠️ 엑셀 파일 생성 중 오류가 발생했습니다: ' + err.message);
+  }
 });
 
+// 📦 창고 정산용 다운로드
 document.getElementById('btn-exp-wh').addEventListener('click', () => {
-  const targets = sales.filter(s => s.prodNum || s.name || s.nickname); 
+  if (typeof XLSX === 'undefined') {
+    toast('⚠️ 엑셀 라이브러리(XLSX)를 불러오지 못했습니다. 인터넷 연결을 확인하세요.');
+    return;
+  }
+
+  const targets = sales.filter(s => s.prodNum || s.name || s.nickname || s.salePrice || s.depositPrice); 
   if(targets.length === 0){ toast('데이터가 없습니다.'); return; }
   
-  const summary = {}; 
-  targets.forEach(s => {
-    const key = `${s.prodNum || '미분류'}_${s.name || '무명'}_${s.color||''}_${s.size||''}`;
-    if(!summary[key]) { 
-      summary[key] = { '품번': s.prodNum, '상품명': s.name, '색상': s.color, '사이즈': s.size, '수량': 0, '정산액합계(원가)': 0 }; 
-    }
-    summary[key]['수량'] += 1; 
-    summary[key]['정산액합계(원가)'] += (Number(s.depositPrice) || 0);
-  });
-  
-  // 👇 이 부분이 새롭게 추가된 부분입니다. (합계 계산 후 마지막 줄에 삽입)
-  const summaryData = Object.values(summary);
-  
-  const totalQty = summaryData.reduce((sum, item) => sum + item['수량'], 0);
-  const totalAmt = summaryData.reduce((sum, item) => sum + item['정산액합계(원가)'], 0);
-  
-  summaryData.push({ 
-    '품번': '총계', 
-    '상품명': '-', 
-    '색상': '-', 
-    '사이즈': '-', 
-    '수량': totalQty, 
-    '정산액합계(원가)': totalAmt 
-  });
-  
-  const ws = XLSX.utils.json_to_sheet(summaryData); const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, '창고정산요약'); 
-  
-  const dateVal = (document.getElementById('ledger-date')?.value || '').trim();
-  const whVal = (document.getElementById('wh-name-input')?.value || '').trim();
-  const filePrefix = dateVal ? dateVal : '정산요약';
-  const fileMiddle = whVal ? ` [${whVal}]` : '';
-  
-  XLSX.writeFile(wb, `${filePrefix}${fileMiddle} 창고정산요약.xlsx`);
+  try {
+    const summary = {}; 
+    targets.forEach(s => {
+      const key = `${s.prodNum || '미분류'}_${s.name || '무명'}_${s.color||''}_${s.size||''}`;
+      if(!summary[key]) { 
+        summary[key] = { '품번': s.prodNum, '상품명': s.name, '색상': s.color, '사이즈': s.size, '수량': 0, '정산액합계(원가)': 0 }; 
+      }
+      summary[key]['수량'] += 1; 
+      summary[key]['정산액합계(원가)'] += (Number(s.depositPrice) || 0);
+    });
+    
+    const summaryData = Object.values(summary);
+    const totalQty = summaryData.reduce((sum, item) => sum + item['수량'], 0);
+    const totalAmt = summaryData.reduce((sum, item) => sum + item['정산액합계(원가)'], 0);
+    
+    summaryData.push({ 
+      '품번': '총계', 
+      '상품명': '-', 
+      '색상': '-', 
+      '사이즈': '-', 
+      '수량': totalQty, 
+      '정산액합계(원가)': totalAmt 
+    });
+    
+    const ws = XLSX.utils.json_to_sheet(summaryData); 
+    const wb = XLSX.utils.book_new(); 
+    XLSX.utils.book_append_sheet(wb, ws, '창고정산요약'); 
+    
+    const dateVal = (document.getElementById('ledger-date')?.value || '').trim();
+    const whVal = (document.getElementById('wh-name-input')?.value || '').trim();
+    const filePrefix = dateVal ? dateVal : '정산요약';
+    const fileMiddle = whVal ? ` [${whVal}]` : '';
+    
+    XLSX.writeFile(wb, `${filePrefix}${fileMiddle} 창고정산요약.xlsx`);
+    toast('✅ 창고 정산용 엑셀 다운로드가 완료되었습니다.');
+  } catch (err) {
+    console.error('창고정산 엑셀 생성 중 오류:', err);
+    toast('⚠️ 창고 정산 엑셀 생성 중 오류가 발생했습니다: ' + err.message);
+  }
 });
 
 window.exportShareData = function() {
@@ -4312,7 +4378,7 @@ window.sendSalesToSheet = async function() {
   if (modeChoice === "3") mode = "overwrite_all";
   
   // 💡 상단에 입력된 공통 날짜값을 미리 가져옵니다.
-  const globalDate = (document.getElementById('ledger-date')?.value || '').trim();
+  const globalDate = (document.getElementById('ledger-date')?.value || '').replace(/\s+/g, '');
 
   const records = targets.map(s => {
     let combinedName = (s.name || '').trim();
@@ -4326,7 +4392,7 @@ window.sendSalesToSheet = async function() {
     }
     
     // ✅ 각 행의 날짜가 비어있을 경우, 상단 공통 날짜(globalDate)를 끌어와서 강제로 채워줍니다.
-    let finalDate = (s.rowDate || '').trim();
+    let finalDate = (s.rowDate || '').replace(/\s+/g, '');
     if (finalDate === '') finalDate = globalDate;
     
     return { 
@@ -4392,7 +4458,7 @@ window.copyAllSalesData = async function() {
 
     // 6. 입금가 뒤에 빈 칸 2개('')를 넣어 엑셀 2열을 건너뛰고 합친 메모 입력
     rows.push([
-      s.rowDate || '',           // 1. 날짜
+      (s.rowDate || '').replace(/\s+/g, ''),           // 1. 날짜
       combinedName,              // 2. 품번&상품명
       colorSize,                 // 3. 색상/사이즈
       s.nickname || '',          // 4. 고객명
