@@ -1,18 +1,21 @@
-const CACHE_NAME = 'live-ledger-v6';
+const CACHE_NAME = 'live-ledger-v7'; // v7으로 강제 업데이트
 const ASSETS_TO_CACHE = [
   './',
-  './index.html',
-  './xlsx.full.min.js'
+  './index.html'
 ];
 
-// 1. 설치 단계: 필수 파일 캐싱
+// 1. 설치 단계: 파일이 없어도 업데이트가 멈추지 않도록 안전한 캐싱 도입
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
+      // 🚨 핵심 원인 해결: xlsx 파일이 깃허브에 없더라도 SW 설치가 터지지 않게 분리
+      // 파일이 없으면 에러를 뿜지 않고 부드럽게 무시(.catch)합니다.
+      cache.add('./xlsx.full.min.js').catch(() => console.log('xlsx 파일 로컬 캐싱 건너뜀'));
+      
       return cache.addAll(ASSETS_TO_CACHE);
     })
   );
-  self.skipWaiting();
+  self.skipWaiting(); // 즉시 새 버전 활성화
 });
 
 // 2. 활성화 단계: 이전 구버전 캐시 정리 및 즉시 제어권 획득
