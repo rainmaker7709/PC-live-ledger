@@ -1,11 +1,11 @@
-const CACHE_NAME = 'live-ledger-v5'; // 👈 버전을 올려 기존 이미지 캐시 삭제
+const CACHE_NAME = 'live-ledger-v6';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
   './xlsx.full.min.js'
 ];
 
-// 설치 단계: 필수 파일 캐싱
+// 1. 설치 단계: 필수 파일 캐싱
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
@@ -15,7 +15,7 @@ self.addEventListener('install', (event) => {
   self.skipWaiting();
 });
 
-// 활성화 단계: 이전 캐시(이미지 포함 구버전) 정리
+// 2. 활성화 단계: 이전 구버전 캐시 정리 및 즉시 제어권 획득
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((keys) => {
@@ -31,18 +31,30 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-// 요청 가로채기: 네트워크 연결 안 될 경우 캐시된 파일 제공
+// 3. 요청 가로채기: HTML은 네트워크 우선, 기타 자원은 캐시 우선
 self.addEventListener('fetch', (event) => {
   if (event.request.url.includes('script.google.com')) {
     return;
   }
 
+  // HTML 파일 요청 시 네트워크에서 먼저 최신 버전을 가져오고, 실패(오프라인) 시 캐시 사용
+  if (event.request.mode === 'navigate' || (event.request.headers.get('accept') && event.request.headers.get('accept').includes('text/html'))) {
+    event.respondWith(
+      fetch(event.request)
+        .then((response) => {
+          const copy = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
+          return response;
+        })
+        .catch(() => caches.match(event.request))
+    );
+    return;
+  }
+
+  // 기타 정적 자원(JS, CSS 등)은 캐시 우선 사용
   event.respondWith(
     caches.match(event.request).then((cachedResponse) => {
-      if (cachedResponse) {
-        return cachedResponse;
-      }
-      return fetch(event.request);
+      return cachedResponse || fetch(event.request);
     })
   );
 });
