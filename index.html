@@ -589,7 +589,7 @@
 <body>
 
 <header>
-  <h1><span style="color:var(--accent);">●</span> veraledger</h1>
+  <h1><span style="color:var(--accent);">●</span> veraledger(테스트)</h1>
   <nav>
     <button class="tab-btn tab-dash active" onclick="switchTab('view-dash', this)">📋 판매 장부</button>
     <button class="tab-btn tab-settle" onclick="switchTab('view-settle', this)">📊 마감 정산</button>
@@ -1169,7 +1169,7 @@ function updateGlobalMemoBtnState() {
     btn.style.background = '#F4F6F8';
     btn.style.color = 'var(--ink-soft)';
     btn.style.borderColor = 'var(--line)';
-    btn.innerHTML = '📝 메모장';
+    btn.innerHTML = '📝 메모장(테스트)';
   }
 }
 
@@ -5673,8 +5673,20 @@ window.clearAllStockOrders = function() {
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('./sw.js')
-      .then((reg) => console.log('Service Worker 등록 성공:', reg.scope))
+      .then((reg) => {
+        // 앱 실행 시 서버의 최신 sw.js 변경 사항을 강제 체크
+        reg.update();
+      })
       .catch((err) => console.error('Service Worker 등록 실패:', err));
+  });
+
+  // 새 서비스 워커(sw.js)가 활성화되면 앱 화면을 자동으로 새로고침하여 최신 HTML 반영
+  let refreshing = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (!refreshing) {
+      refreshing = true;
+      window.location.reload();
+    }
   });
 }
 /* 👆👆👆 여기까지 복사해서 붙여넣으세요 👆👆👆 */
