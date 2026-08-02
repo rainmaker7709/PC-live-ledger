@@ -591,6 +591,10 @@
 <header>
   <h1><span style="color:var(--accent);">●</span> veraledger</h1>
   <nav>
+    <button class="tab-btn tab-dash active" onclick="switchTab('view-dash', this)">📋 판매 장부</button>
+    <button class="tab-btn tab-settle" onclick="switchTab('view-settle', this)">📊 마감 정산</button>
+    <button class="tab-btn tab-deposit" onclick="switchTab('view-deposit', this)">💰 입금 정산</button>
+  </nav>
 </header>
 
 <div id="view-dash" class="view">
