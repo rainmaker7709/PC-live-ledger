@@ -4,10 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>판매장부 - 방송 현장 최적화 (v4.0)</title>
-<!-- 1. 오프라인 지원: 로컬 폴더의 xlsx.full.min.js를 먼저 불러옴 -->
+<!-- 오프라인용 로컬 파일 호출 -->
 <script src="./xlsx.full.min.js"></script>
 
-<!-- 2. 예비 안전장치: 로컬 파일이 없어서 XLSX가 로드되지 않았다면 CDN에서 불러옴 -->
+<!-- 로컬 파일이 없을 때만 작동하는 예비 CDN 호출 -->
 <script>
   if (typeof XLSX === 'undefined') {
     document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"><\/script>');
