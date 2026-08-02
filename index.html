@@ -3735,7 +3735,15 @@ window.updateProdField = function(id, field, value) { const target = products.fi
 window.updateRowField = function(id, field, value) { 
   const target = sales.find(x => x.id === id); 
   if(target) { 
-    if (field === 'salePrice' || field === 'depositPrice') value = convertPrice(value); 
+    // 판매가, 입금가를 직접 타이핑할 때는 convertPrice(자동 만원 변환)를 거치지 않음
+    // 대신 사용자가 콤마(,)를 섞어 쳤을 경우를 대비해 콤마만 깔끔하게 지워줌
+    if (field === 'salePrice' || field === 'depositPrice') {
+      if (value !== undefined && value !== null && value !== '') {
+        let cleanVal = value.toString().replace(/,/g, '').trim();
+        value = isNaN(Number(cleanVal)) ? value : Number(cleanVal);
+      }
+    }
+    
     target[field] = value; 
     target.sent = false; 
 
@@ -4539,22 +4547,41 @@ window.openMatrixFromSettle = function() {
 window.closeMatrixPopup = function() { document.getElementById('matrix-modal').style.display = 'none'; };
 
 window.executeAutofill = function(id, field) {
-  const idx = sales.findIndex(x => x.id === id); if (idx === -1) return;
-  const val = sales[idx][field]; if (val === undefined || val === null || String(val).trim() === '') { return; }
-  let hasBelow = (idx + 1 < sales.length && String(sales[idx + 1][field]).trim() === '');
-  let hasAbove = (idx - 1 >= 0 && String(sales[idx - 1][field]).trim() === '');
-  if (!hasBelow && !hasAbove) { return; }
-  let chosenDir = 'down';
-  if (hasBelow && hasAbove) { if (lastAutofill.id === id && lastAutofill.field === field && lastAutofill.dir === 'down') chosenDir = 'up'; else chosenDir = 'down'; } 
-  else if (hasBelow) chosenDir = 'down'; else chosenDir = 'up';
+  const idx = sales.findIndex(x => x.id === id); 
+  if (idx === -1) return;
+
+  // 선택된 셀 중 현재 행(id)에 속한 모든 필드 추출 (없으면 클릭한 필드만 사용)
+  let targetFields = [];
+  selectedCells.forEach(cellKey => {
+    const [rId, fName] = cellKey.split(':::');
+    if (rId === id) targetFields.push(fName);
+  });
+  if (targetFields.length === 0) targetFields = [field];
 
   saveState();
-  if (chosenDir === 'down') {
-    for (let i = idx + 1; i < sales.length; i++) { if (String(sales[i][field]).trim() === '') { sales[i][field] = val; sales[i].sent = false; } else break; }
-  } else {
-    for (let i = idx - 1; i >= 0; i--) { if (String(sales[i][field]).trim() === '') { sales[i][field] = val; sales[i].sent = false; } else break; }
+  let fillCount = 0;
+
+  targetFields.forEach(fName => {
+    const val = sales[idx][fName];
+    if (val === undefined || val === null || String(val).trim() === '') return;
+
+    // 아래 방향으로 연속된 빈 셀 채우기
+    for (let i = idx + 1; i < sales.length; i++) {
+      if (String(sales[i][fName]).trim() === '') {
+        sales[i][fName] = val;
+        sales[i].sent = false;
+        fillCount++;
+      } else {
+        break; // 데이터가 있는 셀을 만나면 중단
+      }
+    }
+  });
+
+  if (fillCount > 0) {
+    lastAutofill = { id, field, dir: 'down' };
+    renderSales();
+    toast(`📋 ${targetFields.length}개 항목의 다중 자동채우기가 완료되었습니다.`);
   }
-  lastAutofill = { id, field, dir: chosenDir }; renderSales();
 };
 
 window.addEventListener('keydown', function(e) {
@@ -4673,13 +4700,53 @@ window.addEventListener('mousedown', function(e) {
   }
 });
 
+// 💡 마우스 이동 시 좌클릭 누름 여부(e.buttons === 1)를 최우선 검사하여 자동 선택 현환 방지
 window.addEventListener('mousemove', function(e) {
-  if (!isDragging && !isFillDragging) { if (dragScrollInterval) { clearInterval(dragScrollInterval); dragScrollInterval = null; } return; }
-  const saleScroll = document.querySelector('.table-scroll-sale'); const settleScroll = document.querySelector('#view-settle .table-responsive');
-  let container = (document.getElementById('view-dash').style.display !== 'none') ? saleScroll : settleScroll; if (!container) return;
-  const rect = container.getBoundingClientRect(); const threshold = 40; clearInterval(dragScrollInterval); dragScrollInterval = null;
-  if (e.clientY > rect.bottom - threshold && e.clientY < rect.bottom + 20) { dragScrollInterval = setInterval(() => { container.scrollTop += 8; }, 16); } 
-  else if (e.clientY < rect.top + threshold && e.clientY > rect.top - 20) { dragScrollInterval = setInterval(() => { container.scrollTop -= 8; }, 16); }
+  // 마우스 좌클릭 상태가 아니면 모든 드래그 상태 즉시 강제 리셋
+  if (e.buttons !== 1) {
+    isDragging = false;
+    isFillDragging = false;
+    window.isDragPending = false;
+    document.body.classList.remove('dragging-mode');
+    document.querySelectorAll('.cell-wrap').forEach(el => el.classList.remove('fill-preview'));
+    if (dragScrollInterval) { clearInterval(dragScrollInterval); dragScrollInterval = null; }
+    return;
+  }
+
+  if (window.isDragPending) {
+    const dist = Math.hypot(e.clientX - window.dragStartX, e.clientY - window.dragStartY);
+    if (dist > 3) {
+      isDragging = true;
+      window.isDragPending = false;
+      
+      if (document.activeElement && document.activeElement.tagName === 'INPUT') {
+        document.activeElement.blur();
+      }
+      
+      document.body.classList.add('dragging-mode');
+    }
+  }
+
+  if (!isDragging && !isFillDragging) { 
+    if (dragScrollInterval) { clearInterval(dragScrollInterval); dragScrollInterval = null; } 
+    return; 
+  }
+
+  const saleScroll = document.querySelector('.table-scroll-sale'); 
+  const settleScroll = document.querySelector('#view-settle .table-responsive');
+  let container = (document.getElementById('view-dash').style.display !== 'none') ? saleScroll : settleScroll; 
+  if (!container) return;
+
+  const rect = container.getBoundingClientRect(); 
+  const threshold = 40; 
+  clearInterval(dragScrollInterval); 
+  dragScrollInterval = null;
+
+  if (e.clientY > rect.bottom - threshold && e.clientY < rect.bottom + 20) { 
+    dragScrollInterval = setInterval(() => { container.scrollTop += 8; }, 16); 
+  } else if (e.clientY < rect.top + threshold && e.clientY > rect.top - 20) { 
+    dragScrollInterval = setInterval(() => { container.scrollTop -= 8; }, 16); 
+  }
 });
 
 window.addEventListener('paste', function(e) {
@@ -4905,29 +4972,42 @@ window.addEventListener('mouseup', function() {
   window.isDragPending = false;
 
   if (isFillDragging && startCell) {
-    const field = startCell.field;
-    const startVal = startCell.value;
-    
+  const startRowId = startCell.id;
+  
+  // 기준 행에서 선택되어 있던 모든 필드 수집
+  let sourceFields = [];
+  selectedCells.forEach(cellKey => {
+    const [rId, fName] = cellKey.split(':::');
+    if (rId === startRowId) sourceFields.push(fName);
+  });
+  if (sourceFields.length === 0) sourceFields = [startCell.field];
+
+  const sourceItem = sales.find(x => x.id === startRowId);
+
+  if (sourceItem) {
     let fillCount = 0;
     let stateSaved = false;
 
     const previewedWraps = document.querySelectorAll('.cell-wrap.fill-preview');
+    
+    // 미리보기된 모든 셀의 행 ID 수집
+    const targetRowIds = new Set();
     previewedWraps.forEach(wrap => {
       const cellId = wrap.getAttribute('data-cell-id');
-      if (cellId) {
-        const [rId, fName] = cellId.split(':::');
-        const targetSale = sales.find(x => x.id === rId);
-        if (targetSale) {
-          if (!stateSaved) { saveState(); stateSaved = true; } 
-          targetSale[fName] = startVal; 
+      if (cellId) targetRowIds.add(cellId.split(':::')[0]);
+    });
+
+    targetRowIds.forEach(rId => {
+      const targetSale = sales.find(x => x.id === rId);
+      if (targetSale) {
+        if (!stateSaved) { saveState(); stateSaved = true; }
+        
+        // 다중 선택된 모든 필드 값을 한 번에 복사
+        sourceFields.forEach(fName => {
+          targetSale[fName] = sourceItem[fName] || '';
           targetSale.sent = false;
-          fillCount++;
-          
-          wrap.classList.add('flash-overwrite-active');
-          setTimeout(() => {
-            wrap.classList.remove('flash-overwrite-active');
-          }, 700);
-        }
+        });
+        fillCount++;
       }
     });
 
@@ -4935,18 +5015,14 @@ window.addEventListener('mouseup', function() {
 
     if (fillCount > 0) {
       renderSales();
+      toast(`📋 ${sourceFields.length}개 열 영역의 다중 드래그 채우기가 완료되었습니다.`);
     }
-
-    isFillDragging = false;
-    startCell = null;
-    document.body.classList.remove('dragging-mode');
   }
 
-  if (isDragging) { 
-    isDragging = false; 
-    startCell = null; 
-    document.body.classList.remove('dragging-mode'); 
-  } 
+  isFillDragging = false;
+  startCell = null;
+  document.body.classList.remove('dragging-mode');
+}
   
   if (dragScrollInterval) { 
     clearInterval(dragScrollInterval); 
