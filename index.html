@@ -756,10 +756,10 @@
       <table>
         <colgroup>
           <col style="width:38px;">
-          <col style="width:50px;"> <col style="width:39px;">  <col style="width:205px;"> <col style="width:65px;"> <col style="width:50px;"> <col style="width:95px;"> <col style="width:65px;">  <col style="width:65px;">  <col style="width:85px;"> <col style="width:90px;">  </colgroup>
+          <col style="width:50px;"> <col style="width:39px;">  <col style="width:190px;"> <col style="width:55px;"> <col style="width:45px;"> <col style="width:85px;"> <col style="width:40px;"> <col style="width:65px;">  <col style="width:65px;">  <col style="width:85px;"> <col style="width:90px;">  </colgroup>
         <thead>
           <tr>
-            <th>No.</th><th>날짜</th><th>품번</th><th>상품명</th><th>색상</th><th>사이즈</th><th>고객명</th><th style="text-align:right; padding-right:8px;">판매가</th><th style="text-align:right; padding-right:8px;">입금가</th><th>메모 / 상태</th><th>액션</th>
+            <th>No.</th><th>날짜</th><th>품번</th><th>상품명</th><th>색상</th><th>사이즈</th><th>고객명</th><th style="text-align:center;">수량</th><th style="text-align:right; padding-right:8px;">판매가</th><th style="text-align:right; padding-right:8px;">입금가</th><th>메모 / 상태</th><th>액션</th>
           </tr>
         </thead>
         <tbody id="list-sale"></tbody>
@@ -799,6 +799,7 @@
       <input type="text" id="wh-name-input" class="search-input" style="width: 140px; height: 28px; font-size: 12px; font-weight: bold; border-color: var(--line); padding: 4px 8px; border-radius: 4px;" placeholder="창고명 입력..." oninput="saveToLocalStorage()">
       <button class="btn btn-purple" id="btn-exp-full" style="padding:7px 14px; font-size:13px; font-weight:800;">📄 전체 판매 내역 다운로드</button>
       <button class="btn btn-primary" id="btn-exp-wh" style="padding:7px 14px; font-size:13px; color:var(--accent-ink); font-weight:800;">📦 창고 정산용 다운로드</button>
+      <button class="btn btn-primary" id="btn-exp-other-wh" style="padding:7px 14px; font-size:13px; background:#4CAF50; border-color:#4CAF50; color:#fff; font-weight:800;">🚚 기타창고 다운로드</button>
     </div>
   </div>
 
@@ -814,14 +815,15 @@
       <div class="table-responsive" style="flex:1; overflow-y:auto; max-height:calc(100vh - 310px);">
         <table style="table-layout: fixed;">
           <colgroup>
-            <col style="width: 48px;">
+            <col style="width: 42px;">
             <col style="width: auto;">
-            <col style="width: 55px;">
-            <col style="width: 45px;">
-            <col style="width: 85px;">
-            <col style="width: 74px;">
-            <col style="width: 74px;">
-            <col style="width: 75px;">
+            <col style="width: 49px;">
+            <col style="width: 40px;">
+            <col style="width: 76px;">
+            <col style="width: 35px;">
+            <col style="width: 66px;">
+            <col style="width: 66px;">
+            <col style="width: 60px;">
           </colgroup>
           <thead>
   <tr>
@@ -830,6 +832,7 @@
     <th>색상</th>
     <th>사이즈</th>
     <th onclick="settleSetSort('nickname')" style="cursor:pointer;">고객명 ⇅</th>
+    <th style="text-align:center;">수량</th>
     <th onclick="settleSetSort('salePrice')" style="cursor:pointer; text-align:right;">판매가 ⇅</th>
     <th onclick="settleSetSort('depositPrice')" style="cursor:pointer; text-align:right;">입금가 ⇅</th>
     <th style="text-align:center;">액션</th>
@@ -872,9 +875,10 @@
           <colgroup>
             <col style="width: 45px;">
             <col style="width: auto;">
-            <col style="width: 70px;">
-            <col style="width: 70px;">
-            <col style="width: 90px;">
+            <col style="width: 60px;">
+            <col style="width: 60px;">
+            <col style="width: 40px;">
+            <col style="width: 80px;">
           </colgroup>
           <thead>
             <tr>
@@ -882,6 +886,7 @@
               <th>상품명</th>
               <th>색상</th>
               <th>사이즈</th>
+              <th style="text-align: center;">수량</th>
               <th style="text-align: right; padding-right: 8px;">판매금액</th>
             </tr>
           </thead>
@@ -1819,7 +1824,7 @@ window.renderDepositAnalysisTable = function() {
   sales.forEach(s => {
     const nick = (s.nickname || '').trim();
     if (!nick) return; 
-    const price = Number(s.salePrice) || 0;
+    const price = (Number(s.salePrice) || 0) * (Number(s.qty) || 1);
     ledgerMap.set(nick, (ledgerMap.get(nick) || 0) + price);
 
     if (!userTagsMap.has(nick)) userTagsMap.set(nick, { fs: false, reward: 0 });
@@ -2135,16 +2140,17 @@ window.viewLedgerDetail = function(nickname) {
       
       const displayName = combinedName || '-';
 
+      const calcPrice = (Number(s.salePrice) || 0) * (Number(s.qty) || 1);
       return `
       <tr>
         <td style="text-align:center; vertical-align:middle;">
-          <!-- 각 상품 줄마다 고유 가격 데이터를 심은 체크박스를 기본 체크 상태로 배치 -->
-          <input type="checkbox" class="detail-item-chk" data-price="${s.salePrice || 0}" checked style="width:16px; height:16px; cursor:pointer;" onchange="calculateDetailCheckedTotal()">
+          <input type="checkbox" class="detail-item-chk" data-price="${calcPrice}" checked style="width:16px; height:16px; cursor:pointer;" onchange="calculateDetailCheckedTotal()">
         </td>
         <td style="font-weight:700;">${escapeHtml(displayName)}</td>
         <td style="font-size:12px; color:var(--ink-soft);">${escapeHtml(s.color) || '-'}</td>
         <td style="font-size:12px; color:var(--ink-soft);">${escapeHtml(s.size) || '-'}</td>
-        <td class="num" style="text-align:right; font-weight:700; color:var(--purple-ink);">${s.salePrice ? fmt(s.salePrice) : '-'}</td>
+        <td class="num" style="text-align:center; color:var(--ink-soft);">${s.qty ? s.qty : '1'}</td>
+        <td class="num" style="text-align:right; font-weight:700; color:var(--purple-ink);">${calcPrice ? fmt(calcPrice) : '-'}</td>
       </tr>
       `;
     }).join('');
@@ -2155,7 +2161,7 @@ window.viewLedgerDetail = function(nickname) {
 };
 
 function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,5); }
-function createEmptySaleObject() { return { id: uid(), rowDate: '', prodNum: '', name: '', color: '', size: '', nickname: '', salePrice: '', depositPrice: '', memo: '', autoReward: 0, tags: { yt:false, tt:false, fs:false, kp:false }, createdAt: Date.now(), highlighted: false, sent: false }; }
+function createEmptySaleObject() { return { id: uid(), rowDate: '', prodNum: '', name: '', color: '', size: '', nickname: '', qty: '', salePrice: '', depositPrice: '', memo: '', autoReward: 0, tags: { yt:false, tt:false, fs:false, kp:false }, createdAt: Date.now(), highlighted: false, sent: false }; }
 
 function convertPrice(val) {
   if (val === undefined || val === null || val === '') return '';
@@ -2932,8 +2938,8 @@ function renderSales(){
     return true;
   });
 
-  const totalSale = sales.reduce((a,s)=>a+(Number(s.salePrice)||0),0); const totalDep = sales.reduce((a,s)=>a+(Number(s.depositPrice)||0),0);
-  const filtTotalSale = filtered.reduce((a,s)=>a+(Number(s.salePrice)||0),0); const filtTotalDep = filtered.reduce((a,s)=>a+(Number(s.depositPrice)||0),0);
+  const totalSale = sales.reduce((a,s)=>a+((Number(s.salePrice)||0)*(Number(s.qty)||1)),0); const totalDep = sales.reduce((a,s)=>a+((Number(s.depositPrice)||0)*(Number(s.qty)||1)),0);
+  const filtTotalSale = filtered.reduce((a,s)=>a+((Number(s.salePrice)||0)*(Number(s.qty)||1)),0); const filtTotalDep = filtered.reduce((a,s)=>a+((Number(s.depositPrice)||0)*(Number(s.qty)||1)),0);
   
   const isFiltered = q !== '' || qNick !== '' || Object.keys(activeSaleFilters).length > 0;
   if (!isFiltered) {
@@ -3132,6 +3138,7 @@ function getRowHtml(s, index, isPopup = false, hasDivider = false) {
       <td><div class="cell-wrap" id="${prefix}-${s.id}-color" data-cell-id="${s.id}:::color" oncontextmenu="handleCellFilter(event, '${s.id}', 'color')" ondblclick="enterEditMode(event, '${s.id}', 'color', ${isPopup}, true)"><span class="view-text${blankClass(s.color)}" style="font-size:12px;">${escapeHtml(s.color) || '&nbsp;'}</span><input type="text" class="inline-input" style="font-size:12px;" value="${escapeHtml(s.color)}" data-field="color" onfocus="trackFocus('sale', '${s.id}', 'color', this)" onblur="exitEditMode('${s.id}', 'color', ${isPopup})" onkeydown="handleSaleKeydown(event, '${s.id}', ${isPopup})" oninput="updateRowField('${s.id}', 'color', this.value); acFilter(this, 'color')" placeholder="색상"><div class="drag-handle"></div></div></td>
       <td><div class="cell-wrap" id="${prefix}-${s.id}-size" data-cell-id="${s.id}:::size" oncontextmenu="handleCellFilter(event, '${s.id}', 'size')" ondblclick="enterEditMode(event, '${s.id}', 'size', ${isPopup}, true)"><span class="view-text${blankClass(s.size)}" style="font-size:12px;">${escapeHtml(s.size) || '&nbsp;'}</span><input type="text" class="inline-input" style="font-size:12px;" value="${escapeHtml(s.size)}" data-field="size" onfocus="trackFocus('sale', '${s.id}', 'size', this)" onblur="exitEditMode('${s.id}', 'size', ${isPopup})" onkeydown="handleSaleKeydown(event, '${s.id}', ${isPopup})" oninput="updateRowField('${s.id}', 'size', this.value); acFilter(this, 'size')" placeholder="사이즈"><div class="drag-handle"></div></div></td>
       <td><div class="cell-wrap" id="${prefix}-${s.id}-nickname" data-cell-id="${s.id}:::nickname" oncontextmenu="handleCellFilter(event, '${s.id}', 'nickname')" ondblclick="enterEditMode(event, '${s.id}', 'nickname', ${isPopup}, true)"><span class="${nickSpanClass}" style="font-weight:700;">${escapeHtml(s.nickname) || '&nbsp;'}</span><input type="text" class="${nickClass}" data-ac="nickname" style="background:#FDFBF7; font-weight:700;" value="${escapeHtml(s.nickname)}" data-field="nickname" onfocus="trackFocus('sale', '${s.id}', 'nickname', this)" onblur="exitEditMode('${s.id}', 'nickname', ${isPopup})" onkeydown="handleSaleKeydown(event, '${s.id}', ${isPopup})" oninput="updateRowField('${s.id}', 'nickname', this.value); checkNicknameBlank(this); acFilter(this,'nickname')" placeholder="고객명"><div class="drag-handle"></div></div></td>
+      <td><div class="cell-wrap num-wrap" id="${prefix}-${s.id}-qty" data-cell-id="${s.id}:::qty" oncontextmenu="handleCellFilter(event, '${s.id}', 'qty')" ondblclick="enterEditMode(event, '${s.id}', 'qty', ${isPopup}, true)"><span class="view-text${blankClass(s.qty)}" style="text-align:center;">${s.qty ? escapeHtml(s.qty) : '1'}</span><input type="text" class="inline-input num" value="${s.qty || ''}" data-field="qty" onfocus="trackFocus('sale', '${s.id}', 'qty', this)" onblur="exitEditMode('${s.id}', 'qty', ${isPopup})" onkeydown="handleSaleKeydown(event, '${s.id}', ${isPopup})" oninput="updateRowField('${s.id}', 'qty', this.value)" placeholder="1" style="text-align:center;"><div class="drag-handle"></div></div></td>
       <td><div class="cell-wrap num-wrap" id="${prefix}-${s.id}-salePrice" data-cell-id="${s.id}:::salePrice" oncontextmenu="handleCellFilter(event, '${s.id}', 'salePrice')" ondblclick="enterEditMode(event, '${s.id}', 'salePrice', ${isPopup}, true)"><span class="view-text${blankClass(s.salePrice)}" style="color:var(--purple-ink); font-weight:700;">${s.salePrice ? fmt(s.salePrice) : '&nbsp;'}</span><input type="text" class="inline-input num" value="${s.salePrice || ''}" data-field="salePrice" onfocus="trackFocus('sale', '${s.id}', 'salePrice', this)" onblur="exitEditMode('${s.id}', 'salePrice', ${isPopup})" onkeydown="handleSaleKeydown(event, '${s.id}', ${isPopup})" oninput="updateRowField('${s.id}', 'salePrice', this.value)" placeholder="0" style="color:var(--purple-ink); font-weight:700;"><div class="drag-handle"></div></div></td>
       <td><div class="cell-wrap num-wrap" id="${prefix}-${s.id}-depositPrice" data-cell-id="${s.id}:::depositPrice" oncontextmenu="handleCellFilter(event, '${s.id}', 'depositPrice')" ondblclick="enterEditMode(event, '${s.id}', 'depositPrice', ${isPopup}, true)"><span class="view-text${blankClass(s.depositPrice)}" style="color:var(--purple-ink); font-weight:700;">${s.depositPrice ? fmt(s.depositPrice) : '&nbsp;'}</span><input type="text" class="inline-input num" value="${s.depositPrice || ''}" data-field="depositPrice" onfocus="trackFocus('sale', '${s.id}', 'depositPrice', this)" onblur="exitEditMode('${s.id}', 'depositPrice', ${isPopup})" onkeydown="handleSaleKeydown(event, '${s.id}', ${isPopup})" oninput="updateRowField('${s.id}', 'depositPrice', this.value)" placeholder="0" style="color:var(--purple-ink); font-weight:700;"><div class="drag-handle"></div></div></td>
       <td>
@@ -3158,8 +3165,8 @@ function renderSettleSummaryAndRight() { renderSettleSummary(); renderSettleRigh
 
 function renderSettleSummary() {
   const list = settleValidSales(); 
-  const totalSale = list.reduce((a, s) => a + (Number(s.salePrice) || 0), 0); 
-  const totalDep = list.reduce((a, s) => a + (Number(s.depositPrice) || 0), 0);
+  const totalSale = list.reduce((a, s) => a + ((Number(s.salePrice) || 0)*(Number(s.qty)||1)), 0); 
+  const totalDep = list.reduce((a, s) => a + ((Number(s.depositPrice) || 0)*(Number(s.qty)||1)), 0);
   const box = document.getElementById('settle-summary-box'); 
   if (!box) return;
 
@@ -3245,14 +3252,17 @@ function getSettleRowHtml(s, index, hasDivider = false) {
       <!-- 5. 고객명 -->
       <td><div class="cell-wrap" id="${prefix}-${s.id}-nickname" data-cell-id="${s.id}:::nickname" oncontextmenu="handleCellFilter(event, '${s.id}', 'nickname')" ondblclick="enterSettleEditMode(event, '${s.id}', 'nickname')"><span class="${nickSpanClass}" style="font-weight:700;">${escapeHtml(s.nickname) || '&nbsp;'}</span><input type="text" class="${nickClass}" data-ac="nickname" style="background:#FDFBF7; font-weight:700;" value="${escapeHtml(s.nickname)}" data-field="nickname" onfocus="trackFocus('sale', '${s.id}', 'nickname', this)" onblur="exitSettleEditMode('${s.id}', 'nickname')" onkeydown="handleSettleKeydown(event, '${s.id}')" oninput="updateSettleRowField('${s.id}', 'nickname', this.value); checkNicknameBlank(this); acFilter(this,'nickname')" placeholder="고객명"><div class="drag-handle"></div></div></td>
       
+      <!-- 수량 -->
+      <td><div class="cell-wrap num-wrap" id="${prefix}-${s.id}-qty" data-cell-id="${s.id}:::qty" oncontextmenu="handleCellFilter(event, '${s.id}', 'qty')" ondblclick="enterSettleEditMode(event, '${s.id}', 'qty')"><span class="view-text${blankClass(s.qty)}" style="text-align:center;">${s.qty ? escapeHtml(s.qty) : '1'}</span><input type="text" class="inline-input num" value="${s.qty || ''}" data-field="qty" onfocus="trackFocus('sale', '${s.id}', 'qty', this)" onblur="exitSettleEditMode('${s.id}', 'qty')" onkeydown="handleSettleKeydown(event, '${s.id}')" oninput="updateSettleRowField('${s.id}', 'qty', this.value)" placeholder="1" style="text-align:center;"><div class="drag-handle"></div></div></td>
+
       <!-- 6. 판매가 -->
       <td><div class="cell-wrap num-wrap" id="${prefix}-${s.id}-salePrice" data-cell-id="${s.id}:::salePrice" oncontextmenu="handleCellFilter(event, '${s.id}', 'salePrice')" ondblclick="enterSettleEditMode(event, '${s.id}', 'salePrice')"><span class="view-text${blankClass(s.salePrice)}" style="color:var(--purple-ink); font-weight:700;">${s.salePrice ? fmt(s.salePrice) : '&nbsp;'}</span><input type="text" class="inline-input num" value="${s.salePrice || ''}" data-field="salePrice" onfocus="trackFocus('sale', '${s.id}', 'salePrice', this)" onblur="exitSettleEditMode('${s.id}', 'salePrice')" onkeydown="handleSettleKeydown(event, '${s.id}')" oninput="updateSettleRowField('${s.id}', 'salePrice', this.value)" placeholder="0" style="color:var(--purple-ink); font-weight:700;"><div class="drag-handle"></div></div></td>
       
       <!-- 7. 입금가 -->
       <td><div class="cell-wrap num-wrap" id="${prefix}-${s.id}-depositPrice" data-cell-id="${s.id}:::depositPrice" oncontextmenu="handleCellFilter(event, '${s.id}', 'depositPrice')" ondblclick="enterSettleEditMode(event, '${s.id}', 'depositPrice')"><span class="view-text${blankClass(s.depositPrice)}" style="color:var(--purple-ink); font-weight:700;">${s.depositPrice ? fmt(s.depositPrice) : '&nbsp;'}</span><input type="text" class="inline-input num" value="${s.depositPrice || ''}" data-field="depositPrice" onfocus="trackFocus('sale', '${s.id}', 'depositPrice')" onblur="exitSettleEditMode('${s.id}', 'depositPrice')" onkeydown="handleSettleKeydown(event, '${s.id}')" oninput="updateSettleRowField('${s.id}', 'depositPrice', this.value)" placeholder="0" style="color:var(--purple-ink); font-weight:700;"><div class="drag-handle"></div></div></td>
       
-      <!-- 8. 액션 버튼 -->
-      <td><button class="action-text text-add-row" onclick="duplicateSettleRow('${s.id}')">추가</button><button class="action-text text-del" onclick="settleDeleteRow('${s.id}')">삭제</button></td>
+      <!-- 8. 액션 버튼 (+,- 기호로 변경) -->
+      <td><button class="action-text text-add-row" style="font-size:16px; padding:0 2px;" onclick="duplicateSettleRow('${s.id}')">＋</button><button class="action-text text-del" style="font-size:16px; padding:0 2px;" onclick="settleDeleteRow('${s.id}')">－</button></td>
     </tr>`;
 }
 
@@ -3296,8 +3306,8 @@ function renderSettleLeftPanel() {
     });
   }
   
-  const leftTotalSale = list.reduce((a, s) => a + (Number(s.salePrice) || 0), 0);
-  const leftTotalDep = list.reduce((a, s) => a + (Number(s.depositPrice) || 0), 0);
+  const leftTotalSale = list.reduce((a, s) => a + ((Number(s.salePrice) || 0)*(Number(s.qty)||1)), 0);
+  const leftTotalDep = list.reduce((a, s) => a + ((Number(s.depositPrice) || 0)*(Number(s.qty)||1)), 0);
   let filterClearBtn = settleFilterValue ? `<button class="btn btn-history" style="padding:2px 6px; font-size:11px; background:#FFF0F0; color:var(--danger); font-weight:800; margin-left:6px;" onclick="clearSettleFilter()">필터해제 ✕</button>` : '';
   
   const isLeftFiltered = q !== '' || qNick !== '' || Object.keys(activeSaleFilters).length > 0 || settleFilterValue !== null;
@@ -3543,8 +3553,8 @@ function renderSettleRightPanel() {
     body.innerHTML = groups.map((g, gIdx) => {
       const repSale = g.items.find(it => it.salePrice)?.salePrice || ''; 
       const repDep = g.items.find(it => it.depositPrice)?.depositPrice || '';
-      const totalSale = g.items.reduce((a, it) => a + (Number(it.salePrice) || 0), 0); 
-      const totalDep = g.items.reduce((a, it) => a + (Number(it.depositPrice) || 0), 0);
+      const totalSale = g.items.reduce((a, it) => a + ((Number(it.salePrice) || 0)*(Number(it.qty)||1)), 0); 
+      const totalDep = g.items.reduce((a, it) => a + ((Number(it.depositPrice) || 0)*(Number(it.qty)||1)), 0);
       const ids = g.items.map(it => it.id).join(','); 
       
       const isFiltered = settleFilterValue === g.key;
@@ -3580,8 +3590,8 @@ function renderSettleRightPanel() {
   else if (settleGroupKey === 'nickname') {
     head.innerHTML = `<tr><th style="width:38px; text-align:center;">No.</th><th>고객명</th><th style="width:60px; text-align:center;">구매수량</th><th style="width:110px; text-align:right;">총 판매금액</th><th style="width:110px; text-align:right;">총 입금금액</th><th style="width:52px; text-align:center;">액션</th></tr>`;
     body.innerHTML = groups.map((g, gIdx) => {
-      const totalSale = g.items.reduce((a, it) => a + (Number(it.salePrice) || 0), 0);
-      const totalDep = g.items.reduce((a, it) => a + (Number(it.depositPrice) || 0), 0);
+      const totalSale = g.items.reduce((a, it) => a + ((Number(it.salePrice) || 0)*(Number(it.qty)||1)), 0); 
+      const totalDep = g.items.reduce((a, it) => a + ((Number(it.depositPrice) || 0)*(Number(it.qty)||1)), 0);
       const ids = g.items.map(it => it.id).join(','); 
       
       const isFiltered = settleFilterValue === g.key;
@@ -3611,7 +3621,7 @@ function renderSettleRightPanel() {
     const totalLabel = field === 'salePrice' ? '총판매가' : '총입금가';
     head.innerHTML = `<tr><th style="width:38px; text-align:center;">No.</th><th style="text-align:right; padding-right:8px;">${label}</th><th style="width:60px; text-align:center;">수량</th><th style="width:140px; text-align:right; padding-right:8px;">${totalLabel}</th><th style="width:52px; text-align:center;">액션</th></tr>`;
     body.innerHTML = groups.map((g, gIdx) => {
-      const total = g.items.reduce((a, it) => a + (Number(it[field]) || 0), 0); 
+      const total = g.items.reduce((a, it) => a + ((Number(it[field]) || 0)*(Number(it.qty)||1)), 0);
       const ids = g.items.map(it => it.id).join(','); 
       
       const isFiltered = settleFilterValue === g.key;
@@ -4063,7 +4073,7 @@ function updateCellSelectionVisuals() {
 async function copySelectedCellsToClipboard() {
   if (selectedCells.size === 0) return;
   
-  const saleFields = ['rowDate', 'prodNum', 'name', 'color', 'size', 'nickname', 'salePrice', 'depositPrice', 'memo'];
+  const saleFields = ['rowDate', 'prodNum', 'name', 'color', 'size', 'nickname', 'qty', 'salePrice', 'depositPrice', 'memo'];
   const prodFields = ['prodNum', 'brand', 'features', 'color', 'size', 'price', 'specs'];
   
   const rowElements = Array.from(document.querySelectorAll('#list-sale tr, #settle-left-body tr, #list-prod tr')).filter(tr => tr.id.includes('row-'));
@@ -4185,7 +4195,7 @@ document.getElementById('btn-exp-full').addEventListener('click', () => {
   }
 });
 
-// 📦 창고 정산용 다운로드
+// 📦 창고 정산용 다운로드 (입금가 열 추가 & 헤더 원가 삭제 반영)
 document.getElementById('btn-exp-wh').addEventListener('click', () => {
   if (typeof XLSX === 'undefined') {
     toast('⚠️ 엑셀 라이브러리(XLSX)를 불러오지 못했습니다. 인터넷 연결을 확인하세요.');
@@ -4199,16 +4209,28 @@ document.getElementById('btn-exp-wh').addEventListener('click', () => {
     const summary = {}; 
     targets.forEach(s => {
       const key = `${s.prodNum || '미분류'}_${s.name || '무명'}_${s.color||''}_${s.size||''}`;
+      let q = Number(s.qty) || 1;
+      let pDep = Number(s.depositPrice) || 0;
+      
       if(!summary[key]) { 
-        summary[key] = { '품번': s.prodNum, '상품명': s.name, '색상': s.color, '사이즈': s.size, '수량': 0, '정산액합계(원가)': 0 }; 
+        summary[key] = { 
+          '품번': s.prodNum || '', 
+          '상품명': s.name || '', 
+          '색상': s.color || '', 
+          '사이즈': s.size || '', 
+          '수량': 0, 
+          '입금가': pDep, 
+          '정산액합계': 0 
+        }; 
       }
-      summary[key]['수량'] += 1; 
-      summary[key]['정산액합계(원가)'] += (Number(s.depositPrice) || 0);
+      summary[key]['수량'] += q; 
+      summary[key]['입금가'] = pDep; // 실시간 장부의 개당 입금가
+      summary[key]['정산액합계'] += pDep * q; // 수량 * 입금가
     });
     
     const summaryData = Object.values(summary);
     const totalQty = summaryData.reduce((sum, item) => sum + item['수량'], 0);
-    const totalAmt = summaryData.reduce((sum, item) => sum + item['정산액합계(원가)'], 0);
+    const totalAmt = summaryData.reduce((sum, item) => sum + item['정산액합계'], 0);
     
     summaryData.push({ 
       '품번': '총계', 
@@ -4216,7 +4238,8 @@ document.getElementById('btn-exp-wh').addEventListener('click', () => {
       '색상': '-', 
       '사이즈': '-', 
       '수량': totalQty, 
-      '정산액합계(원가)': totalAmt 
+      '입금가': '-', 
+      '정산액합계': totalAmt 
     });
     
     const ws = XLSX.utils.json_to_sheet(summaryData); 
@@ -4233,6 +4256,77 @@ document.getElementById('btn-exp-wh').addEventListener('click', () => {
   } catch (err) {
     console.error('창고정산 엑셀 생성 중 오류:', err);
     toast('⚠️ 창고 정산 엑셀 생성 중 오류가 발생했습니다: ' + err.message);
+  }
+});
+
+// 🚚 기타창고 다운로드 (신규)
+document.getElementById('btn-exp-other-wh').addEventListener('click', () => {
+  if (typeof XLSX === 'undefined') {
+    toast('⚠️ 엑셀 라이브러리(XLSX)를 불러오지 못했습니다. 인터넷 연결을 확인하세요.');
+    return;
+  }
+
+  const targets = sales.filter(s => s.prodNum || s.name || s.nickname || s.salePrice || s.depositPrice); 
+  if(targets.length === 0){ toast('데이터가 없습니다.'); return; }
+  
+  try {
+    let totalQty = 0;
+    let totalSalePrice = 0;
+    let totalDepositPrice = 0;
+
+    const summaryData = targets.map((s, idx) => {
+      let combinedName = (s.name || '').trim();
+      let colorSize = [s.color, s.size].map(x => (x || '').trim()).filter(Boolean).join('/');
+      let q = Number(s.qty) || 1;
+      let pSale = Number(s.salePrice) || 0;
+      let pDep = Number(s.depositPrice) || 0;
+
+      totalQty += q;
+      totalSalePrice += pSale * q;
+      totalDepositPrice += pDep * q;
+
+      return {
+        '품번': s.prodNum || '',
+        '상품명': combinedName,
+        '색상/사이즈': colorSize,
+        '고객명': s.nickname || '',
+        '개당판매가': pSale,
+        '수량': q,
+        '판매가': pSale * q,
+        '개당입금가': pDep,
+        '입금가': pDep * q,
+        '메모': s.memo || ''
+      };
+    });
+
+    // 총계 행 추가
+    summaryData.push({
+      '품번': '총계',
+      '상품명': '-',
+      '색상/사이즈': '-',
+      '고객명': `총 ${targets.length}건`,
+      '개당판매가': '-',
+      '수량': totalQty,
+      '판매가': totalSalePrice,
+      '개당입금가': '-',
+      '입금가': totalDepositPrice,
+      '메모': '-'
+    });
+    
+    const ws = XLSX.utils.json_to_sheet(summaryData); 
+    const wb = XLSX.utils.book_new(); 
+    XLSX.utils.book_append_sheet(wb, ws, '기타창고_다운로드'); 
+    
+    const dateVal = (document.getElementById('ledger-date')?.value || '').trim();
+    const whVal = (document.getElementById('wh-name-input')?.value || '').trim();
+    const filePrefix = dateVal ? dateVal : '기타창고';
+    const fileMiddle = whVal ? ` [${whVal}]` : '';
+    
+    XLSX.writeFile(wb, `${filePrefix}${fileMiddle} 기타창고_다운로드.xlsx`);
+    toast('✅ 기타창고 엑셀 다운로드가 완료되었습니다.');
+  } catch (err) {
+    console.error('기타창고 엑셀 생성 중 오류:', err);
+    toast('⚠️ 기타창고 엑셀 생성 중 오류가 발생했습니다: ' + err.message);
   }
 });
 
@@ -4420,7 +4514,8 @@ window.sendSalesToSheet = async function() {
       name: combinedName,    
       colorSize: `${s.color || ''}${s.size || ''}`, 
       nickname: s.nickname, 
-      price: s.salePrice 
+      price: s.salePrice,
+      qty: s.qty
     };
   });
   
@@ -4433,7 +4528,7 @@ window.sendSalesToSheet = async function() {
   
   // 2. 구글시트 백엔드(GAS)로 records와 함께 mode 전달
   const res = await callGAS('appendSalesRecords', [records, mode]);
-  const rows = records.map(r => [r.date, r.name, r.colorSize, r.nickname, r.price || '']); 
+  const rows = records.map(r => [r.date, r.name, r.colorSize, r.nickname, r.price || '', r.qty || '1']); 
   const copied = await copyTsvToClipboard(rows);
   
   if (res && res.success) { 
@@ -4478,15 +4573,16 @@ window.copyAllSalesData = async function() {
 
     // 6. 입금가 뒤에 빈 칸 2개('')를 넣어 엑셀 2열을 건너뛰고 합친 메모 입력
     rows.push([
-      (s.rowDate || '').replace(/\s+/g, ''),           // 1. 날짜
-      combinedName,              // 2. 품번&상품명
-      colorSize,                 // 3. 색상/사이즈
-      s.nickname || '',          // 4. 고객명
-      s.salePrice || '',         // 5. 판매가
-      s.depositPrice || '',      // 6. 입금가
-      '',                        // 7. 건너뛰기용 빈 칸 1
-      '',                        // 8. 건너뛰기용 빈 칸 2
-      combinedStatusAndMemo      // 9. 태그/상태 + 메모 (합쳐진 한 셀)
+      (s.rowDate || '').replace(/\s+/g, ''),
+      combinedName,              
+      colorSize,                 
+      s.nickname || '',          
+      s.qty || '1',              // 5. 수량
+      s.salePrice || '',         
+      s.depositPrice || '',      
+      '',                        
+      '',                        
+      combinedStatusAndMemo      
     ]);
   });
   
@@ -4527,9 +4623,16 @@ window.showMatrixReport = function(items, titleText) {
     let rowTotal = 0;
     sizes.forEach(s => {
       const matched = grid[c][s] || [];
-      const count = matched.length; rowTotal += count; sizeTotals[s] += count; grandTotalCount += count;
+      let count = 0;
+      matched.forEach(x => count += (Number(x.qty) || 1));
+      rowTotal += count; sizeTotals[s] += count; grandTotalCount += count;
       
-      const buyers = matched.map(x => `<div style="font-size:11.5px; line-height:1.3; margin:2px 0; background:#F4F6F8; padding:1px 4px; border-radius:3px; border:1px solid #E4E8EB; text-align:center;">${escapeHtml((x.nickname || '익명').trim())}</div>`).join('');
+      const buyers = matched.map(x => {
+        let nName = escapeHtml((x.nickname || '익명').trim());
+        let q = Number(x.qty) || 1;
+        if (q > 1) nName += `×${q}`;
+        return `<div style="font-size:11.5px; line-height:1.3; margin:2px 0; background:#F4F6F8; padding:1px 4px; border-radius:3px; border:1px solid #E4E8EB; text-align:center;">${nName}</div>`;
+      }).join('');
       
       html += `<td style="vertical-align:top; padding:4px 6px;">
         ${count > 0 ? `<div style="text-align:right; margin-bottom:3px;"><b style="color:var(--blue); font-size:11px;">${count}건</b></div>` : ''}
@@ -4854,7 +4957,7 @@ window.addEventListener('paste', function(e) {
   let startRowId = null; 
   let startField = null; 
   let startFieldIndex = 0; 
-  const fields = ['rowDate', 'prodNum', 'name', 'color', 'size', 'nickname', 'salePrice', 'depositPrice', 'memo'];
+  const fields = ['rowDate', 'prodNum', 'name', 'color', 'size', 'nickname', 'qty', 'salePrice', 'depositPrice', 'memo'];
   
   if (selectedCells.size > 0) {
     const firstCell = Array.from(selectedCells)[0]; 
@@ -4957,7 +5060,7 @@ function setupUnifiedListEvents(elementId, prefixStr, dataArray, renderCallback)
 function calculateGridRange(currentCellWrap) {
   if (!startCell || !currentCellWrap) return;
   const currentCellId = currentCellWrap.getAttribute('data-cell-id'); if (!currentCellId) return;
-  const [endRowId, endField] = currentCellId.split(':::'); const fields = ['rowDate', 'prodNum', 'name', 'color', 'size', 'nickname', 'salePrice', 'depositPrice', 'memo'];
+  const [endRowId, endField] = currentCellId.split(':::'); const fields = ['rowDate', 'prodNum', 'name', 'color', 'size', 'nickname', 'qty', 'salePrice', 'depositPrice', 'memo'];
   const container = document.getElementById('view-dash').style.display !== 'none' ? document.getElementById('list-sale') : document.getElementById('settle-left-body');
   const trElements = Array.from(container.querySelectorAll('tr')).filter(tr => tr.id.includes('row-'));
   const rowIds = trElements.map(tr => tr.id.replace('row-', '').replace('settle-row-', ''));
