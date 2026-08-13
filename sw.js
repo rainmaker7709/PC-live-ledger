@@ -1,4 +1,4 @@
-const CACHE_NAME = 'live-ledger-v7.9'; // v7.9으로 강제 업데이트
+const CACHE_NAME = 'live-ledger-v8.9'; // v8.9으로 강제 업데이트
 const ASSETS_TO_CACHE = [
   './',
   './index.html'

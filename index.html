@@ -3167,11 +3167,13 @@ function renderSettleSummary() {
   const list = settleValidSales(); 
   const totalSale = list.reduce((a, s) => a + ((Number(s.salePrice) || 0)*(Number(s.qty)||1)), 0); 
   const totalDep = list.reduce((a, s) => a + ((Number(s.depositPrice) || 0)*(Number(s.qty)||1)), 0);
+  // 💡 [수정] 건수(list.length) 대신 구매수량(qty)의 합계를 구합니다.
+  const totalQty = list.reduce((a, s) => a + (Number(s.qty) || 1), 0);
   const box = document.getElementById('settle-summary-box'); 
   if (!box) return;
 
   let baseHtml = `
-    <div class="total-box"><div class="n num">${list.length}</div><div class="l">총 판매개수</div></div>
+    <div class="total-box"><div class="n num">${totalQty}</div><div class="l">총 판매개수</div></div>
     <div class="total-box"><div class="n num" style="color:var(--purple-ink);">${fmt(totalSale)} 원</div><div class="l">총 판매금액</div></div>
     <div class="total-box"><div class="n num" style="color:var(--danger);">${fmt(totalDep)} 원</div><div class="l">총 입금금액</div></div>
   `;
@@ -3555,6 +3557,8 @@ function renderSettleRightPanel() {
       const repDep = g.items.find(it => it.depositPrice)?.depositPrice || '';
       const totalSale = g.items.reduce((a, it) => a + ((Number(it.salePrice) || 0)*(Number(it.qty)||1)), 0); 
       const totalDep = g.items.reduce((a, it) => a + ((Number(it.depositPrice) || 0)*(Number(it.qty)||1)), 0);
+      // 💡 [수정] 그룹 내 수량(qty) 합계 계산
+      const totalQty = g.items.reduce((a, it) => a + (Number(it.qty) || 1), 0);
       const ids = g.items.map(it => it.id).join(','); 
       
       const isFiltered = settleFilterValue === g.key;
@@ -3574,7 +3578,7 @@ function renderSettleRightPanel() {
           <td style="text-align:center;"><div class="row-num-btn" onclick="cycleSettleGroupHighlight('${escapeHtml(g.key)}')" title="클릭 시 그룹 강조색 순환/취소">${gIdx + 1}</div></td>
           <td><input type="text" class="settle-input" style="font-weight:700;" value="${escapeHtml(prodDisplayName)}" onchange="settleGroupRename('${encodeURIComponent(ids)}','name',this.value)"></td>
           <td><input type="text" class="settle-input num" value="${repDep}" onchange="settleGroupBulkSet('${encodeURIComponent(ids)}','depositPrice',this.value)"></td>
-          <td class="num" style="text-align:center; font-weight:bold; color:var(--blue);">${g.items.length}</td>
+          <td class="num" style="text-align:center; font-weight:bold; color:var(--blue);">${totalQty}</td>
           <td class="num" style="text-align:right; padding-right:4px; color:var(--danger); font-weight:700;">${fmt(totalDep)}</td>
           <td><input type="text" class="settle-input num" value="${repSale}" onchange="settleGroupBulkSet('${encodeURIComponent(ids)}','salePrice',this.value)"></td>
           <td class="num" style="text-align:right; padding-right:4px; color:var(--purple-ink); font-weight:700;">${fmt(totalSale)}</td>
@@ -3592,6 +3596,8 @@ function renderSettleRightPanel() {
     body.innerHTML = groups.map((g, gIdx) => {
       const totalSale = g.items.reduce((a, it) => a + ((Number(it.salePrice) || 0)*(Number(it.qty)||1)), 0); 
       const totalDep = g.items.reduce((a, it) => a + ((Number(it.depositPrice) || 0)*(Number(it.qty)||1)), 0);
+      // 💡 [수정] 그룹 내 수량(qty) 합계 계산
+      const totalQty = g.items.reduce((a, it) => a + (Number(it.qty) || 1), 0);
       const ids = g.items.map(it => it.id).join(','); 
       
       const isFiltered = settleFilterValue === g.key;
@@ -3604,7 +3610,7 @@ function renderSettleRightPanel() {
               onclick="cycleSettleGroupHighlight('${escapeHtml(g.key)}')" 
               title="클릭 시 그룹 강조색 순환/취소">${gIdx + 1}</td>
           <td><input type="text" class="settle-input" style="font-weight:700;" value="${escapeHtml(g.key)}" onchange="settleGroupRename('${encodeURIComponent(ids)}','nickname',this.value)"></td>
-          <td class="num" style="text-align:center; font-weight:bold; color:var(--blue);">${g.items.length}</td>
+          <td class="num" style="text-align:center; font-weight:bold; color:var(--blue);">${totalQty}</td>
           <td class="num" style="text-align:right; padding-right:6px; color:var(--purple-ink); font-weight:700;">${fmt(totalSale)}</td>
           <td class="num" style="text-align:right; padding-right:6px; color:var(--danger); font-weight:700;">${fmt(totalDep)}</td>
           <td style="text-align:center; display:inline-flex; justify-content:center; align-items:center; width:100%; border:none; padding: 5px 0;">
@@ -3622,6 +3628,8 @@ function renderSettleRightPanel() {
     head.innerHTML = `<tr><th style="width:38px; text-align:center;">No.</th><th style="text-align:right; padding-right:8px;">${label}</th><th style="width:60px; text-align:center;">수량</th><th style="width:140px; text-align:right; padding-right:8px;">${totalLabel}</th><th style="width:52px; text-align:center;">액션</th></tr>`;
     body.innerHTML = groups.map((g, gIdx) => {
       const total = g.items.reduce((a, it) => a + ((Number(it[field]) || 0)*(Number(it.qty)||1)), 0);
+      // 💡 [수정] 그룹 내 수량(qty) 합계 계산
+      const totalQty = g.items.reduce((a, it) => a + (Number(it.qty) || 1), 0);
       const ids = g.items.map(it => it.id).join(','); 
       
       const isFiltered = settleFilterValue === g.key;
@@ -3634,7 +3642,7 @@ function renderSettleRightPanel() {
               onclick="cycleSettleGroupHighlight('${escapeHtml(g.key)}')" 
               title="클릭 시 그룹 강조색 순환/취소">${gIdx + 1}</td>
           <td><input type="text" class="settle-input num" value="${g.key}" onchange="settleGroupRename('${encodeURIComponent(ids)}','${field}',this.value)"></td>
-          <td class="num" style="text-align:center; font-weight:bold; color:var(--blue);">${g.items.length}</td>
+          <td class="num" style="text-align:center; font-weight:bold; color:var(--blue);">${totalQty}</td>
           <td class="num" style="text-align:right; padding-right:4px; font-weight:700;">${fmt(total)}</td>
           <td style="text-align:center; display:inline-flex; justify-content:center; align-items:center; width:100%; border:none; padding: 5px 0;">
             <button class="btn btn-purple" style="padding:2px 8px; font-size:11px; white-space:nowrap;" onclick="toggleSettleGroupFilter('${escapeHtml(g.key)}', event)">필터</button>
@@ -3643,7 +3651,6 @@ function renderSettleRightPanel() {
     }).join('') || `<tr><td colspan="5" style="text-align:center; color:var(--ink-soft); padding:20px;">데이터가 없습니다.</td></tr>`;
   }
 }
-
 window.settleIdsFromParam = function(idsParam) { return decodeURIComponent(idsParam).split(',').filter(Boolean); };
 window.settleGroupRename = function(idsParam, field, value) { saveState(); const ids = settleIdsFromParam(idsParam); const val = (field === 'salePrice' || field === 'depositPrice') ? convertPrice(value) : value; ids.forEach(id => { const s = sales.find(x => x.id === id); if (s) { s[field] = val; s.sent = false; } }); renderSales(); };
 window.settleGroupBulkSet = function(idsParam, field, value) { saveState(); const ids = settleIdsFromParam(idsParam); const val = convertPrice(value); ids.forEach(id => { const s = sales.find(x => x.id === id); if (s) { s[field] = val; s.sent = false; } }); renderSales(); };
