@@ -641,29 +641,45 @@
 
     <div id="prod-filter-tags" style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; align-items: center;"></div>
 
-    <div class="fixed-add-box" style="display: table; width: 100%; table-layout: fixed;">
-      <div style="display: table-row;">
-        <div style="display: table-cell; width: 38px;"></div>
-        <div style="display: table-cell; width: 45px; padding-right: 3px;"><input type="text" id="new-prod-num" class="inline-input" style="background:#fff; border:1px solid var(--line);" placeholder="품번" onkeydown="handleFixedProdKeydown(event)"></div>
-        <div style="display: table-cell; width: 65px; padding-right: 3px;"><input type="text" id="new-prod-brand" class="inline-input" data-ac="brand" style="background:#fff; border:1px solid var(--line);" placeholder="브랜드" onkeydown="handleFixedProdKeydown(event)" oninput="acFilter(this,'brand')"></div>
-        <div style="display: table-cell; width: 48px;"></div>
-        <div style="display: table-cell; width: 165px; padding-right: 3px;"><input type="text" id="new-prod-features" class="inline-input" style="background:#fff; border:1px solid var(--line);" placeholder="특징 (소재 등)" onkeydown="handleFixedProdKeydown(event)"></div>
-        <div style="display: table-cell; width: 95px; padding-right: 3px;"><input type="text" id="new-prod-color" class="inline-input reduced-font" style="background:#fff; border:1px solid var(--line);" placeholder="색상" onkeydown="handleFixedProdKeydown(event)" oninput="syncStockWithTextInputs('new')"></div>
-        <div style="display: table-cell; width: 70px; padding-right: 3px;"><input type="text" id="new-prod-size" class="inline-input reduced-font" style="background:#fff; border:1px solid var(--line);" placeholder="사이즈" onkeydown="handleFixedProdKeydown(event)" oninput="syncStockWithTextInputs('new')"></div>
-        <div style="display: table-cell; width: 65px; padding-right: 3px;"><input type="text" id="new-prod-price" class="inline-input num" style="background:#fff; border:1px solid var(--line); text-align: right;" placeholder="판매가" onkeydown="handleFixedProdKeydown(event)"></div>
-        <div style="display: table-cell; width: 175px; padding-right: 3px;"><input type="text" id="new-prod-specs" class="inline-input reduced-font" style="background:#fff; border:1px solid var(--line);" placeholder="세부 제원 치수" onkeydown="handleFixedProdKeydown(event)"></div>
-        <div style="display: table-cell; width: 55px; padding-right: 3px; vertical-align: middle;"><button id="btn-fixed-stock" class="btn" onclick="openStockPopup('new')" style="width: 100%; padding: 6px 0; font-weight: bold; background: #fff; border: 1px solid var(--line); color: var(--ink);">테이블</button></div>
-        <div style="display: table-cell; width: 90px; vertical-align: middle;"><button class="btn btn-primary" onclick="addProductFromFixed()" style="width: 100%; padding: 6px 0; font-weight: bold;">상품등록</button></div>
-      </div>
+    <!-- 💡 [수정] 고정 상품등록 박스를 Flexbox 가변 레이아웃으로 변경 -->
+    <div class="fixed-add-box" style="display: flex; width: 100%; align-items: center; gap: 4px;">
+      <div style="width: 38px; flex-shrink: 0;"></div>
+      <div style="width: 45px; flex-shrink: 0;"><input type="text" id="new-prod-num" class="inline-input" style="background:#fff; border:1px solid var(--line);" placeholder="품번" onkeydown="handleFixedProdKeydown(event)"></div>
+      <div style="width: 65px; flex-shrink: 0;"><input type="text" id="new-prod-brand" class="inline-input" data-ac="brand" style="background:#fff; border:1px solid var(--line);" placeholder="브랜드" onkeydown="handleFixedProdKeydown(event)" oninput="acFilter(this,'brand')"></div>
+      <div style="width: 48px; flex-shrink: 0;"></div>
+      
+      <!-- 👇 아래부터 가변형(flex) 적용칸: 창 크기에 맞춰 유연하게 줄어듭니다 -->
+      <div style="flex: 1.5; min-width: 80px;"><input type="text" id="new-prod-features" class="inline-input" style="background:#fff; border:1px solid var(--line);" placeholder="특징 (소재 등)" onkeydown="handleFixedProdKeydown(event)"></div>
+      <div style="flex: 1; min-width: 60px;"><input type="text" id="new-prod-color" class="inline-input reduced-font" style="background:#fff; border:1px solid var(--line);" placeholder="색상" onkeydown="handleFixedProdKeydown(event)" oninput="syncStockWithTextInputs('new')"></div>
+      <div style="flex: 0.8; min-width: 50px;"><input type="text" id="new-prod-size" class="inline-input reduced-font" style="background:#fff; border:1px solid var(--line);" placeholder="사이즈" onkeydown="handleFixedProdKeydown(event)" oninput="syncStockWithTextInputs('new')"></div>
+      
+      <div style="width: 65px; flex-shrink: 0;"><input type="text" id="new-prod-price" class="inline-input num" style="background:#fff; border:1px solid var(--line); text-align: right;" placeholder="판매가" onkeydown="handleFixedProdKeydown(event)"></div>
+      
+      <!-- 👇 가변형(flex) 적용칸 -->
+      <div style="flex: 1.5; min-width: 80px;"><input type="text" id="new-prod-specs" class="inline-input reduced-font" style="background:#fff; border:1px solid var(--line);" placeholder="세부 제원 치수" onkeydown="handleFixedProdKeydown(event)"></div>
+      
+      <div style="width: 55px; flex-shrink: 0;"><button id="btn-fixed-stock" class="btn" onclick="openStockPopup('new')" style="width: 100%; padding: 6px 0; font-weight: bold; background: #fff; border: 1px solid var(--line); color: var(--ink);">테이블</button></div>
+      <div style="width: 90px; flex-shrink: 0;"><button class="btn btn-primary" onclick="addProductFromFixed()" style="width: 100%; padding: 6px 0; font-weight: bold;">상품등록</button></div>
     </div>
 
     <div class="table-responsive table-scroll-prod">
       <table>
+        <!-- 💡 [수정] 긴 텍스트가 들어가는 칸들을 창 크기에 맞춰 유연하게 변하도록 비율(%)로 변경 -->
         <colgroup>
           <col style="width:38px;">
-          <col style="width:45px;">  <col style="width:65px;">  <col style="width:48px;">  
-          <col style="width:165px;"> <col style="width:95px;">  <col style="width:70px;">  
-          <col style="width:65px;">  <col style="width:175px;"> <col style="width:55px;">
+          <col style="width:45px;">
+          <col style="width:65px;">
+          <col style="width:48px;">  
+          
+          <col style="width:33%;"> <!-- 특징 (가변) -->
+          <col style="width:19%;"> <!-- 색상 (가변) -->
+          <col style="width:14%;"> <!-- 사이즈 (가변) -->  
+          
+          <col style="width:65px;">  
+          
+          <col style="width:34%;"> <!-- 세부제원 (가변) -->
+          
+          <col style="width:55px;">
           <col style="width:90px;">  
         </colgroup>
         <thead>
