@@ -3105,8 +3105,14 @@ function renderSales(){
     return true;
   });
 
-  const totalSale = sales.reduce((a,s)=>a+((Number(s.salePrice)||0)*(Number(s.qty)||1)),0); const totalDep = sales.reduce((a,s)=>a+((Number(s.depositPrice)||0)*(Number(s.qty)||1)),0);
-  const filtTotalSale = filtered.reduce((a,s)=>a+((Number(s.salePrice)||0)*(Number(s.qty)||1)),0); const filtTotalDep = filtered.reduce((a,s)=>a+((Number(s.depositPrice)||0)*(Number(s.qty)||1)),0);
+  // 상단 합계도 고객명이 있는 행만 추출하여 계산
+  const validSalesForTotal = sales.filter(s => (s.nickname || '').trim() !== '');
+  const validFilteredForTotal = filtered.filter(s => (s.nickname || '').trim() !== '');
+
+  const totalSale = validSalesForTotal.reduce((a,s)=>a+((Number(s.salePrice)||0)*(Number(s.qty)||1)),0); 
+  const totalDep = validSalesForTotal.reduce((a,s)=>a+((Number(s.depositPrice)||0)*(Number(s.qty)||1)),0);
+  const filtTotalSale = validFilteredForTotal.reduce((a,s)=>a+((Number(s.salePrice)||0)*(Number(s.qty)||1)),0); 
+  const filtTotalDep = validFilteredForTotal.reduce((a,s)=>a+((Number(s.depositPrice)||0)*(Number(s.qty)||1)),0);
   
   const isFiltered = q !== '' || qNick !== '' || Object.keys(activeSaleFilters).length > 0;
   if (!isFiltered) {
@@ -3337,10 +3343,11 @@ function getRowHtml(s, index, isPopup = false, hasDivider = false) {
 }
 
 let settleLeftSortKey = 'name'; 
-let settleLeftSortAsc = true; // 👈 이 줄을 새로 추가합니다! (true: 오름차순, false: 내림차순)
+let settleLeftSortAsc = true; 
 let settleGroupKey = 'name'; 
 const SETTLE_GROUP_LABEL = { name: '상품명', salePrice: '판매가', depositPrice: '입금가', nickname: '고객명' };
-function settleValidSales() { return sales.filter(s => s.prodNum || s.name || s.nickname || s.salePrice || s.depositPrice); }
+// 고객명(nickname)이 비어있지 않은 항목만 마감정산 대상으로 반환
+function settleValidSales() { return sales.filter(s => (s.nickname || '').trim() !== ''); }
 
 function renderSettleDetail() {
   renderSettleSummary(); renderSettleLeftPanel(); renderSettleRightPanel();
@@ -3741,7 +3748,9 @@ document.querySelectorAll('.settle-sort-btn').forEach(btn => {
 });
 
 function settleGetGroups() {
-  const list = settleValidSales(); const key = settleGroupKey; const map = new Map();
+  // 💡 취소/제외(isExcluded)된 항목은 그룹 요약 집계에서 완전히 뺌
+  const list = settleValidSales().filter(s => !s.isExcluded); 
+  const key = settleGroupKey; const map = new Map();
   list.forEach(s => {
     let gKey = '';
     if (key === 'name') {
@@ -4035,19 +4044,25 @@ window.updateRowField = function(id, field, value) {
     target[field] = value; 
     target.sent = false; 
 
-    // 💡 [신규] 1+1 / 세트 그룹의 고객명 입력 시 같은 그룹 내 다른 행도 자동 동기화
-    if (field === 'nickname' && target.groupId) {
+    // 💡 1+1 / 세트 그룹인 경우: 고객명(nickname) 및 품번(prodNum) 입력 시 같은 그룹 내 다른 행도 자동 동기화
+    if ((field === 'nickname' || field === 'prodNum') && target.groupId) {
       sales.forEach(s => {
         if (s.groupId === target.groupId && s.id !== id) {
-          s.nickname = value;
+          s[field] = value;
           s.sent = false;
           // 실시간 장부 및 마감정산 화면 인풋창/텍스트 즉시 동기화
-          const wrap = document.getElementById(`wrap-${s.id}-nickname`) || document.getElementById(`wrap-settle-${s.id}-nickname`);
+          const wrap = document.getElementById(`wrap-${s.id}-${field}`) || document.getElementById(`wrap-settle-${s.id}-${field}`);
           if (wrap) {
             const input = wrap.querySelector('input');
             const text = wrap.querySelector('.view-text');
-            if (input) { input.value = value; checkNicknameBlank(input); }
-            if (text) { text.textContent = value || ''; checkNicknameBlank(input); }
+            if (input) { 
+              input.value = value; 
+              if (field === 'nickname') checkNicknameBlank(input); 
+            }
+            if (text) { 
+              text.textContent = value || ''; 
+              if (field === 'nickname') checkNicknameBlank(input); 
+            }
           }
         }
       });
@@ -4155,6 +4170,17 @@ window.addEmptySaleRow = function() {
   sales.push(emptyRow); 
   renderSales(); 
   scrollToRow(`row-${emptyRow.id}`); 
+
+  // 💡 항목 추가 시 마지막에 작업하던 칸(또는 상품명)에 자동 커서 및 글자 맨 뒤로 이동
+  setTimeout(() => {
+    const field = sessionStartField || 'name'; 
+    enterEditMode(null, emptyRow.id, field, false, true);
+    const wrap = document.getElementById(`wrap-${emptyRow.id}-${field}`);
+    if (wrap) {
+      const input = wrap.querySelector('input');
+      if (input) input.setSelectionRange(input.value.length, input.value.length);
+    }
+  }, 50);
 };
 
 window.clearAllProducts = function() { if (products.length === 0) { toast('⚠️ 삭제할 상품 정보가 없습니다.'); return; } if (confirm('🚨 정말로 상품등록 대장의 모든 데이터를 삭제하시겠습니까? 데이터는 되돌릴 수 있습니다.')) { saveState(); products = []; populateAutocompleteLists(); renderProducts(); saveToLocalStorage(); toast('💥 상품등록 정보가 모두 삭제되었습니다.'); } };
@@ -4169,6 +4195,17 @@ window.duplicateRow = function(id) {
     const newRow = { id: uid(), rowDate: src.rowDate || '', prodNum: src.prodNum, name: src.name, color: src.color, size: src.size, nickname: '', salePrice: src.salePrice, depositPrice: src.depositPrice, memo: '', autoReward: 0, tags: { yt:false, tt:false, fs:false }, createdAt: Date.now(), highlighted: src.highlighted, sent: false };
     sales.splice(index + 1, 0, newRow); 
     renderSales(); scrollToRow(`row-${newRow.id}`);
+    
+    // 💡 복제 완료 즉시 마지막에 작업하던 칸(또는 고객명)을 열고 글자 맨 뒤에 커서 배치
+    setTimeout(() => {
+      const field = sessionStartField || 'nickname'; 
+      enterEditMode(null, newRow.id, field, false, true);
+      const wrap = document.getElementById(`wrap-${newRow.id}-${field}`);
+      if (wrap) {
+        const input = wrap.querySelector('input');
+        if (input) input.setSelectionRange(input.value.length, input.value.length);
+      }
+    }, 50);
   }
 };
 
@@ -4385,7 +4422,7 @@ document.getElementById('btn-exp-full').addEventListener('click', () => {
   }
 
   // 필터 조건 확장 (가격, 날짜, 메모 등이 있는 항목 포함)
-  const targets = sales.filter(s => s.prodNum || s.name || s.nickname || s.salePrice || s.depositPrice || s.memo || s.rowDate); 
+  const targets = sales.filter(s => (s.nickname || '').trim() !== '' && !s.isExcluded);
   if(targets.length === 0){ toast('다운로드할 판매 내역이 없습니다.'); return; }
   
   try {
@@ -4472,7 +4509,7 @@ document.getElementById('btn-exp-wh').addEventListener('click', () => {
     return;
   }
 
-  const targets = sales.filter(s => s.prodNum || s.name || s.nickname || s.salePrice || s.depositPrice); 
+  const targets = sales.filter(s => (s.nickname || '').trim() !== '' && !s.isExcluded);
   if(targets.length === 0){ toast('데이터가 없습니다.'); return; }
   
   try {
@@ -4552,7 +4589,7 @@ document.getElementById('btn-exp-other-wh').addEventListener('click', () => {
     return;
   }
 
-  const targets = sales.filter(s => s.prodNum || s.name || s.nickname || s.salePrice || s.depositPrice); 
+  const targets = sales.filter(s => (s.nickname || '').trim() !== '' && !s.isExcluded);
   if(targets.length === 0){ toast('데이터가 없습니다.'); return; }
   
   try {
@@ -4754,7 +4791,7 @@ document.getElementById('file-import-share').addEventListener('change', async fu
 async function copyTsvToClipboard(rows) { const text = rows.map(r => r.join('\t')).join('\n'); try { await navigator.clipboard.writeText(text); return true; } catch (e) { return false; } }
 
 window.sendSalesToSheet = async function() {
-  const targets = sales.filter(s => s.rowDate || s.prodNum || s.name || s.nickname); 
+  const targets = sales.filter(s => (s.nickname || '').trim() !== '' && !s.isExcluded); 
   if (targets.length === 0) { 
     toast('☁️ 전송할 판매 내역 레코드가 존재하지 않습니다.'); 
     return; 
@@ -4828,7 +4865,7 @@ window.sendSalesToSheet = async function() {
 };
 
 window.copyAllSalesData = async function() {
-  const targets = sales.filter(s => s.rowDate || s.prodNum || s.name || s.nickname); 
+  const targets = sales.filter(s => (s.nickname || '').trim() !== '' && !s.isExcluded); 
   if (targets.length === 0) { toast('복사할 판매내역이 없습니다.'); return; }
   
   const rows = [];
@@ -4953,7 +4990,7 @@ window.openMatrixFromFilteredSales = function() {
     return true;
   });
 
-  const validFiltered = filtered.filter(s => s.prodNum || s.name || s.nickname || s.salePrice || s.depositPrice);
+  const validFiltered = filtered.filter(s => (s.nickname || '').trim() !== '' && !s.isExcluded);
   if (validFiltered.length === 0) {
     toast('⚠️ 현재 표시된 판매 내역이 없어 입체 분석표를 생성할 수 없습니다.');
     return;
@@ -6139,6 +6176,14 @@ window.addSetGroupRow = function(type) {
 
   setTimeout(() => {
     enterEditMode(null, row1.id, 'name', false, true);
+    // 💡 전체 선택을 해제하고 커서를 '[1+1] ' 또는 '[세트] ' 글자 맨 뒤로 이동
+    const wrap = document.getElementById(`wrap-${row1.id}-name`);
+    if (wrap) {
+      const input = wrap.querySelector('input');
+      if (input) {
+        input.setSelectionRange(input.value.length, input.value.length);
+      }
+    }
   }, 50);
 };
 
@@ -6266,8 +6311,8 @@ function renderPaperLedger() {
   const summaryEl = document.getElementById('paper-ledger-summary');
   if (!body) return;
 
-  // 1. 유효한 데이터 추출 (완전 빈 행 및 제외/취소 항목 제외)
-  const validSales = sales.filter(s => (s.prodNum || s.name || s.nickname || s.salePrice) && !s.isExcluded);
+  // 1. 유효한 데이터 추출 (고객명이 기입된 데이터만 취급 + 제외/취소 항목 제외)
+  const validSales = sales.filter(s => (s.nickname || '').trim() !== '' && !s.isExcluded);
 
   // 2. 개별 상품 문자열 생성 헬퍼 함수 (상품명 + 색상 + 사이즈)
   const formatItemDetail = (item) => {
