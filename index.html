@@ -7465,19 +7465,40 @@ window.openChipPicker = function(inputEl, type, contextType = 'sale', rowId = nu
 
   renderChipPickerContent();
 
-  // 💡 사용자가 직접 마우스로 옮긴 적이 없을 때는 상품등록처럼 [색상] 칸 좌측에 맞춰 배치
+  // 💡 사용자가 직접 마우스로 옮긴 적이 없을 때 자동 위치 계산
   if (!popup.dataset.userMoved) {
     const rect = inputEl.getBoundingClientRect();
-    let left = rect.left;      // 👈 현재 클릭한 색상 입력칸의 좌측 기준
-    let top = rect.bottom + 4;  // 👈 색상 입력칸 바로 아랫줄 4px 간격
+    let left = rect.left;
+    let top = rect.bottom + 4; // 입력칸 바로 밑 4px 간격
 
-    // 화면 오른쪽 밖으로 삐져나갈 때만 화면 안쪽으로 안전 보정
-    if (left + 380 > window.innerWidth) {
-      left = Math.max(10, window.innerWidth - 390);
+    // 💡 [핵심] 사이즈일 경우 시작선을 바로 왼쪽의 [색상] 항목 좌측에 맞춤
+    if (type === 'size') {
+      const fixedBox = inputEl.closest('.fixed-add-box');
+      if (fixedBox) {
+        // 상단 고정 등록창: 고정 색상 칸 위치 탐색
+        const colorEl = fixedBox.querySelector('#new-prod-color');
+        if (colorEl) left = colorEl.getBoundingClientRect().left;
+      } else {
+        // 테이블 행: 해당 행의 색상 셀 위치 탐색
+        const tr = inputEl.closest('tr');
+        if (tr) {
+          const colorCell = tr.querySelector('[id*="-color"]');
+          if (colorCell) left = colorCell.getBoundingClientRect().left;
+        }
+      }
+    }
+
+    // 사이즈는 1줄(약 465px), 색상은 바둑판(약 380px)
+    const expectedWidth = (type === 'size') ? 465 : 380;
+    const expectedHeight = (type === 'size') ? 85 : 260;
+
+    // 화면 오른쪽 밖으로 벗어날 때만 안쪽으로 안전 보정
+    if (left + expectedWidth > window.innerWidth) {
+      left = Math.max(10, window.innerWidth - (expectedWidth + 15));
     }
     // 화면 아래쪽을 벗어날 때만 입력칸 위쪽에 배치
-    if (top + 260 > window.innerHeight) {
-      top = Math.max(10, rect.top - 260);
+    if (top + expectedHeight > window.innerHeight) {
+      top = Math.max(10, rect.top - expectedHeight);
     }
 
     popup.style.left = Math.round(left) + 'px';
@@ -7510,12 +7531,24 @@ function renderChipPickerContent() {
   const isColor = activeChipContext.type === 'color';
   const titleText = isColor ? '🎨 색상 다중 선택' : '📏 사이즈 다중 선택';
 
+  // 💡 [핵심] 색상은 바둑판(380px), 사이즈는 1줄로 나열되도록 폭 제한 해제
+  if (isColor) {
+    popup.style.maxWidth = '380px';
+    popup.style.width = 'auto';
+  } else {
+    popup.style.maxWidth = 'none';
+    popup.style.width = 'max-content';
+  }
+
+  // 💡 사이즈는 1줄(nowrap), 색상은 여러줄(wrap)
+  const gridWrapStyle = isColor ? 'flex-wrap: wrap;' : 'flex-wrap: nowrap;';
+
   let html = `
     <div class="chip-picker-header" title="마우스로 잡고 원하는 위치로 이동할 수 있습니다">
       <span>⠿ ${titleText}</span>
       <span style="cursor:pointer; color:var(--ink-soft); font-size:14px;" onclick="closeChipPicker()">✕</span>
     </div>
-    <div class="chip-picker-grid">
+    <div class="chip-picker-grid" style="${gridWrapStyle}">
   `;
 
   if (isColor) {
