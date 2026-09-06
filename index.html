@@ -840,6 +840,20 @@
     background-color: #FFD6D6 !important;
     animation: none;
   }
+
+  /* 👇 가격 전용 자동완성(드롭다운) 팝업 스타일 추가 */
+  .ac-price-dropdown {
+    position: fixed; display: none; z-index: 6000; background: #fff; border: 2px solid #2F80ED;
+    border-radius: 8px; box-shadow: 0 8px 24px rgba(0,0,0,0.2); width: 320px; padding: 8px; 
+    flex-wrap: wrap; gap: 6px; user-select: none; align-content: flex-start;
+  }
+  .ac-price-dropdown .ac-item {
+    display: inline-flex; align-items: center; justify-content: center; padding: 7px 12px;
+    font-size: 13px; font-weight: 800; color: #111827; background: #F8FAFC;
+    border: 1px solid #CBD5E1; border-radius: 16px; cursor: pointer; flex-shrink: 0;
+    white-space: nowrap; transition: 0.1s ease-in-out;
+  }
+  .ac-price-dropdown .ac-item:hover { background: #2F80ED; color: #FFF; border-color: #2F80ED; }
 </style>
 </head>
 <body>
@@ -909,7 +923,7 @@
       <div style="flex: 1; min-width: 60px;"><input type="text" id="new-prod-color" class="inline-input reduced-font" style="background:#fff; border:1px solid var(--line);" placeholder="색상" onkeydown="handleFixedProdKeydown(event)" oninput="syncStockWithTextInputs('new')" onclick="this.select(); openChipPicker(this, 'color', 'new')" onfocus="this.select(); openChipPicker(this, 'color', 'new')"></div>
       <div style="flex: 0.8; min-width: 50px;"><input type="text" id="new-prod-size" class="inline-input reduced-font" style="background:#fff; border:1px solid var(--line);" placeholder="사이즈" onkeydown="handleFixedProdKeydown(event)" oninput="syncStockWithTextInputs('new')" onclick="this.select(); openChipPicker(this, 'size', 'new')" onfocus="this.select(); openChipPicker(this, 'size', 'new')"></div>
       
-      <div style="width: 65px; flex-shrink: 0;"><input type="text" id="new-prod-price" class="inline-input num" style="background:#fff; border:1px solid var(--line); text-align: right;" placeholder="판매가" onkeydown="handleFixedProdKeydown(event)"></div>
+      <div style="width: 65px; flex-shrink: 0;"><input type="text" id="new-prod-price" class="inline-input num" style="background:#fff; border:1px solid var(--line); text-align: right;" placeholder="판매가" onkeydown="handleFixedProdKeydown(event)" onfocus="handlePCPriceFocus(this, 'new', 'price', true)" onclick="handlePCPriceFocus(this, 'new', 'price', true)"></div>
       
       <!-- 👇 가변형(flex) 적용칸 -->
       <div style="flex: 1.5; min-width: 80px;"><input type="text" id="new-prod-specs" class="inline-input reduced-font" style="background:#fff; border:1px solid var(--line);" placeholder="세부 제원 치수" onkeydown="handleFixedProdKeydown(event)"></div>
@@ -1482,6 +1496,8 @@
 </div>
 
 <div id="ac-dropdown" class="ac-dropdown"></div>
+<!-- 👇 추가: 가격 전용 드롭다운 컨테이너 -->
+<div id="ac-price-dropdown" class="ac-price-dropdown"></div>
 <div id="chip-picker-popup" class="chip-picker-popup"></div>
 <div id="toast" class="toast"></div>
 
@@ -2849,6 +2865,10 @@ window.enterEditMode = function(event, id, field, isPopup = false, isUserInitiat
       if (field === 'color' || field === 'size') {
         if (typeof openChipPicker === 'function') openChipPicker(input, field, 'sale', id);
       }
+      // 👇 추가: 가격 셀 첫 클릭 시 즉시 팝업 열기
+      if (field === 'salePrice' || field === 'depositPrice') {
+        if (typeof handlePCPriceFocus === 'function') handlePCPriceFocus(input, id, field, false);
+      }
     }, 10);
   }
 };
@@ -2891,6 +2911,10 @@ window.enterProdEditMode = function(event, id, field, isPopup = false) {
     input.select(); // 처음 셀에 진입할 때만 전체 선택
     if (field === 'color' || field === 'size') {
       openChipPicker(input, field, 'prod', id);
+    }
+    // 👇 추가: 상품등록 가격 셀 첫 클릭 시 즉시 팝업 열기 (소수점 모드)
+    if (field === 'price') {
+      if (typeof handlePCPriceFocus === 'function') handlePCPriceFocus(input, id, field, true);
     }
     trackFocus('product', id, field, input); 
     isProgrammaticFocus = false;
@@ -3672,7 +3696,7 @@ function renderProducts(){
       <td><div class="cell-wrap" id="wrap-prod-${p.id}-features" data-cell-id="${p.id}:::features" oncontextmenu="handleProdCellFilter(event, '${p.id}', 'features')" ondblclick="enterProdEditMode(event, '${p.id}', 'features', false)"><span class="view-text${blankClass(p.features)}">${escapeHtml(p.features) || '&nbsp;'}</span><input type="text" class="inline-input" value="${escapeHtml(p.features)}" data-field="features" onfocus="trackFocus('product', '${p.id}', 'features', this)" onblur="exitProdEditMode('${p.id}', 'features', false)" onkeydown="handleProdKeydown(event, '${p.id}', false)" oninput="updateProdField('${p.id}', 'features', this.value)" placeholder="특징 (소재 등)"></div></td>
       <td><div class="cell-wrap" id="wrap-prod-${p.id}-color" data-cell-id="${p.id}:::color" oncontextmenu="handleProdCellFilter(event, '${p.id}', 'color')" ondblclick="enterProdEditMode(event, '${p.id}', 'color', false)"><span class="view-text reduced-font${blankClass(p.color)}">${escapeHtml(p.color) || '&nbsp;'}</span><input type="text" class="inline-input reduced-font" value="${escapeHtml(p.color)}" data-field="color" onfocus="trackFocus('product', '${p.id}', 'color', this)" onblur="exitProdEditMode('${p.id}', 'color', false)" onkeydown="handleProdKeydown(event, '${p.id}', false)" oninput="updateProdField('${p.id}', 'color', this.value)" placeholder="색상"></div></td>
       <td><div class="cell-wrap" id="wrap-prod-${p.id}-size" data-cell-id="${p.id}:::size" oncontextmenu="handleProdCellFilter(event, '${p.id}', 'size')" ondblclick="enterProdEditMode(event, '${p.id}', 'size', false)"><span class="view-text reduced-font${blankClass(p.size)}">${escapeHtml(p.size) || '&nbsp;'}</span><input type="text" class="inline-input reduced-font" value="${escapeHtml(p.size)}" data-field="size" onfocus="trackFocus('product', '${p.id}', 'size', false)" onblur="exitProdEditMode('${p.id}', 'size', false)" onkeydown="handleProdKeydown(event, '${p.id}', false)" oninput="updateProdField('${p.id}', 'size', this.value)" placeholder="사이즈"></div></td>
-      <td><div class="cell-wrap num-wrap" id="wrap-prod-${p.id}-price" data-cell-id="${p.id}:::price" oncontextmenu="handleProdCellFilter(event, '${p.id}', 'price')" ondblclick="enterProdEditMode(event, '${p.id}', 'price', false)"><span class="view-text${blankClass(p.price)}">${p.price ? escapeHtml(p.price) : '&nbsp;'}</span><input type="text" class="inline-input num" value="${p.price || ''}" data-field="price" onfocus="trackFocus('product', '${p.id}', 'price', this)" onblur="exitProdEditMode('${p.id}', 'price', false)" onkeydown="handleProdKeydown(event, '${p.id}', false)" oninput="updateProdField('${p.id}', 'price', this.value)" placeholder="0"></div></td>
+      <td><div class="cell-wrap num-wrap" id="wrap-prod-${p.id}-price" data-cell-id="${p.id}:::price" oncontextmenu="handleProdCellFilter(event, '${p.id}', 'price')" ondblclick="enterProdEditMode(event, '${p.id}', 'price', false)"><span class="view-text${blankClass(p.price)}">${p.price ? escapeHtml(p.price) : '&nbsp;'}</span><input type="text" class="inline-input num" value="${p.price || ''}" data-field="price" onfocus="trackFocus('product', '${p.id}', 'price', this); handlePCPriceFocus(this, '${p.id}', 'price', true)" onclick="handlePCPriceFocus(this, '${p.id}', 'price', true)" onblur="exitProdEditMode('${p.id}', 'price', false)" onkeydown="handleProdKeydown(event, '${p.id}', false)" oninput="updateProdField('${p.id}', 'price', this.value)" placeholder="0"></div></td>
       <td><div class="cell-wrap" id="wrap-prod-${p.id}-specs" data-cell-id="${p.id}:::specs" oncontextmenu="handleProdCellFilter(event, '${p.id}', 'specs')" ondblclick="enterProdEditMode(event, '${p.id}', 'specs', false)"><span class="view-text reduced-font${blankClass(p.specs)}">${escapeHtml(p.specs) || '&nbsp;'}</span><input type="text" class="inline-input reduced-font" value="${escapeHtml(p.specs)}" data-field="specs" onfocus="trackFocus('product', '${p.id}', 'specs', false)" onblur="exitProdEditMode('${p.id}', 'specs', false)" onkeydown="handleProdKeydown(event, '${p.id}', false)" oninput="updateProdField('${p.id}', 'specs', this.value)" placeholder="세부 제원 치수"></div></td>
       <td><button id="btn-stock-${p.id}" class="btn" style="padding:4px 8px; font-size:11px; font-weight:bold; border:1px solid var(--line); background:#fff; color:var(--ink);" onclick="openStockPopup('edit', '${p.id}')">테이블</button></td>
       <td><div style="display:flex; gap:4px;"><button class="action-text text-add-row" onclick="copyProductToClipboard('${p.id}')">복사</button><button class="action-text text-del" onclick="deleteProdRow('${p.id}')">삭제</button></div></td>
@@ -3950,8 +3974,8 @@ function getRowHtml(s, index, isPopup = false, hasDivider = false) {
       <td><div class="cell-wrap" id="${prefix}-${s.id}-size" data-cell-id="${s.id}:::size" oncontextmenu="handleCellFilter(event, '${s.id}', 'size')" ondblclick="enterEditMode(event, '${s.id}', 'size', ${isPopup}, true)"><span class="view-text${blankClass(s.size)}" style="font-size:12px;">${escapeHtml(s.size) || '&nbsp;'}</span><input type="text" class="inline-input" style="font-size:12px;" value="${escapeHtml(s.size)}" data-field="size" onfocus="trackFocus('sale', '${s.id}', 'size', this)" onblur="exitEditMode('${s.id}', 'size', ${isPopup})" onclick="this.select(); openChipPicker(this, 'size', 'sale', '${s.id}')" onkeydown="handleSaleKeydown(event, '${s.id}', ${isPopup})" oninput="updateRowField('${s.id}', 'size', this.value); acFilter(this, 'size')" placeholder="사이즈"><div class="drag-handle"></div></div></td>
       <td><div class="cell-wrap" id="${prefix}-${s.id}-nickname" data-cell-id="${s.id}:::nickname" oncontextmenu="handleCellFilter(event, '${s.id}', 'nickname')" ondblclick="enterEditMode(event, '${s.id}', 'nickname', ${isPopup}, true)"><span class="${nickSpanClass}" style="font-weight:700;">${escapeHtml(s.nickname) || '&nbsp;'}</span><input type="text" class="${nickClass}" data-ac="nickname" style="background:#FDFBF7; font-weight:700;" value="${escapeHtml(s.nickname)}" data-field="nickname" onfocus="trackFocus('sale', '${s.id}', 'nickname', this)" onblur="exitEditMode('${s.id}', 'nickname', ${isPopup})" onkeydown="handleSaleKeydown(event, '${s.id}', ${isPopup})" oninput="updateRowField('${s.id}', 'nickname', this.value); checkNicknameBlank(this); acFilter(this,'nickname')" placeholder="고객명"><div class="drag-handle"></div></div></td>
       <td><div class="cell-wrap num-wrap" id="${prefix}-${s.id}-qty" data-cell-id="${s.id}:::qty" oncontextmenu="handleCellFilter(event, '${s.id}', 'qty')" ondblclick="enterEditMode(event, '${s.id}', 'qty', ${isPopup}, true)"><span class="view-text${blankClass(s.qty)}" style="text-align:center;">${s.qty ? escapeHtml(s.qty) : '1'}</span><input type="text" class="inline-input num" value="${s.qty || ''}" data-field="qty" onfocus="trackFocus('sale', '${s.id}', 'qty', this)" onblur="exitEditMode('${s.id}', 'qty', ${isPopup})" onkeydown="handleSaleKeydown(event, '${s.id}', ${isPopup})" oninput="updateRowField('${s.id}', 'qty', this.value)" placeholder="1" style="text-align:center;"><div class="drag-handle"></div></div></td>
-      <td><div class="cell-wrap num-wrap" id="${prefix}-${s.id}-salePrice" data-cell-id="${s.id}:::salePrice" oncontextmenu="handleCellFilter(event, '${s.id}', 'salePrice')" ondblclick="enterEditMode(event, '${s.id}', 'salePrice', ${isPopup}, true)"><span class="view-text${blankClass(s.salePrice)}" style="color:var(--purple-ink); font-weight:700;">${s.salePrice ? fmt(s.salePrice) : '&nbsp;'}</span><input type="text" class="inline-input num" value="${s.salePrice || ''}" data-field="salePrice" onfocus="trackFocus('sale', '${s.id}', 'salePrice', this)" onblur="exitEditMode('${s.id}', 'salePrice', ${isPopup})" onkeydown="handleSaleKeydown(event, '${s.id}', ${isPopup})" oninput="updateRowField('${s.id}', 'salePrice', this.value)" placeholder="0" style="color:var(--purple-ink); font-weight:700;"><div class="drag-handle"></div></div></td>
-      <td><div class="cell-wrap num-wrap" id="${prefix}-${s.id}-depositPrice" data-cell-id="${s.id}:::depositPrice" oncontextmenu="handleCellFilter(event, '${s.id}', 'depositPrice')" ondblclick="enterEditMode(event, '${s.id}', 'depositPrice', ${isPopup}, true)"><span class="view-text${blankClass(s.depositPrice)}" style="color:var(--purple-ink); font-weight:700;">${s.depositPrice ? fmt(s.depositPrice) : '&nbsp;'}</span><input type="text" class="inline-input num" value="${s.depositPrice || ''}" data-field="depositPrice" onfocus="trackFocus('sale', '${s.id}', 'depositPrice', this)" onblur="exitEditMode('${s.id}', 'depositPrice', ${isPopup})" onkeydown="handleSaleKeydown(event, '${s.id}', ${isPopup})" oninput="updateRowField('${s.id}', 'depositPrice', this.value)" placeholder="0" style="color:var(--purple-ink); font-weight:700;"><div class="drag-handle"></div></div></td>
+      <td><div class="cell-wrap num-wrap" id="${prefix}-${s.id}-salePrice" data-cell-id="${s.id}:::salePrice" oncontextmenu="handleCellFilter(event, '${s.id}', 'salePrice')" ondblclick="enterEditMode(event, '${s.id}', 'salePrice', ${isPopup}, true)"><span class="view-text${blankClass(s.salePrice)}" style="color:var(--purple-ink); font-weight:700;">${s.salePrice ? fmt(s.salePrice) : '&nbsp;'}</span><input type="text" class="inline-input num" value="${s.salePrice || ''}" data-field="salePrice" onfocus="trackFocus('sale', '${s.id}', 'salePrice', this); handlePCPriceFocus(this, '${s.id}', 'salePrice', false)" onclick="handlePCPriceFocus(this, '${s.id}', 'salePrice', false)" onblur="exitEditMode('${s.id}', 'salePrice', ${isPopup})" onkeydown="handleSaleKeydown(event, '${s.id}', ${isPopup})" oninput="updateRowField('${s.id}', 'salePrice', this.value)" placeholder="0" style="color:var(--purple-ink); font-weight:700;"><div class="drag-handle"></div></div></td>
+<td><div class="cell-wrap num-wrap" id="${prefix}-${s.id}-depositPrice" data-cell-id="${s.id}:::depositPrice" oncontextmenu="handleCellFilter(event, '${s.id}', 'depositPrice')" ondblclick="enterEditMode(event, '${s.id}', 'depositPrice', ${isPopup}, true)"><span class="view-text${blankClass(s.depositPrice)}" style="color:var(--purple-ink); font-weight:700;">${s.depositPrice ? fmt(s.depositPrice) : '&nbsp;'}</span><input type="text" class="inline-input num" value="${s.depositPrice || ''}" data-field="depositPrice" onfocus="trackFocus('sale', '${s.id}', 'depositPrice', this); handlePCPriceFocus(this, '${s.id}', 'depositPrice', false)" onclick="handlePCPriceFocus(this, '${s.id}', 'depositPrice', false)" onblur="exitEditMode('${s.id}', 'depositPrice', ${isPopup})" onkeydown="handleSaleKeydown(event, '${s.id}', ${isPopup})" oninput="updateRowField('${s.id}', 'depositPrice', this.value)" placeholder="0" style="color:var(--purple-ink); font-weight:700;"><div class="drag-handle"></div></div></td>
       <td>
         <button type="button" class="btn-memo-status ${getRowMemoStatus(s).classStr}" onclick="openRowMemoPopup('${s.id}')" title="${hoverTitleAttr}">
           <span class="memo-text-split">${escapeHtml(getRowMemoStatus(s).btnText)}</span>
@@ -4823,9 +4847,10 @@ window.addEmptySaleRow = function() {
   renderSales(); 
   scrollToRow(`row-${emptyRow.id}`); 
 
-  // 💡 항목 추가 시 마지막에 작업하던 칸(또는 상품명)에 자동 커서 및 글자 맨 뒤로 이동
+  // 💡 항목 추가 시 항상 상품명('name') 칸으로 커서 강제 이동
   setTimeout(() => {
-    const field = sessionStartField || 'name'; 
+    sessionStartField = 'name'; // 다음 엔터 입력 시에도 자연스럽게 상품명 기준이 되도록 동기화
+    const field = 'name'; 
     enterEditMode(null, emptyRow.id, field, false, true);
     const wrap = document.getElementById(`wrap-${emptyRow.id}-${field}`);
     if (wrap) {
@@ -7440,6 +7465,149 @@ document.addEventListener('mousedown', function(e) {
 
   closeChipPicker();
 });
+
+/* 👇👇👇 추가되는 가격 릴레이 자바스크립트 코드 👇👇👇 */
+let lastFocusedPriceInput = null;
+
+window.handlePCPriceFocus = function(inputEl, id, field, isProd) {
+  lastFocusedPriceInput = inputEl;
+  renderPCPriceStep1(inputEl, id, field, isProd);
+};
+
+function renderPCPriceStep1(inputEl, id, field, isProd) {
+  const dropdown = document.getElementById('ac-price-dropdown');
+  const targetEl = inputEl || lastFocusedPriceInput;
+  if (!targetEl) return;
+
+  let items = '';
+  if (isProd) { 
+    items += `<div class="ac-item" style="background:#E8F3FF; color:#2F80ED; border-color:#2F80ED;" onmousedown="event.preventDefault()" onclick="event.stopPropagation(); selectPCPriceStep1('${id}', '${field}', 0, true, event)">0.1 ~ 0.9</div>`;
+    for (let i = 1; i <= 9; i++) {
+      items += `<div class="ac-item" onmousedown="event.preventDefault()" onclick="event.stopPropagation(); selectPCPriceStep1('${id}', '${field}', ${i}, true, event)">${i}.0</div>`;
+    }
+    items += `<div class="ac-item" style="background:#FEF3C7; color:#92400E; border-color:#F59E0B;" onmousedown="event.preventDefault()" onclick="event.stopPropagation(); renderPCPriceStep_1_5(lastFocusedPriceInput, '${id}', '${field}', 10, true, event)">10.0대 ➔</div>`;
+    items += `<div class="ac-item" style="background:#FEF3C7; color:#92400E; border-color:#F59E0B;" onmousedown="event.preventDefault()" onclick="event.stopPropagation(); renderPCPriceStep_1_5(lastFocusedPriceInput, '${id}', '${field}', 20, true, event)">20.0대 ➔</div>`;
+  } else { 
+    items += `<div class="ac-item" style="background:#E8F3FF; color:#2F80ED; border-color:#2F80ED;" onmousedown="event.preventDefault()" onclick="event.stopPropagation(); selectPCPriceStep1('${id}', '${field}', 0, false, event)">1천~9천원</div>`;
+    for (let i = 1; i <= 9; i++) {
+      items += `<div class="ac-item" onmousedown="event.preventDefault()" onclick="event.stopPropagation(); selectPCPriceStep1('${id}', '${field}', ${i * 10000}, false, event)">${i}만</div>`;
+    }
+    items += `<div class="ac-item" style="background:#FEF3C7; color:#92400E; border-color:#F59E0B;" onmousedown="event.preventDefault()" onclick="event.stopPropagation(); renderPCPriceStep_1_5(lastFocusedPriceInput, '${id}', '${field}', 100000, false, event)">10만대 ➔</div>`;
+    items += `<div class="ac-item" style="background:#FEF3C7; color:#92400E; border-color:#F59E0B;" onmousedown="event.preventDefault()" onclick="event.stopPropagation(); renderPCPriceStep_1_5(lastFocusedPriceInput, '${id}', '${field}', 200000, false, event)">20만대 ➔</div>`;
+  }
+  dropdown.innerHTML = items;
+  positionPCDropdown(targetEl, dropdown);
+}
+
+window.renderPCPriceStep_1_5 = function(inputEl, id, field, baseLarge, isProd, event) {
+  if (event) { event.preventDefault(); event.stopPropagation(); }
+  const dropdown = document.getElementById('ac-price-dropdown');
+  const targetEl = inputEl || lastFocusedPriceInput;
+
+  let items = `<div class="ac-item" style="background:#F1F5F9; color:#475569;" onmousedown="event.preventDefault()" onclick="event.stopPropagation(); renderPCPriceStep1(lastFocusedPriceInput, '${id}', '${field}', ${isProd})">↩ 이전</div>`;
+  
+  if (isProd) {
+    for (let i = 0; i <= 9; i++) {
+      const midAmount = baseLarge + i; 
+      items += `<div class="ac-item" onmousedown="event.preventDefault()" onclick="event.stopPropagation(); selectPCPriceStep1('${id}', '${field}', ${midAmount}, true, event)">${midAmount}.0</div>`;
+    }
+  } else {
+    for (let i = 0; i <= 9; i++) {
+      const midAmount = baseLarge + (i * 10000); 
+      items += `<div class="ac-item" onmousedown="event.preventDefault()" onclick="event.stopPropagation(); selectPCPriceStep1('${id}', '${field}', ${midAmount}, false, event)">${fmt(midAmount/10000)}만</div>`;
+    }
+  }
+  dropdown.innerHTML = items;
+  positionPCDropdown(targetEl, dropdown);
+}
+
+window.selectPCPriceStep1 = function(id, field, baseAmount, isProd, event) {
+  if (event) { event.preventDefault(); event.stopPropagation(); }
+  renderPCPriceStep2(lastFocusedPriceInput, id, field, baseAmount, isProd);
+}
+
+function renderPCPriceStep2(inputEl, id, field, baseAmount, isProd) {
+  const dropdown = document.getElementById('ac-price-dropdown');
+  const targetEl = inputEl || lastFocusedPriceInput;
+
+  let backAction = `renderPCPriceStep1(lastFocusedPriceInput, '${id}', '${field}', ${isProd})`;
+  if (isProd && baseAmount >= 10) {
+    backAction = `renderPCPriceStep_1_5(lastFocusedPriceInput, '${id}', '${field}', ${Math.floor(baseAmount / 10) * 10}, true)`;
+  } else if (!isProd && baseAmount >= 100000) {
+    backAction = `renderPCPriceStep_1_5(lastFocusedPriceInput, '${id}', '${field}', ${Math.floor(baseAmount / 100000) * 100000}, false)`;
+  }
+
+  let items = `<div class="ac-item" style="background:#F1F5F9; color:#475569;" onmousedown="event.preventDefault()" onclick="event.stopPropagation(); ${backAction}">↩ 이전</div>`;
+
+  if (isProd) {
+    if (baseAmount > 0) items += `<div class="ac-item" style="background:#E8F3FF; color:#2F80ED;" onmousedown="event.preventDefault()" onclick="event.stopPropagation(); selectPCPriceFinal('${id}', '${field}', '${baseAmount.toFixed(1)}', true, event)">딱 ${baseAmount.toFixed(1)}</div>`;
+    for (let i = 1; i <= 9; i++) {
+      const finalAmount = baseAmount + (i * 0.1);
+      items += `<div class="ac-item" onmousedown="event.preventDefault()" onclick="event.stopPropagation(); selectPCPriceFinal('${id}', '${field}', '${finalAmount.toFixed(1)}', true, event)">${finalAmount.toFixed(1)}</div>`;
+    }
+  } else {
+    if (baseAmount > 0) items += `<div class="ac-item" style="background:#E8F3FF; color:#2F80ED;" onmousedown="event.preventDefault()" onclick="event.stopPropagation(); selectPCPriceFinal('${id}', '${field}', '${baseAmount}', false, event)">딱 ${fmt(baseAmount)}원</div>`;
+    for (let i = 1; i <= 9; i++) {
+      const finalAmount = baseAmount + (i * 1000);
+      items += `<div class="ac-item" onmousedown="event.preventDefault()" onclick="event.stopPropagation(); selectPCPriceFinal('${id}', '${field}', '${finalAmount}', false, event)">${fmt(finalAmount)}</div>`;
+    }
+  }
+  dropdown.innerHTML = items;
+  positionPCDropdown(targetEl, dropdown);
+}
+
+window.selectPCPriceFinal = function(id, field, finalVal, isProd, event) {
+  if (event) { event.preventDefault(); event.stopPropagation(); }
+  document.getElementById('ac-price-dropdown').style.display = 'none';
+
+  if (id === 'new') { 
+    document.getElementById('new-prod-price').value = finalVal;
+  } else if (isProd) { 
+    updateProdField(id, field, finalVal);
+    renderProducts();
+  } else { 
+    updateRowField(id, field, finalVal);
+    renderSales();
+    
+    // 판매가를 기입하면 입금가로 자동으로 넘어감
+    if (field === 'salePrice') {
+      setTimeout(() => {
+        enterEditMode(null, id, 'depositPrice', false, true);
+        const depWrap = document.getElementById(`wrap-${id}-depositPrice`);
+        if (depWrap) {
+          const depInput = depWrap.querySelector('input');
+          if (depInput) handlePCPriceFocus(depInput, id, 'depositPrice', false);
+        }
+      }, 50);
+    }
+  }
+}
+
+function positionPCDropdown(input, dropdown) {
+  const rect = input.getBoundingClientRect();
+  dropdown.style.left = Math.max(10, Math.round(rect.left)) + 'px';
+  dropdown.style.top = Math.round(rect.bottom + 2) + 'px';
+  dropdown.style.display = 'flex';
+}
+
+document.addEventListener('mousedown', function (e) {
+  const pdd = document.getElementById('ac-price-dropdown');
+  if (pdd && pdd.style.display !== 'none') {
+    // 1. 팝업 안을 누른 경우 유지
+    if (pdd.contains(e.target)) return;
+    // 2. 가격 입력창 또는 해당 셀(.cell-wrap) 안을 누른 경우 닫지 않고 유지
+    if (lastFocusedPriceInput && (e.target === lastFocusedPriceInput || lastFocusedPriceInput.closest('.cell-wrap')?.contains(e.target))) {
+      return;
+    }
+    pdd.style.display = 'none';
+  }
+});
+
+window.addEventListener('scroll', function () { 
+  const pdd = document.getElementById('ac-price-dropdown');
+  if (pdd) pdd.style.display = 'none'; 
+}, true);
+/* 👆👆👆 여기까지 👆👆👆 */
 
 </script>
 </body>
