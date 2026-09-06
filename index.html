@@ -196,6 +196,8 @@
     border-bottom: 1px solid var(--line);
     padding-bottom: 6px;
     margin-bottom: 8px;
+    cursor: move; /* 💡 마우스 드래그 이동 커서 */
+    user-select: none;
   }
   .chip-picker-grid {
     display: flex;
@@ -854,6 +856,88 @@
     white-space: nowrap; transition: 0.1s ease-in-out;
   }
   .ac-price-dropdown .ac-item:hover { background: #2F80ED; color: #FFF; border-color: #2F80ED; }
+
+  /* 👇 [수정] 화면을 밀지 않고 공중에 자유롭게 떠 있는(Floating) 가로 툴바 스타일 */
+  .sale-ac-bar {
+    position: fixed; /* 💡 화면 요소를 밀지 않고 공중에 띄움 */
+    display: none;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 12px;
+    background: #FFFFFF;
+    border: 2px solid var(--purple-ink);
+    border-radius: 8px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.22); /* 💡 공중에 뜬 입체 그림자 */
+    z-index: 6500; /* 표와 헤더보다 항상 위 */
+    max-width: 85vw;
+    overflow-x: auto;
+    white-space: nowrap;
+    user-select: none;
+    scrollbar-width: thin;
+  }
+  /* 👇 [수정] 스크롤바를 도톰하고 잡기 쉽게 개선 */
+  .sale-ac-bar::-webkit-scrollbar { height: 7px; }
+  .sale-ac-bar::-webkit-scrollbar-track { background: #F1F5F9; border-radius: 4px; }
+  .sale-ac-bar::-webkit-scrollbar-thumb { background: #94A3B8; border-radius: 4px; }
+  .sale-ac-bar::-webkit-scrollbar-thumb:hover { background: #64748B; }
+  
+  .sale-ac-bar .bar-title {
+    font-size: 11.5px;
+    font-weight: 900;
+    color: var(--purple-ink);
+    background: var(--purple-bg);
+    padding: 4px 9px;
+    border-radius: 4px;
+    flex-shrink: 0;
+    cursor: move; /* 💡 마우스 드래그 이동 커서 */
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+  /* 드래그 손잡이 아이콘 표시 */
+  .sale-ac-bar .bar-title::before {
+    content: '⠿';
+    font-size: 13px;
+    opacity: 0.65;
+  }
+  .sale-ac-bar .bar-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--ink);
+    background: #F8FAFC;
+    border: 1px solid #CBD5E1;
+    border-radius: 14px;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: all 0.1s ease-in-out;
+  }
+  .sale-ac-bar .bar-item:hover {
+    background: var(--purple-hover);
+    border-color: var(--purple-ink);
+  }
+  .sale-ac-bar .bar-item.active {
+    background: var(--purple-ink) !important;
+    color: #FFFFFF !important;
+    border-color: var(--purple-ink) !important;
+  }
+  .sale-ac-bar .bar-close {
+    margin-left: auto;
+    cursor: pointer;
+    font-weight: 800;
+    color: var(--ink-soft);
+    font-size: 13px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    flex-shrink: 0;
+  }
+  .sale-ac-bar .bar-close:hover {
+    color: var(--danger);
+    background: #FEE2E2;
+  }
 </style>
 </head>
 <body>
@@ -1056,6 +1140,9 @@
         </div>
       </div>
     </div>
+
+    <!-- 👇 [추가] 실시간 판매내역 상단 가로 자동완성 툴바 -->
+    <div id="sale-ac-bar" class="sale-ac-bar"></div>
 
     <div class="table-responsive table-scroll-sale" onscroll="alignCopyButton()">
       <table>
@@ -2832,16 +2919,18 @@ window.enterEditMode = function(event, id, field, isPopup = false, isUserInitiat
   const wrap = document.getElementById(`${prefix}-${id}-${field}`); 
   if (!wrap) return;
 
-  // 이미 편집 중인 셀을 다시 클릭했을 때도 전체 선택 및 칩 바 열림 유지
+  // 💡 이미 편집 중인 셀을 다시 클릭했을 때도 칩스가 유지/재오픈되도록 보강
   if (wrap.classList.contains('editing')) {
-    if (field === 'color' || field === 'size') {
-      const input = wrap.querySelector('input');
-      if (input) {
-        setTimeout(() => {
-          input.select();
+    const input = wrap.querySelector('input');
+    if (input) {
+      setTimeout(() => {
+        input.select();
+        if (field === 'color' || field === 'size') {
           if (typeof openChipPicker === 'function') openChipPicker(input, field, 'sale', id);
-        }, 10);
-      }
+        } else if (field === 'salePrice' || field === 'depositPrice') {
+          if (typeof handlePCPriceFocus === 'function') handlePCPriceFocus(input, id, field, false);
+        }
+      }, 10);
     }
     return;
   }
@@ -2864,10 +2953,14 @@ window.enterEditMode = function(event, id, field, isPopup = false, isUserInitiat
       input.select();
       if (field === 'color' || field === 'size') {
         if (typeof openChipPicker === 'function') openChipPicker(input, field, 'sale', id);
-      }
-      // 👇 추가: 가격 셀 첫 클릭 시 즉시 팝업 열기
-      if (field === 'salePrice' || field === 'depositPrice') {
+      } else if (field === 'salePrice' || field === 'depositPrice') {
         if (typeof handlePCPriceFocus === 'function') handlePCPriceFocus(input, id, field, false);
+      } else {
+        // 💡 색상/사이즈/가격이 아닌 칸(고객명, 품번 등)으로 이동하면 가로 바 닫기
+        if (typeof closeSaleAcBar === 'function') closeSaleAcBar();
+        if (typeof closeChipPicker === 'function') closeChipPicker();
+        const pdd = document.getElementById('ac-price-dropdown');
+        if (pdd) pdd.style.display = 'none';
       }
     }, 10);
   }
@@ -2877,6 +2970,13 @@ window.exitEditMode = function(id, field, isPopup = false) {
   setTimeout(() => {
     const prefix = isPopup ? 'wrap-pop' : 'wrap'; const wrap = document.getElementById(`${prefix}-${id}-${field}`); if (!wrap) return;
     if (document.activeElement && wrap.contains(document.activeElement)) return;
+
+    // 💡 [추가] 칩스 툴바를 누르고 있는 동안에는 편집창이 파괴되지 않도록 보호!
+    const saleBar = document.getElementById('sale-ac-bar');
+    if (saleBar && saleBar.style.display !== 'none' && typeof activeSaleBarContext !== 'undefined' && activeSaleBarContext.rowId === id && activeSaleBarContext.field === field) {
+      return;
+    }
+
     if (currentEditingCell && currentEditingCell.type === 'sale' && currentEditingCell.id === id && currentEditingCell.field === field && currentEditingCell.isPopup === isPopup) { currentEditingCell = null; }
     wrap.classList.remove('editing'); const input = wrap.querySelector('input'); const span = wrap.querySelector('.view-text');
     if (input && span) {
@@ -2896,8 +2996,19 @@ window.enterProdEditMode = function(event, id, field, isPopup = false) {
   const wrap = document.getElementById(`${prefix}-${id}-${field}`); 
   if (!wrap) return;
 
-  // 이미 편집 중인 경우 조기 종료
+  // 💡 이미 편집 중인 셀을 다시 클릭했을 때도 칩스 재오픈
   if (wrap.classList.contains('editing')) {
+    const input = wrap.querySelector('input');
+    if (input) {
+      setTimeout(() => {
+        input.select();
+        if (field === 'color' || field === 'size') {
+          openChipPicker(input, field, 'prod', id);
+        } else if (field === 'price') {
+          if (typeof handlePCPriceFocus === 'function') handlePCPriceFocus(input, id, field, true);
+        }
+      }, 10);
+    }
     return;
   }
 
@@ -2908,16 +3019,24 @@ window.enterProdEditMode = function(event, id, field, isPopup = false) {
   if (input) { 
     isProgrammaticFocus = true;
     input.focus(); 
-    input.select(); // 처음 셀에 진입할 때만 전체 선택
-    if (field === 'color' || field === 'size') {
-      openChipPicker(input, field, 'prod', id);
-    }
-    // 👇 추가: 상품등록 가격 셀 첫 클릭 시 즉시 팝업 열기 (소수점 모드)
-    if (field === 'price') {
-      if (typeof handlePCPriceFocus === 'function') handlePCPriceFocus(input, id, field, true);
-    }
     trackFocus('product', id, field, input); 
     isProgrammaticFocus = false;
+
+    setTimeout(() => {
+      input.select();
+      if (field === 'color' || field === 'size') {
+        // 💡 판매가 칩스 바가 열려있다면 즉시 닫기
+        if (typeof closeSaleAcBar === 'function') closeSaleAcBar(true);
+        openChipPicker(input, field, 'prod', id);
+      } else if (field === 'price') {
+        // 💡 색상/사이즈 팝업이 열려있다면 즉시 닫기
+        if (typeof closeChipPicker === 'function') closeChipPicker();
+        if (typeof handlePCPriceFocus === 'function') handlePCPriceFocus(input, id, field, true);
+      } else {
+        if (typeof closeSaleAcBar === 'function') closeSaleAcBar(true);
+        if (typeof closeChipPicker === 'function') closeChipPicker();
+      }
+    }, 10);
   }
 };
 
@@ -7298,54 +7417,86 @@ const CHIP_SIZES = ['프리', 'S', 'M', 'L', 'XL', '2XL', '44', '55', '66', '77'
 
 let activeChipContext = { input: null, type: null, contextType: null, rowId: null, replaceOnFirstClick: false };
 
+// 💡 팝업을 마우스로 잡고 화면 어디든 끌고 다니는 드래그 엔진
+function makeChipPickerDraggable(popup, handle) {
+  let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+  handle.onmousedown = function(e) {
+    if (e.target.tagName === 'SPAN' && e.target.textContent.trim() === '✕') return;
+    e = e || window.event;
+    e.preventDefault();
+    pos3 = e.clientX;
+    pos4 = e.clientY;
+
+    popup.dataset.userMoved = 'true'; // 사용자가 직접 옮겼음을 기억
+
+    document.onmouseup = function() {
+      document.onmouseup = null;
+      document.onmousemove = null;
+    };
+    document.onmousemove = function(ev) {
+      ev = ev || window.event;
+      ev.preventDefault();
+      pos1 = pos3 - ev.clientX;
+      pos2 = pos4 - ev.clientY;
+      pos3 = ev.clientX;
+      pos4 = ev.clientY;
+      popup.style.top = Math.max(10, Math.min(window.innerHeight - 50, popup.offsetTop - pos2)) + "px";
+      popup.style.left = Math.max(10, Math.min(window.innerWidth - 150, popup.offsetLeft - pos1)) + "px";
+    };
+  };
+}
+
 window.openChipPicker = function(inputEl, type, contextType = 'sale', rowId = null) {
   if (!inputEl) return;
 
-  // 💡 상품등록('new', 'prod')은 여러 옵션을 한 번에 등록하므로 추가 모드 유지
-  // 실시간 판매/정산('sale', 'settle')만 기존 값이 있을 때 첫 클릭 시 덮어쓰기 모드 활성화
-  const isProductContext = (contextType === 'new' || contextType === 'prod');
-  const hasValue = (inputEl.value || '').trim().length > 0;
-  
-  activeChipContext = { 
-    input: inputEl, 
-    type, 
-    contextType, 
-    rowId, 
-    replaceOnFirstClick: (!isProductContext && hasValue) 
-  };
+  // 💡 색상이 열릴 때는 다른 가격/사이즈 가로 바를 즉시 닫음
+  if (typeof closeSaleAcBar === 'function') closeSaleAcBar(true);
 
-  // 키보드로 직접 타이핑을 시작하면 덮어쓰기 플래그 해제
-  const onTypeHandler = () => {
-    activeChipContext.replaceOnFirstClick = false;
-    inputEl.removeEventListener('input', onTypeHandler);
-  };
-  inputEl.addEventListener('input', onTypeHandler);
+  // 💡 실시간 판매내역에서 사이즈는 기존 가로 슬림 바 유지, '색상'은 팝업창으로 바로 진행!
+  if (contextType === 'sale' && type === 'size' && typeof renderSaleBarChips === 'function') {
+    renderSaleBarChips(type, rowId, inputEl);
+    return;
+  }
+
+  activeChipContext = { input: inputEl, type, contextType, rowId };
 
   const popup = document.getElementById('chip-picker-popup');
   if (!popup) return;
 
   renderChipPickerContent();
 
-  const rect = inputEl.getBoundingClientRect();
+  // 💡 사용자가 직접 마우스로 옮긴 적이 없을 때는 상품등록처럼 [색상] 칸 좌측에 맞춰 배치
+  if (!popup.dataset.userMoved) {
+    const rect = inputEl.getBoundingClientRect();
+    let left = rect.left;      // 👈 현재 클릭한 색상 입력칸의 좌측 기준
+    let top = rect.bottom + 4;  // 👈 색상 입력칸 바로 아랫줄 4px 간격
+
+    // 화면 오른쪽 밖으로 삐져나갈 때만 화면 안쪽으로 안전 보정
+    if (left + 380 > window.innerWidth) {
+      left = Math.max(10, window.innerWidth - 390);
+    }
+    // 화면 아래쪽을 벗어날 때만 입력칸 위쪽에 배치
+    if (top + 260 > window.innerHeight) {
+      top = Math.max(10, rect.top - 260);
+    }
+
+    popup.style.left = Math.round(left) + 'px';
+    popup.style.top = Math.round(top) + 'px';
+  }
+
   popup.style.display = 'block';
 
-  let left = rect.left;
-  let top = rect.bottom + 4;
-
-  if (left + 380 > window.innerWidth) {
-    left = Math.max(10, window.innerWidth - 390);
-  }
-  if (top + 250 > window.innerHeight) {
-    top = Math.max(10, rect.top - 250);
-  }
-
-  popup.style.left = left + 'px';
-  popup.style.top = top + 'px';
+  // 💡 상단 헤더에 드래그 이동 기능 연결
+  const header = popup.querySelector('.chip-picker-header');
+  if (header) makeChipPickerDraggable(popup, header);
 };
 
-window.closeChipPicker = function() {
+window.closeChipPicker = function(resetPosition = true) {
   const popup = document.getElementById('chip-picker-popup');
-  if (popup) popup.style.display = 'none';
+  if (popup) {
+    popup.style.display = 'none';
+    if (resetPosition) delete popup.dataset.userMoved; // 닫힐 때만 위치 기억 리셋
+  }
   activeChipContext = { input: null, type: null, contextType: null, rowId: null, replaceOnFirstClick: false };
 };
 
@@ -7357,11 +7508,11 @@ function renderChipPickerContent() {
   const currentTokens = currentVal.split(/[\s,]+/).filter(Boolean);
 
   const isColor = activeChipContext.type === 'color';
-  const titleText = isColor ? '🎨 색상 다중 선택 (터치/클릭)' : '📏 사이즈 다중 선택 (터치/클릭)';
+  const titleText = isColor ? '🎨 색상 다중 선택' : '📏 사이즈 다중 선택';
 
   let html = `
-    <div class="chip-picker-header">
-      <span>${titleText}</span>
+    <div class="chip-picker-header" title="마우스로 잡고 원하는 위치로 이동할 수 있습니다">
+      <span>⠿ ${titleText}</span>
       <span style="cursor:pointer; color:var(--ink-soft); font-size:14px;" onclick="closeChipPicker()">✕</span>
     </div>
     <div class="chip-picker-grid">
@@ -7375,7 +7526,7 @@ function renderChipPickerContent() {
       const borderStyle = c.border ? 'border: 1px solid #CBD5E1;' : '';
 
       html += `
-        <div class="chip-item ${isActive ? 'active' : ''}" onmousedown="toggleChipItem('${c.name}', event)">
+        <div class="chip-item ${isActive ? 'active' : ''}" onmousedown="event.preventDefault()" onclick="toggleChipItem('${c.name}', event)">
           <span class="chip-color-dot" style="${dotStyle} ${borderStyle}"></span>
           <span>${c.name}</span>
         </div>
@@ -7385,7 +7536,7 @@ function renderChipPickerContent() {
     CHIP_SIZES.forEach(sz => {
       const isActive = currentTokens.includes(sz);
       html += `
-        <div class="chip-item ${isActive ? 'active' : ''}" onmousedown="toggleChipItem('${sz}', event)">
+        <div class="chip-item ${isActive ? 'active' : ''}" onmousedown="event.preventDefault()" onclick="toggleChipItem('${sz}', event)">
           <span>${sz}</span>
         </div>
       `;
@@ -7396,219 +7547,439 @@ function renderChipPickerContent() {
   popup.innerHTML = html;
 }
 
+// =========================================================
+// 🎨 색상/사이즈 토글 엔진 (팝업창 및 가로바 점등/점멸 완벽 동기화)
+// =========================================================
 window.toggleChipItem = function(val, event) {
   if (event) {
-    event.preventDefault(); // 인풋 포커스 유지
+    event.preventDefault();
     event.stopPropagation();
   }
 
-  const inputEl = activeChipContext.input;
+  const rId = (activeSaleBarContext && activeSaleBarContext.rowId) || (activeChipContext && activeChipContext.rowId);
+  const f = (activeSaleBarContext && activeSaleBarContext.field) || (activeChipContext && activeChipContext.type);
+
+  // 💡 화면에 현재 살아있는 실제 input을 DOM에서 직접 찾음
+  let inputEl = (rId && f) ? (document.querySelector(`#wrap-${rId}-${f} input`) || document.querySelector(`#wrap-prod-${rId}-${f} input`)) : null;
+  if (!inputEl) inputEl = activeChipContext.input;
   if (!inputEl) return;
+
+  activeChipContext.input = inputEl;
+  if (typeof activeSaleBarContext !== 'undefined') activeSaleBarContext.input = inputEl;
 
   let currentVal = (inputEl.value || '').trim();
   let tokens = currentVal.split(/[\s,]+/).filter(Boolean);
 
-  const isProductContext = (activeChipContext.contextType === 'new' || activeChipContext.contextType === 'prod');
-  const isAllSelected = (inputEl.selectionStart === 0 && inputEl.selectionEnd === inputEl.value.length && inputEl.value.length > 0);
-
-  // 💡 [분기]: 실시간 판매/정산에서만 전체 선택/첫 클릭 시 덮어쓰기 적용
-  // 상품등록(new, prod)은 글자가 선택되어 있어도 지워지지 않고 기존 목록에 계속 추가/토글
-  if (!isProductContext && (activeChipContext.replaceOnFirstClick || isAllSelected)) {
-    activeChipContext.replaceOnFirstClick = false;
-    tokens = [val];
+  // 💡 점등(추가) / 점멸(제거) 토글
+  const idx = tokens.indexOf(val);
+  if (idx > -1) {
+    tokens.splice(idx, 1); // 켜져 있던 항목이면 제거
   } else {
-    const idx = tokens.indexOf(val);
-    if (idx > -1) {
-      tokens.splice(idx, 1);
-    } else {
-      tokens.push(val);
-    }
+    tokens.push(val); // 꺼져 있던 항목이면 추가
   }
 
   const resultStr = tokens.join(' ');
-  inputEl.value = resultStr;
+  inputEl.value = resultStr; // 입력창 즉시 반영
 
-  // 1) 고정 상품등록 패널 동기화
+  // 셀 보기 텍스트(span)도 즉시 동기화
+  const wrap = inputEl.closest('.cell-wrap');
+  if (wrap) {
+    const viewSpan = wrap.querySelector('.view-text');
+    if (viewSpan) viewSpan.textContent = resultStr || '';
+  }
+
+  // 장부 데이터 배열 동기화
   if (activeChipContext.contextType === 'new') {
     syncStockWithTextInputs('new');
-  } 
-  // 2) 테이블 데이터 동기화
-  else if (activeChipContext.rowId) {
-    const f = activeChipContext.type;
-    const rId = activeChipContext.rowId;
+  } else if (rId) {
     if (activeChipContext.contextType === 'prod') {
       updateProdField(rId, f, resultStr);
-    } else if (activeChipContext.contextType === 'sale' || activeChipContext.contextType === 'settle') {
+    } else {
       updateRowField(rId, f, resultStr);
     }
   }
 
-  // 커서를 맨 뒤로 보내어 다중 추가 편의성 유지
-  inputEl.setSelectionRange(inputEl.value.length, inputEl.value.length);
+  // 💡 1. [핵심 추가] 팝업창(chip-picker-popup) 안의 칩 아이템 점등/점멸(active) 실시간 동기화
+  const popup = document.getElementById('chip-picker-popup');
+  if (popup && popup.style.display !== 'none') {
+    popup.querySelectorAll('.chip-item').forEach(item => {
+      const chipText = item.querySelector('span:last-child')?.textContent.trim() || item.textContent.trim();
+      item.classList.toggle('active', tokens.includes(chipText));
+    });
+  }
 
-  inputEl.dispatchEvent(new Event('input', { bubbles: true }));
-  renderChipPickerContent();
+  // 💡 2. 가로 툴바(sale-ac-bar) 안의 바 아이템 점등/점멸(active) 실시간 동기화
+  const bar = document.getElementById('sale-ac-bar');
+  if (bar && bar.style.display !== 'none') {
+    bar.querySelectorAll('.bar-item').forEach(item => {
+      const chipText = item.querySelector('span:last-child')?.textContent.trim() || item.textContent.trim();
+      item.classList.toggle('active', tokens.includes(chipText));
+    });
+  }
 };
 
-// 칩 바 외부 클릭 시 자동 닫힘 (선택된 셀 영역 클릭 시 닫힘 방지)
+// 칩 바 외부 클릭 시 자동 닫힘 (다른 행의 색상 셀 클릭 시에는 닫지 않고 위치 유지)
 document.addEventListener('mousedown', function(e) {
   const popup = document.getElementById('chip-picker-popup');
   if (!popup || popup.style.display === 'none') return;
-
-  // 1. 팝업 내부를 클릭한 경우 닫지 않음
   if (popup.contains(e.target)) return;
 
-  // 2. 현재 활성화된 입력창이나 해당 셀(.cell-wrap)을 클릭한 경우 닫지 않음
+  // 💡 다른 행의 색상 셀을 클릭했을 때는 팝업을 닫지 않고 위치 유지
+  const isColorCell = e.target.closest('[id*="-color"], #new-prod-color');
+  if (isColorCell) return;
+
   if (activeChipContext.input && (e.target === activeChipContext.input || activeChipContext.input.closest('.cell-wrap')?.contains(e.target))) {
     return;
   }
-
-  closeChipPicker();
+  closeChipPicker(true);
 });
 
-/* 👇👇👇 추가되는 가격 릴레이 자바스크립트 코드 👇👇👇 */
+/* =========================================================
+   💰 가격 자동완성 라우터 (상품등록=소수점 / 판매내역=원단위)
+   ========================================================= */
 let lastFocusedPriceInput = null;
 
 window.handlePCPriceFocus = function(inputEl, id, field, isProd) {
   lastFocusedPriceInput = inputEl;
-  renderPCPriceStep1(inputEl, id, field, isProd);
+  // 💡 상품등록, 실시간 판매내역 모두 가로 플로팅 칩스 바(sale-ac-bar)로 통합 호출
+  if (typeof renderSaleBarPriceStep1 === 'function') {
+    renderSaleBarPriceStep1(field, id, inputEl, isProd);
+  }
 };
 
-function renderPCPriceStep1(inputEl, id, field, isProd) {
-  const dropdown = document.getElementById('ac-price-dropdown');
-  const targetEl = inputEl || lastFocusedPriceInput;
-  if (!targetEl) return;
+/* =========================================================
+   🧭 실시간 판매내역 & 상품등록 전용 가로형 슬림 툴바 컨트롤러
+   ========================================================= */
+let activeSaleBarContext = { type: null, field: null, rowId: null, input: null, isProd: false };
 
-  let items = '';
-  if (isProd) { 
-    items += `<div class="ac-item" style="background:#E8F3FF; color:#2F80ED; border-color:#2F80ED;" onmousedown="event.preventDefault()" onclick="event.stopPropagation(); selectPCPriceStep1('${id}', '${field}', 0, true, event)">0.1 ~ 0.9</div>`;
-    for (let i = 1; i <= 9; i++) {
-      items += `<div class="ac-item" onmousedown="event.preventDefault()" onclick="event.stopPropagation(); selectPCPriceStep1('${id}', '${field}', ${i}, true, event)">${i}.0</div>`;
-    }
-    items += `<div class="ac-item" style="background:#FEF3C7; color:#92400E; border-color:#F59E0B;" onmousedown="event.preventDefault()" onclick="event.stopPropagation(); renderPCPriceStep_1_5(lastFocusedPriceInput, '${id}', '${field}', 10, true, event)">10.0대 ➔</div>`;
-    items += `<div class="ac-item" style="background:#FEF3C7; color:#92400E; border-color:#F59E0B;" onmousedown="event.preventDefault()" onclick="event.stopPropagation(); renderPCPriceStep_1_5(lastFocusedPriceInput, '${id}', '${field}', 20, true, event)">20.0대 ➔</div>`;
-  } else { 
-    items += `<div class="ac-item" style="background:#E8F3FF; color:#2F80ED; border-color:#2F80ED;" onmousedown="event.preventDefault()" onclick="event.stopPropagation(); selectPCPriceStep1('${id}', '${field}', 0, false, event)">1천~9천원</div>`;
-    for (let i = 1; i <= 9; i++) {
-      items += `<div class="ac-item" onmousedown="event.preventDefault()" onclick="event.stopPropagation(); selectPCPriceStep1('${id}', '${field}', ${i * 10000}, false, event)">${i}만</div>`;
-    }
-    items += `<div class="ac-item" style="background:#FEF3C7; color:#92400E; border-color:#F59E0B;" onmousedown="event.preventDefault()" onclick="event.stopPropagation(); renderPCPriceStep_1_5(lastFocusedPriceInput, '${id}', '${field}', 100000, false, event)">10만대 ➔</div>`;
-    items += `<div class="ac-item" style="background:#FEF3C7; color:#92400E; border-color:#F59E0B;" onmousedown="event.preventDefault()" onclick="event.stopPropagation(); renderPCPriceStep_1_5(lastFocusedPriceInput, '${id}', '${field}', 200000, false, event)">20만대 ➔</div>`;
-  }
-  dropdown.innerHTML = items;
-  positionPCDropdown(targetEl, dropdown);
+function makeSaleBarDraggable(bar, handle) {
+  let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+  handle.onmousedown = function(e) {
+    if (e.target.closest('.bar-item') || e.target.closest('.bar-close')) return;
+    e = e || window.event;
+    e.preventDefault();
+    pos3 = e.clientX;
+    pos4 = e.clientY;
+
+    bar.dataset.userMoved = 'true';
+
+    document.onmouseup = function() {
+      document.onmouseup = null;
+      document.onmousemove = null;
+    };
+    document.onmousemove = function(ev) {
+      ev = ev || window.event;
+      ev.preventDefault();
+      pos1 = pos3 - ev.clientX;
+      pos2 = pos4 - ev.clientY;
+      pos3 = ev.clientX;
+      pos4 = ev.clientY;
+      bar.style.top = Math.max(10, Math.min(window.innerHeight - 50, bar.offsetTop - pos2)) + "px";
+      bar.style.left = Math.max(10, Math.min(window.innerWidth - 150, bar.offsetLeft - pos1)) + "px";
+    };
+  };
 }
 
-window.renderPCPriceStep_1_5 = function(inputEl, id, field, baseLarge, isProd, event) {
-  if (event) { event.preventDefault(); event.stopPropagation(); }
-  const dropdown = document.getElementById('ac-price-dropdown');
-  const targetEl = inputEl || lastFocusedPriceInput;
+function enableBarDragScroll(bar) {
+  if (bar.dataset.dragScrollInit) return;
+  bar.dataset.dragScrollInit = 'true';
 
-  let items = `<div class="ac-item" style="background:#F1F5F9; color:#475569;" onmousedown="event.preventDefault()" onclick="event.stopPropagation(); renderPCPriceStep1(lastFocusedPriceInput, '${id}', '${field}', ${isProd})">↩ 이전</div>`;
-  
+  let isDown = false, startX = 0, scrollLeft = 0, hasDragged = false;
+
+  bar.addEventListener('mousedown', function(e) {
+    if (e.target.closest('.bar-title') || e.target.closest('.bar-close')) return;
+    isDown = true;
+    hasDragged = false;
+    startX = e.pageX - bar.offsetLeft;
+    scrollLeft = bar.scrollLeft;
+  });
+
+  window.addEventListener('mousemove', function(e) {
+    if (!isDown) return;
+    const x = e.pageX - bar.offsetLeft;
+    const walk = (x - startX);
+    if (Math.abs(walk) > 4) {
+      hasDragged = true;
+      bar.scrollLeft = scrollLeft - walk;
+    }
+  });
+
+  window.addEventListener('mouseup', function() { isDown = false; });
+
+  bar.addEventListener('click', function(e) {
+    if (hasDragged) {
+      e.stopPropagation();
+      e.preventDefault();
+      hasDragged = false;
+    }
+  }, true);
+
+  bar.addEventListener('wheel', function(e) {
+    if (e.deltaY !== 0) {
+      e.preventDefault();
+      bar.scrollLeft += e.deltaY;
+    }
+  }, { passive: false });
+}
+
+// 💡 툴바 위치 지정 (실시간 품번 시작점 매칭)
+function showFloatingSaleBar(bar, forceReposition = false) {
+  bar.style.display = 'flex';
+
+  if (!bar.dataset.userMoved) {
+    const liveInput = activeSaleBarContext.input;
+    if (liveInput) {
+      const rect = liveInput.getBoundingClientRect();
+      if (rect.width > 0 || rect.height > 0 || rect.top > 0) {
+        let top = rect.bottom + 5;
+        let left = rect.left;
+
+        // 💡 [수정] 1. 고정 입력 패널(#new-prod-price)인 경우: 고정 품번(#new-prod-num) 위치에 맞춤
+        const fixedBox = liveInput.closest('.fixed-add-box');
+        if (fixedBox) {
+          const fixedNum = fixedBox.querySelector('#new-prod-num');
+          if (fixedNum) {
+            left = fixedNum.getBoundingClientRect().left;
+          }
+        } else {
+          // 💡 2. 일반 테이블 행(tr)인 경우: 해당 행의 품번 칸에 맞춤
+          const tr = liveInput.closest('tr');
+          if (tr) {
+            const prodNumCell = tr.querySelector('[id*="-prodNum"]');
+            if (prodNumCell) {
+              left = prodNumCell.getBoundingClientRect().left;
+            }
+          }
+        }
+
+        if (left + 380 > window.innerWidth) {
+          left = Math.max(10, window.innerWidth - 390);
+        }
+        if (top + 55 > window.innerHeight) {
+          top = Math.max(10, rect.top - 50);
+        }
+
+        bar.style.top = `${Math.round(top)}px`;
+        bar.style.left = `${Math.round(Math.max(10, left))}px`;
+      }
+    }
+  }
+
+  const handle = bar.querySelector('.bar-title');
+  if (handle) makeSaleBarDraggable(bar, handle);
+  enableBarDragScroll(bar);
+}
+
+window.closeSaleAcBar = function(resetPosition = true) {
+  const bar = document.getElementById('sale-ac-bar');
+  if (bar) {
+    bar.style.display = 'none';
+    bar.innerHTML = '';
+    if (resetPosition) delete bar.dataset.userMoved;
+  }
+  activeSaleBarContext = { type: null, field: null, rowId: null, input: null, isProd: false };
+};
+
+// 💡 [핵심 수정] 바깥 클릭 감지기: 상품등록 색상/사이즈 클릭 시 판매가 칩스 즉시 닫기
+document.addEventListener('mousedown', function (e) {
+  const bar = document.getElementById('sale-ac-bar');
+  if (bar && bar.style.display !== 'none') {
+    if (bar.contains(e.target)) return;
+    
+    // 💡 상품등록의 색상/사이즈 칸을 클릭한 경우 판매가 칩스 바를 즉시 닫음!
+    const isProdColorOrSize = e.target.closest('#new-prod-color, #new-prod-size, [id^="wrap-prod-"][id*="-color"], [id^="wrap-prod-"][id*="-size"]');
+    if (isProdColorOrSize) {
+      closeSaleAcBar(true);
+      return;
+    }
+
+    // 그 외 유지해야 할 셀(실시간 판매장부의 셀 및 상품등록의 판매가 칸)
+    const targetCell = e.target.closest('[id*="-price"], [id*="-salePrice"], [id*="-depositPrice"], #new-prod-price, [id^="wrap-"][id*="-color"], [id^="wrap-"][id*="-size"]');
+    if (targetCell) return;
+
+    if (activeSaleBarContext.input && (e.target === activeSaleBarContext.input || activeSaleBarContext.input.closest('.cell-wrap')?.contains(e.target))) {
+      return;
+    }
+    closeSaleAcBar(true);
+  }
+});
+
+// 💡 가로 바 렌더링: 색상 / 사이즈
+window.renderSaleBarChips = function(type, rowId, inputEl) {
+  const bar = document.getElementById('sale-ac-bar');
+  if (!bar || !inputEl) return;
+
+  activeSaleBarContext = { type, field: type, rowId, input: inputEl, isProd: false };
+  activeChipContext = { input: inputEl, type, contextType: 'sale', rowId };
+
+  const prevScrollLeft = bar.scrollLeft;
+  const currentTokens = (inputEl.value || '').trim().split(/[\s,]+/).filter(Boolean);
+  const titleText = (type === 'color') ? '🎨 색상' : '📏 사이즈';
+
+  let html = `<span class="bar-title" title="마우스로 잡고 창 위치 이동">${titleText}</span>`;
+
+  if (type === 'color') {
+    CHIP_COLORS.forEach(c => {
+      const isActive = currentTokens.includes(c.name);
+      const isGrad = c.dot.includes('gradient');
+      const dotStyle = isGrad ? `background: ${c.dot};` : `background-color: ${c.dot};`;
+      const borderStyle = c.border ? 'border: 1px solid #CBD5E1;' : '';
+      html += `
+        <div class="bar-item ${isActive ? 'active' : ''}" onmousedown="event.preventDefault()" onclick="toggleChipItem('${c.name}', event);">
+          <span class="chip-color-dot" style="${dotStyle} ${borderStyle}"></span>
+          <span>${c.name}</span>
+        </div>
+      `;
+    });
+  } else {
+    CHIP_SIZES.forEach(sz => {
+      const isActive = currentTokens.includes(sz);
+      html += `
+        <div class="bar-item ${isActive ? 'active' : ''}" onmousedown="event.preventDefault()" onclick="toggleChipItem('${sz}', event);">
+          <span>${sz}</span>
+        </div>
+      `;
+    });
+  }
+
+  html += `<span class="bar-close" onclick="closeSaleAcBar()">✕ 닫기</span>`;
+  bar.innerHTML = html;
+  bar.scrollLeft = prevScrollLeft;
+  showFloatingSaleBar(bar);
+};
+
+// 💡 가로 바 렌더링: 가격 1단계 (상품등록 소수점 모드 & 장부 원단위 모드 완벽 분기)
+window.renderSaleBarPriceStep1 = function(field, id, inputEl, isProd = false) {
+  const bar = document.getElementById('sale-ac-bar');
+  if (!bar || !inputEl) return;
+
+  activeSaleBarContext = { type: 'price', field, rowId: id, input: inputEl, isProd };
+  lastFocusedPriceInput = inputEl;
+
+  let titleText = '💰 판매가';
+  if (field === 'depositPrice') titleText = '🏦 입금가';
+  else if (isProd) titleText = '🏷️ 상품 판매가(소수점)';
+
+  let html = `<span class="bar-title" title="마우스로 잡고 창 위치 이동">${titleText}</span>`;
+
+  if (isProd) {
+    // 💡 [상품등록 전용] 소수점 모드 (0.1~0.9, 1.0~9.0, 10.0대, 20.0대)
+    html += `<div class="bar-item" style="background:#E8F3FF; color:#2F80ED; border-color:#2F80ED;" onmousedown="event.preventDefault()" onclick="renderSaleBarPriceStep2('${field}', '${id}', 0, true)">0.1 ~ 0.9</div>`;
+    for (let i = 1; i <= 9; i++) {
+      html += `<div class="bar-item" onmousedown="event.preventDefault()" onclick="renderSaleBarPriceStep2('${field}', '${id}', ${i}, true)">${i}.0</div>`;
+    }
+    html += `<div class="bar-item" style="background:#FEF3C7; color:#92400E; border-color:#F59E0B;" onmousedown="event.preventDefault()" onclick="renderSaleBarPriceStep1_5('${field}', '${id}', 10, true)">10.0대 ➔</div>`;
+    html += `<div class="bar-item" style="background:#FEF3C7; color:#92400E; border-color:#F59E0B;" onmousedown="event.preventDefault()" onclick="renderSaleBarPriceStep1_5('${field}', '${id}', 20, true)">20.0대 ➔</div>`;
+  } else {
+    // 💡 [실시간 판매장부 전용] 원 단위 모드 (1천~9천, 1만~9만, 10만대, 20만대)
+    html += `<div class="bar-item" style="background:#E8F3FF; color:#2F80ED; border-color:#2F80ED;" onmousedown="event.preventDefault()" onclick="renderSaleBarPriceStep2('${field}', '${id}', 0, false)">1천~9천원</div>`;
+    for (let i = 1; i <= 9; i++) {
+      html += `<div class="bar-item" onmousedown="event.preventDefault()" onclick="renderSaleBarPriceStep2('${field}', '${id}', ${i * 10000}, false)">${i}만</div>`;
+    }
+    html += `<div class="bar-item" style="background:#FEF3C7; color:#92400E; border-color:#F59E0B;" onmousedown="event.preventDefault()" onclick="renderSaleBarPriceStep1_5('${field}', '${id}', 100000, false)">10만대 ➔</div>`;
+    html += `<div class="bar-item" style="background:#FEF3C7; color:#92400E; border-color:#F59E0B;" onmousedown="event.preventDefault()" onclick="renderSaleBarPriceStep1_5('${field}', '${id}', 200000, false)">20만대 ➔</div>`;
+  }
+
+  html += `<span class="bar-close" onclick="closeSaleAcBar()">✕ 닫기</span>`;
+  bar.innerHTML = html;
+  showFloatingSaleBar(bar);
+};
+
+// 💡 가로 바 렌더링: 가격 1.5단계 (10만대 / 20만대 세부)
+window.renderSaleBarPriceStep1_5 = function(field, id, baseLarge, isProd = false) {
+  const bar = document.getElementById('sale-ac-bar');
+  if (!bar) return;
+
+  const titleText = isProd ? '🏷️ 상품 판매가(소수점)' : (field === 'salePrice' ? '💰 판매가' : '🏦 입금가');
+  let html = `<span class="bar-title" title="마우스로 잡고 창 위치 이동">${titleText}</span>`;
+  html += `<div class="bar-item" style="background:#F1F5F9; color:#475569;" onmousedown="event.preventDefault()" onclick="renderSaleBarPriceStep1('${field}', '${id}', activeSaleBarContext.input, ${isProd})">↩ 이전</div>`;
+
   if (isProd) {
     for (let i = 0; i <= 9; i++) {
-      const midAmount = baseLarge + i; 
-      items += `<div class="ac-item" onmousedown="event.preventDefault()" onclick="event.stopPropagation(); selectPCPriceStep1('${id}', '${field}', ${midAmount}, true, event)">${midAmount}.0</div>`;
+      const midAmount = baseLarge + i;
+      html += `<div class="bar-item" onmousedown="event.preventDefault()" onclick="renderSaleBarPriceStep2('${field}', '${id}', ${midAmount}, true)">${midAmount}.0</div>`;
     }
   } else {
     for (let i = 0; i <= 9; i++) {
-      const midAmount = baseLarge + (i * 10000); 
-      items += `<div class="ac-item" onmousedown="event.preventDefault()" onclick="event.stopPropagation(); selectPCPriceStep1('${id}', '${field}', ${midAmount}, false, event)">${fmt(midAmount/10000)}만</div>`;
+      const midAmount = baseLarge + (i * 10000);
+      html += `<div class="bar-item" onmousedown="event.preventDefault()" onclick="renderSaleBarPriceStep2('${field}', '${id}', ${midAmount}, false)">${fmt(midAmount/10000)}만</div>`;
     }
   }
-  dropdown.innerHTML = items;
-  positionPCDropdown(targetEl, dropdown);
-}
 
-window.selectPCPriceStep1 = function(id, field, baseAmount, isProd, event) {
-  if (event) { event.preventDefault(); event.stopPropagation(); }
-  renderPCPriceStep2(lastFocusedPriceInput, id, field, baseAmount, isProd);
-}
+  html += `<span class="bar-close" onclick="closeSaleAcBar()">✕ 닫기</span>`;
+  bar.innerHTML = html;
+};
 
-function renderPCPriceStep2(inputEl, id, field, baseAmount, isProd) {
-  const dropdown = document.getElementById('ac-price-dropdown');
-  const targetEl = inputEl || lastFocusedPriceInput;
+// 💡 가로 바 렌더링: 가격 2단계 (최종 소수점 단위 / 원 단위 선택)
+window.renderSaleBarPriceStep2 = function(field, id, baseAmount, isProd = false) {
+  const bar = document.getElementById('sale-ac-bar');
+  if (!bar) return;
 
-  let backAction = `renderPCPriceStep1(lastFocusedPriceInput, '${id}', '${field}', ${isProd})`;
+  const titleText = isProd ? '🏷️ 상품 판매가(소수점)' : (field === 'salePrice' ? '💰 판매가' : '🏦 입금가');
+  let html = `<span class="bar-title" title="마우스로 잡고 창 위치 이동">${titleText}</span>`;
+
+  let backAction = `renderSaleBarPriceStep1('${field}', '${id}', activeSaleBarContext.input, ${isProd})`;
   if (isProd && baseAmount >= 10) {
-    backAction = `renderPCPriceStep_1_5(lastFocusedPriceInput, '${id}', '${field}', ${Math.floor(baseAmount / 10) * 10}, true)`;
+    backAction = `renderSaleBarPriceStep1_5('${field}', '${id}', ${Math.floor(baseAmount / 10) * 10}, true)`;
   } else if (!isProd && baseAmount >= 100000) {
-    backAction = `renderPCPriceStep_1_5(lastFocusedPriceInput, '${id}', '${field}', ${Math.floor(baseAmount / 100000) * 100000}, false)`;
+    backAction = `renderSaleBarPriceStep1_5('${field}', '${id}', ${Math.floor(baseAmount / 100000) * 100000}, false)`;
   }
 
-  let items = `<div class="ac-item" style="background:#F1F5F9; color:#475569;" onmousedown="event.preventDefault()" onclick="event.stopPropagation(); ${backAction}">↩ 이전</div>`;
+  html += `<div class="bar-item" style="background:#F1F5F9; color:#475569;" onmousedown="event.preventDefault()" onclick="${backAction}">↩ 이전</div>`;
 
   if (isProd) {
-    if (baseAmount > 0) items += `<div class="ac-item" style="background:#E8F3FF; color:#2F80ED;" onmousedown="event.preventDefault()" onclick="event.stopPropagation(); selectPCPriceFinal('${id}', '${field}', '${baseAmount.toFixed(1)}', true, event)">딱 ${baseAmount.toFixed(1)}</div>`;
+    // 💡 소수점 최종 반영
+    if (baseAmount > 0) {
+      html += `<div class="bar-item" style="background:#E8F3FF; color:#2F80ED; font-weight:800;" onmousedown="event.preventDefault()" onclick="selectSaleBarPriceFinal('${id}', '${field}', '${baseAmount.toFixed(1)}', true)">딱 ${baseAmount.toFixed(1)}</div>`;
+    }
     for (let i = 1; i <= 9; i++) {
       const finalAmount = baseAmount + (i * 0.1);
-      items += `<div class="ac-item" onmousedown="event.preventDefault()" onclick="event.stopPropagation(); selectPCPriceFinal('${id}', '${field}', '${finalAmount.toFixed(1)}', true, event)">${finalAmount.toFixed(1)}</div>`;
+      html += `<div class="bar-item" onmousedown="event.preventDefault()" onclick="selectSaleBarPriceFinal('${id}', '${field}', '${finalAmount.toFixed(1)}', true)">${finalAmount.toFixed(1)}</div>`;
     }
   } else {
-    if (baseAmount > 0) items += `<div class="ac-item" style="background:#E8F3FF; color:#2F80ED;" onmousedown="event.preventDefault()" onclick="event.stopPropagation(); selectPCPriceFinal('${id}', '${field}', '${baseAmount}', false, event)">딱 ${fmt(baseAmount)}원</div>`;
+    // 💡 원 단위 최종 반영
+    if (baseAmount > 0) {
+      html += `<div class="bar-item" style="background:#E8F3FF; color:#2F80ED; font-weight:800;" onmousedown="event.preventDefault()" onclick="selectSaleBarPriceFinal('${id}', '${field}', '${baseAmount}', false)">딱 ${fmt(baseAmount)}원</div>`;
+    }
     for (let i = 1; i <= 9; i++) {
       const finalAmount = baseAmount + (i * 1000);
-      items += `<div class="ac-item" onmousedown="event.preventDefault()" onclick="event.stopPropagation(); selectPCPriceFinal('${id}', '${field}', '${finalAmount}', false, event)">${fmt(finalAmount)}</div>`;
+      html += `<div class="bar-item" onmousedown="event.preventDefault()" onclick="selectSaleBarPriceFinal('${id}', '${field}', '${finalAmount}', false)">${fmt(finalAmount)}</div>`;
     }
   }
-  dropdown.innerHTML = items;
-  positionPCDropdown(targetEl, dropdown);
-}
 
-window.selectPCPriceFinal = function(id, field, finalVal, isProd, event) {
-  if (event) { event.preventDefault(); event.stopPropagation(); }
-  document.getElementById('ac-price-dropdown').style.display = 'none';
+  html += `<span class="bar-close" onclick="closeSaleAcBar()">✕ 닫기</span>`;
+  bar.innerHTML = html;
+};
 
-  if (id === 'new') { 
+// 💡 최종 가격 선택 및 자동 다음 셀 이동
+window.selectSaleBarPriceFinal = function(id, field, finalVal, isProd = false) {
+  closeSaleAcBar(false);
+
+  if (id === 'new') {
+    // 상품등록 고정 입력 패널
     document.getElementById('new-prod-price').value = finalVal;
-  } else if (isProd) { 
+  } else if (isProd) {
+    // 상품등록 리스트
     updateProdField(id, field, finalVal);
     renderProducts();
-  } else { 
+  } else {
+    // 실시간 판매장부
     updateRowField(id, field, finalVal);
     renderSales();
-    
-    // 판매가를 기입하면 입금가로 자동으로 넘어감
+
+    // 판매가 완료 시 입금가로 자동 릴레이 이동
     if (field === 'salePrice') {
       setTimeout(() => {
         enterEditMode(null, id, 'depositPrice', false, true);
         const depWrap = document.getElementById(`wrap-${id}-depositPrice`);
         if (depWrap) {
           const depInput = depWrap.querySelector('input');
-          if (depInput) handlePCPriceFocus(depInput, id, 'depositPrice', false);
+          if (depInput) renderSaleBarPriceStep1('depositPrice', id, depInput, false);
         }
       }, 50);
     }
   }
-}
-
-function positionPCDropdown(input, dropdown) {
-  const rect = input.getBoundingClientRect();
-  dropdown.style.left = Math.max(10, Math.round(rect.left)) + 'px';
-  dropdown.style.top = Math.round(rect.bottom + 2) + 'px';
-  dropdown.style.display = 'flex';
-}
-
-document.addEventListener('mousedown', function (e) {
-  const pdd = document.getElementById('ac-price-dropdown');
-  if (pdd && pdd.style.display !== 'none') {
-    // 1. 팝업 안을 누른 경우 유지
-    if (pdd.contains(e.target)) return;
-    // 2. 가격 입력창 또는 해당 셀(.cell-wrap) 안을 누른 경우 닫지 않고 유지
-    if (lastFocusedPriceInput && (e.target === lastFocusedPriceInput || lastFocusedPriceInput.closest('.cell-wrap')?.contains(e.target))) {
-      return;
-    }
-    pdd.style.display = 'none';
-  }
-});
-
-window.addEventListener('scroll', function () { 
-  const pdd = document.getElementById('ac-price-dropdown');
-  if (pdd) pdd.style.display = 'none'; 
-}, true);
-/* 👆👆👆 여기까지 👆👆👆 */
-
+};
 </script>
 </body>
 </html>
