@@ -996,6 +996,13 @@
         <div style="display: flex; align-items: center; gap: 4px; margin-left: 8px;">
           <input type="text" id="ledger-date" class="search-input" style="width: 140px; height: 28px; font-size: 12px; text-align: center; padding: 2px; background: #FFFDF9; border-color: #E2D9C8; font-weight: bold;" placeholder="MM.DD.요일" oninput="saveToLocalStorage()">
           <input type="text" id="ledger-session" class="search-input" style="width: 70px; height: 28px; font-size: 12px; text-align: center; padding: 2px; background: #FFFDF9; border-color: #E2D9C8; font-weight: bold;" placeholder="회차(예: 1부)" oninput="saveToLocalStorage()">
+          
+          <!-- 👇 [이동] 깜빡임 버튼을 회차 입력칸 바로 옆으로 이동 (높이 28px 통일) -->
+          <div id="sale-global-filter-alert" style="display: none; margin-left: 2px;">
+            <button class="btn btn-filter-blink" style="padding: 0 10px; height: 28px; font-size: 11.5px; border-radius: 4px; border: 2px solid #F5B0AD; cursor: pointer; display: flex; align-items: center; gap: 4px; box-shadow: 0 2px 6px rgba(220,53,69,0.15);" onclick="clearAllSaleFilters()">
+              🚨 필터 적용 중 (전체보기 🔄)
+            </button>
+          </div>
         </div>
       </div>
       
@@ -1026,13 +1033,6 @@
 </div>
 
     <div id="sale-filter-tags" style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; align-items: center;"></div>
-
-    <!-- 👇 [추가] 필터링 적용 시 나타나는 대형 깜빡임 버튼 -->
-    <div id="sale-global-filter-alert" style="display: none; width: 100%; padding-bottom: 12px;">
-      <button class="btn btn-filter-blink" style="width: 100%; padding: 10px; font-size: 13.5px; border-radius: 6px; border: 2px solid #F5B0AD; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 8px;" onclick="clearAllSaleFilters()">
-        🚨 현재 일부 항목만 필터링되어 보이고 있습니다. (여기를 눌러 필터를 초기화하고 전체 목록을 보세요) 🔄
-      </button>
-    </div>
 
     <!-- 🍒 플로팅(둥둥 뜨는) 복사 버튼 영역 -->
     <div style="position: relative; width: 100%;">
