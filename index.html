@@ -871,14 +871,21 @@
 
     <div id="sale-filter-tags" style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; align-items: center;"></div>
 
-    <div class="table-responsive table-scroll-sale">
+    <!-- 🍒 고객명 컬럼 바로 위 플로팅(둥둥 뜨는) 버튼 영역 -->
+    <div style="position: relative; width: 100%;">
+      <div id="btn-copy-buyers-wrap" style="display: none; position: absolute; bottom: 2px; z-index: 50;">
+        <button type="button" class="btn" onclick="copyFilteredBuyers()" style="padding: 4px 10px; height: 26px; font-size: 11px; font-weight: 800; background: #FFF0F5; color: #D86B8A; border: 1px solid #F5C6D3; border-radius: 4px; cursor: pointer; white-space: nowrap; box-shadow: 0 2px 6px rgba(216,107,138,0.3);" title="현재 필터된 상품의 구매고객 목록 복사">🍒 구매고객 복사</button>
+      </div>
+    </div>
+
+    <div class="table-responsive table-scroll-sale" onscroll="alignCopyButton()">
       <table>
         <colgroup>
           <col style="width:38px;">
           <col style="width:50px;"> <col style="width:39px;">  <col style="width:190px;"> <col style="width:55px;"> <col style="width:45px;"> <col style="width:85px;"> <col style="width:40px;"> <col style="width:65px;">  <col style="width:65px;">  <col style="width:85px;"> <col style="width:90px;">  </colgroup>
         <thead>
           <tr>
-            <th>No.</th><th>날짜</th><th>품번</th><th>상품명</th><th>색상</th><th>사이즈</th><th>고객명</th><th style="text-align:center;">수량</th><th style="text-align:right; padding-right:8px;">판매가</th><th style="text-align:right; padding-right:8px;">입금가</th><th>메모 / 상태</th><th>액션</th>
+            <th>No.</th><th>날짜</th><th>품번</th><th>상품명</th><th>색상</th><th>사이즈</th><th id="th-sale-nick">고객명</th><th style="text-align:center;">수량</th><th style="text-align:right; padding-right:8px;">판매가</th><th style="text-align:right; padding-right:8px;">입금가</th><th>메모 / 상태</th><th>액션</th>
           </tr>
         </thead>
         <tbody id="list-sale"></tbody>
@@ -2802,8 +2809,94 @@ function renderSaleFilterTags() {
     // 🔄 필터 초기화 버튼 (표 분석 버튼 오른쪽에 생성)
     html += `<button class="btn btn-history" style="padding:4px 10px; font-size:11.5px; margin-left:6px; background:#FFF0F0; border-color:#F5B0AD; color:var(--danger); font-weight:800;" onclick="clearAllSaleFilters()">필터 초기화 🔄</button>`;
   }
-  container.innerHTML = html;
+container.innerHTML = html;
 }
+
+// 💡 고객명 컬럼 위치를 추적하여 복사 버튼을 정확히 그 위에 띄우는 함수
+window.alignCopyButton = function() {
+  const wrap = document.getElementById('btn-copy-buyers-wrap');
+  const th = document.getElementById('th-sale-nick');
+  const container = document.querySelector('.table-scroll-sale');
+  
+  if (wrap && th && container && wrap.style.display !== 'none') {
+    // 테이블 내 고객명 컬럼의 현재 X 좌표 계산 (가로 스크롤 반영)
+    const offsetLeft = th.offsetLeft - container.scrollLeft;
+    // 버튼을 고객명 컬럼의 정중앙에 배치
+    const centerPos = offsetLeft + (th.offsetWidth / 2) - (wrap.offsetWidth / 2);
+    wrap.style.left = Math.max(0, centerPos) + 'px';
+  }
+};
+
+// 브라우저 창 크기가 변할 때도 자동 위치 조절
+window.addEventListener('resize', window.alignCopyButton);
+
+// 🍒 우클릭 상품명 필터 시 구매고객 목록 복사 함수
+window.copyFilteredBuyers = function() {
+  const prodName = activeSaleFilters['name'];
+  if (!prodName) {
+    toast('⚠️ 상품명 필터가 적용되어 있지 않습니다.');
+    return;
+  }
+
+  // 현재 필터 및 검색이 적용된 판매 목록 중 유효 구매고객(취소/제외 제외)만 추출
+  const q = document.getElementById('search-sale').value.toLowerCase().trim();
+  const searchSaleNickEl = document.getElementById('search-sale-nick');
+  const qNick = searchSaleNickEl ? searchSaleNickEl.value.toLowerCase().trim() : '';
+
+  const targets = sales.filter(s => {
+    if ((s.nickname || '').trim() === '' || s.isExcluded) return false;
+
+    const matchText = s.prodNum.toLowerCase().includes(q) || s.name.toLowerCase().includes(q) || String(s.salePrice).includes(q) || String(s.depositPrice).includes(q);
+    const matchNick = s.nickname.toLowerCase().includes(qNick);
+    if (!matchText || !matchNick) return false;
+
+    for (let f in activeSaleFilters) {
+      const targetVal = String(s[f] || '').trim().toLowerCase();
+      const filterVal = String(activeSaleFilters[f] || '').trim().toLowerCase();
+      if (targetVal !== filterVal) return false;
+    }
+    return true;
+  });
+
+  if (targets.length === 0) {
+    toast('⚠️ 복사할 구매고객 내역이 없습니다.');
+    return;
+  }
+
+  // 1. 품번 추출 및 포맷 (숫자만 있으면 '번' 결합, 없으면 공란)
+  let pNum = '';
+  const itemWithNum = targets.find(t => (t.prodNum || '').trim() !== '');
+  if (itemWithNum) {
+    pNum = (itemWithNum.prodNum || '').trim();
+    if (/^\d+$/.test(pNum)) pNum += '번';
+  }
+
+  // 2. 제목 구성 (품번 유무 분기)
+  const title = pNum ? `${pNum} ${prodName} 구매고객` : `${prodName} 구매고객`;
+
+  // 3. 구매고객별 [색상 사이즈 고객명] 조합 (공란 자동 제외)
+  const buyerList = targets.map(s => {
+    const color = (s.color || '').trim();
+    const size = (s.size || '').trim();
+    const nick = (s.nickname || '').trim();
+    return [color, size, nick].filter(Boolean).join(' ');
+  });
+
+  // 4. 최종 문자열 생성 및 클립보드 복사 (강제 레드 컬러 이모지 적용)
+  const redHeart = '\u2764\uFE0F';
+  const resultText = `🍒${title}${redHeart}${buyerList.join(redHeart)}`;
+  navigator.clipboard.writeText(resultText).then(() => {
+    toast(`📋 구매고객 목록이 복사되었습니다: ${resultText}`);
+  }).catch(() => {
+    const ta = document.createElement('textarea');
+    ta.value = resultText;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    toast(`📋 구매고객 목록이 복사되었습니다: ${resultText}`);
+  });
+};
 
 window.removeProdFilter = function(key) {
   delete activeProdFilters[key];
@@ -3119,6 +3212,17 @@ function renderSales(){
     document.getElementById('count-sale').innerHTML = `<b>${sales.length}건</b> 기록됨 <span style="margin-left:10px; color:var(--purple-ink); font-weight:700;">[판매가합: ${fmt(totalSale)}원]</span> <span style="margin-left:6px; color:var(--danger); font-weight:700;">[입금가합: ${fmt(totalDep)}원]</span>`;
   } else {
     document.getElementById('count-sale').innerHTML = `필터결과: <b>${filtered.length}건</b> (전체 <b>${sales.length}건</b>) <span style="margin-left:10px; color:var(--purple-ink); font-weight:700;">[필터 판매가: ${fmt(filtTotalSale)}원]</span> <span style="margin-left:6px; color:var(--danger); font-weight:700;">[필터 입금가: ${fmt(filtTotalDep)}원]</span>`;
+  }
+
+  // 💡 상품명 우클릭 필터 적용 시 "구매고객 복사" 버튼 표시 및 위치 정렬
+  const copyBuyersWrap = document.getElementById('btn-copy-buyers-wrap');
+  if (copyBuyersWrap) {
+    if (activeSaleFilters && activeSaleFilters['name']) {
+      copyBuyersWrap.style.display = 'block';
+      if (typeof alignCopyButton === 'function') setTimeout(alignCopyButton, 10);
+    } else {
+      copyBuyersWrap.style.display = 'none';
+    }
   }
   
   const htmlList = filtered.map((s, i) => { 
