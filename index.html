@@ -824,6 +824,22 @@
   .badge-set { background: #F6F0FC; color: #896BB5; border: 1px solid #D8C7ED; }
   .badge-single { background: #FFF9E6; color: #B45309; border: 1px solid #FDE68A; }
   .badge-part { background: #EFF6FF; color: #2563EB; border: 1px solid #BFDBFE; }
+
+  /* 👇 [추가] 필터 초기화 버튼 깜빡임 애니메이션 */
+  @keyframes filter-blink {
+    0% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.4); background-color: #FFF0F0; border-color: #F5B0AD; color: var(--danger); }
+    50% { box-shadow: 0 0 0 5px rgba(220, 53, 69, 0); background-color: #FFE4E4; border-color: #F43F5E; color: #E11D48; }
+    100% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0); background-color: #FFF0F0; border-color: #F5B0AD; color: var(--danger); }
+  }
+  .btn-filter-blink {
+    animation: filter-blink 1.2s infinite;
+    font-weight: 900 !important;
+    transition: all 0.2s;
+  }
+  .btn-filter-blink:hover {
+    background-color: #FFD6D6 !important;
+    animation: none;
+  }
 </style>
 </head>
 <body>
@@ -1011,6 +1027,13 @@
 
     <div id="sale-filter-tags" style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; align-items: center;"></div>
 
+    <!-- 👇 [추가] 필터링 적용 시 나타나는 대형 깜빡임 버튼 -->
+    <div id="sale-global-filter-alert" style="display: none; width: 100%; padding-bottom: 12px;">
+      <button class="btn btn-filter-blink" style="width: 100%; padding: 10px; font-size: 13.5px; border-radius: 6px; border: 2px solid #F5B0AD; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 8px;" onclick="clearAllSaleFilters()">
+        🚨 현재 일부 항목만 필터링되어 보이고 있습니다. (여기를 눌러 필터를 초기화하고 전체 목록을 보세요) 🔄
+      </button>
+    </div>
+
     <!-- 🍒 플로팅(둥둥 뜨는) 복사 버튼 영역 -->
     <div style="position: relative; width: 100%;">
       <div id="btn-floating-action-wrap" style="position: absolute; bottom: 2px; z-index: 50; display: flex; gap: 4px;">
@@ -1083,7 +1106,7 @@
     <span style="font-weight:800; font-size:13.5px; color:var(--ink-soft);">📋 전체 판매 목록 <span id="settle-left-count" class="count"></span></span>
     <!-- ⚠️ 이 부분에 div를 만들고 초기화 버튼을 추가했습니다 -->
     <div style="display:flex; gap:4px;">
-      <button class="btn btn-history" style="padding:4px 10px; font-size:12px; font-weight:800; background:#FFF0F0; border-color:#F5B0AD; color:var(--danger);" onclick="clearAllSettleFilters()">필터 초기화 🔄</button>
+      <button id="btn-settle-filter-reset" class="btn btn-history" style="padding:4px 10px; font-size:12px; font-weight:800; background:#FFF0F0; border-color:#F5B0AD; color:var(--danger);" onclick="clearAllSettleFilters()">필터 초기화 🔄</button>
     </div>
   </div>
       <div class="table-responsive" style="flex:1; overflow-y:auto; max-height:calc(100vh - 310px);">
@@ -2971,8 +2994,6 @@ function renderSaleFilterTags() {
     });
     // 📊 필터 결과 표 분석 버튼
     html += `<button class="btn btn-purple" style="padding:4px 10px; font-size:11.5px; margin-left:8px; border-color:#2F80ED; color:#2F80ED; background:#E6F0FA; font-weight:800;" onclick="openMatrixFromFilteredSales()">📊 필터 결과 표 분석</button>`;
-    // 🔄 필터 초기화 버튼 (표 분석 버튼 오른쪽에 생성)
-    html += `<button class="btn btn-history" style="padding:4px 10px; font-size:11.5px; margin-left:6px; background:#FFF0F0; border-color:#F5B0AD; color:var(--danger); font-weight:800;" onclick="clearAllSaleFilters()">필터 초기화 🔄</button>`;
   }
 container.innerHTML = html;
 }
@@ -3701,9 +3722,15 @@ function renderSales(){
   
   const isFiltered = q !== '' || qNick !== '' || Object.keys(activeSaleFilters).length > 0;
   if (!isFiltered) {
-    document.getElementById('count-sale').innerHTML = `<b>${sales.length}건</b> 기록됨 <span style="margin-left:10px; color:var(--purple-ink); font-weight:700;">[판매가합: ${fmt(totalSale)}원]</span> <span style="margin-left:6px; color:var(--danger); font-weight:700;">[입금가합: ${fmt(totalDep)}원]</span>`;
+    document.getElementById('count-sale').innerHTML = `<b>${sales.length}건</b> 기록됨 ...`;
   } else {
-    document.getElementById('count-sale').innerHTML = `필터결과: <b>${filtered.length}건</b> (전체 <b>${sales.length}건</b>) <span style="margin-left:10px; color:var(--purple-ink); font-weight:700;">[필터 판매가: ${fmt(filtTotalSale)}원]</span> <span style="margin-left:6px; color:var(--danger); font-weight:700;">[필터 입금가: ${fmt(filtTotalDep)}원]</span>`;
+    document.getElementById('count-sale').innerHTML = `필터결과: <b>${filtered.length}건</b> ...`;
+  }
+
+  // 👇 [추가] 실시간 판매 내역 대형 깜빡임 버튼 표시 제어
+  const globalFilterAlert = document.getElementById('sale-global-filter-alert');
+  if (globalFilterAlert) {
+    globalFilterAlert.style.display = isFiltered ? 'block' : 'none';
   }
 
   // 💡 필터 조건에 따른 버튼 표시 토글 및 위치 정렬
@@ -4175,9 +4202,20 @@ function renderSettleLeftPanel() {
   
   const leftTotalSale = list.reduce((a, s) => a + ((Number(s.salePrice) || 0)*(Number(s.qty)||1)), 0);
   const leftTotalDep = list.reduce((a, s) => a + ((Number(s.depositPrice) || 0)*(Number(s.qty)||1)), 0);
-  let filterClearBtn = settleFilterValue ? `<button class="btn btn-history" style="padding:2px 6px; font-size:11px; background:#FFF0F0; color:var(--danger); font-weight:800; margin-left:6px;" onclick="clearSettleFilter()">필터해제 ✕</button>` : '';
+  let filterClearBtn = settleFilterValue ? `<button class="btn btn-history" ...>필터해제 ✕</button>` : '';
   
   const isLeftFiltered = q !== '' || qNick !== '' || Object.keys(activeSaleFilters).length > 0 || settleFilterValue !== null;
+  
+  // 👇 [추가] 마감정산 필터 초기화 버튼 깜빡임 제어
+  const settleResetBtn = document.getElementById('btn-settle-filter-reset');
+  if (settleResetBtn) {
+    if (isLeftFiltered) {
+      settleResetBtn.classList.add('btn-filter-blink');
+    } else {
+      settleResetBtn.classList.remove('btn-filter-blink');
+    }
+  }
+
   let matrixBtn = '';
 
 // 좌측 목록에 검색어나 필터가 하나라도 적용되어 있고 데이터가 있다면 "표로보기" 버튼 표시!
@@ -4304,7 +4342,15 @@ window.settleDeleteRow = function(id) {
 
   const target = sales[idx];
 
-  // 💡 정산 탭 삭제시에도 똑같이 텍스트가 채워져 있는지 넉넉하고 유연하게 검사
+  // 1. 고객명이 적혀있는 행이면 삭제 전 확인창 띄우기
+  const nick = (target.nickname || '').trim();
+  if (nick !== '') {
+    if (!confirm(`⚠️ [${nick}] 고객명이 입력되어 있는 판매 내역입니다.\n정말 이 행을 삭제하시겠습니까?`)) {
+      return; // '취소' 클릭 시 행 삭제 중단
+    }
+  }
+
+  // 2. 셀에 데이터가 작성되어 있는지 검사
   const hasData = [
     target.prodNum, target.name, target.color, target.size,
     target.nickname, target.salePrice, target.depositPrice, target.memo
@@ -4312,11 +4358,15 @@ window.settleDeleteRow = function(id) {
 
   saveState();
   if (sales.length <= 1) sales = [createEmptySaleObject()]; else sales.splice(idx, 1);
+  
+  populateAutocompleteLists();
   renderSales();
   saveToLocalStorage();
 
-  // 문구 일치화 출력 확인
-  if (hasData) {
+  // 3. 삭제 후 하단 안내 문구(Toast) 출력
+  if (nick !== '') {
+    toast(`🗑️ [${nick}] 고객님의 판매 내역이 삭제되었습니다.`);
+  } else if (hasData) {
     toast('🗑️ 항목이 입력된 목록이 삭제되었습니다.');
   }
 };
