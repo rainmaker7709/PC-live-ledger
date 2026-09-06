@@ -983,23 +983,20 @@
     </h2>
 
     <!-- 💡 저장/업로드 버튼 + 날짜/회차 입력칸이 모인 툴바 영역 -->
-    <div class="search-container" style="display: flex; justify-content: space-between; align-items: center; width: 100%; flex-wrap: wrap; gap: 6px;">
+    <div class="search-container" style="display: flex; justify-content: space-between; align-items: center; width: 100%; flex-wrap: nowrap; gap: 6px; overflow-x: auto; overflow-y: hidden;">
       
       <!-- 왼쪽 그룹 -->
-      <!-- 왼쪽 그룹 -->
-      <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
-        <button class="btn btn-history" onclick="loadAutocompleteData(false)" style="padding: 6px 10px; height: 28px; font-weight: bold;" title="구글시트의 최신 회원명/브랜드 목록을 다시 불러옵니다">🔄 참고데이터 새로고침</button>
-        <!-- 💡 저장/업로드를 마감정산으로 이동하고, 종이장부 버튼 배치 -->
-        <button class="btn btn-purple" onclick="openPaperLedgerModal()" style="height: 28px; padding: 0 10px; font-size: 12px; font-weight: 800;" title="깔끔한 종이 장부 형태로 전체화면 보기">📄 종이장부</button>
+      <div style="display: flex; align-items: center; gap: 6px; flex-wrap: nowrap; flex-shrink: 1; min-width: 0;">
+        <button class="btn btn-history" onclick="loadAutocompleteData(false)" style="padding: 6px 10px; height: 28px; font-weight: bold; flex-shrink: 1; white-space: nowrap;" title="구글시트의 최신 회원명/브랜드 목록을 다시 불러옵니다">🔄 참고데이터 새로고침</button>
+        <button class="btn btn-purple" onclick="openPaperLedgerModal()" style="height: 28px; padding: 0 10px; font-size: 12px; font-weight: 800; flex-shrink: 1; white-space: nowrap;" title="깔끔한 종이 장부 형태로 전체화면 보기">📄 종이장부</button>
         
-        <!-- 💡 날짜/회차 입력칸을 버튼들과 약간의 간격(margin-left: 8px)을 두고 배치 -->
-        <div style="display: flex; align-items: center; gap: 4px; margin-left: 8px;">
-          <input type="text" id="ledger-date" class="search-input" style="width: 140px; height: 28px; font-size: 12px; text-align: center; padding: 2px; background: #FFFDF9; border-color: #E2D9C8; font-weight: bold;" placeholder="MM.DD.요일" oninput="saveToLocalStorage()">
-          <input type="text" id="ledger-session" class="search-input" style="width: 70px; height: 28px; font-size: 12px; text-align: center; padding: 2px; background: #FFFDF9; border-color: #E2D9C8; font-weight: bold;" placeholder="회차(예: 1부)" oninput="saveToLocalStorage()">
+        <!-- 💡 날짜/회차 입력칸이 압축되도록 min-width 설정 -->
+        <div style="display: flex; align-items: center; gap: 4px; margin-left: 8px; flex-shrink: 1; min-width: 0;">
+          <input type="text" id="ledger-date" class="search-input" style="width: 140px; min-width: 70px; flex-shrink: 1; height: 28px; font-size: 12px; text-align: center; padding: 2px; background: #FFFDF9; border-color: #E2D9C8; font-weight: bold;" placeholder="MM.DD.요일" oninput="saveToLocalStorage()">
+          <input type="text" id="ledger-session" class="search-input" style="width: 70px; min-width: 40px; flex-shrink: 1; height: 28px; font-size: 12px; text-align: center; padding: 2px; background: #FFFDF9; border-color: #E2D9C8; font-weight: bold;" placeholder="회차(예: 1부)" oninput="saveToLocalStorage()">
           
-          <!-- 👇 [이동] 깜빡임 버튼을 회차 입력칸 바로 옆으로 이동 (높이 28px 통일) -->
-          <div id="sale-global-filter-alert" style="display: none; margin-left: 2px;">
-            <button class="btn btn-filter-blink" style="padding: 0 10px; height: 28px; font-size: 11.5px; border-radius: 4px; border: 2px solid #F5B0AD; cursor: pointer; display: flex; align-items: center; gap: 4px; box-shadow: 0 2px 6px rgba(220,53,69,0.15);" onclick="clearAllSaleFilters()">
+          <div id="sale-global-filter-alert" style="display: none; margin-left: 2px; flex-shrink: 1;">
+            <button class="btn btn-filter-blink" style="padding: 0 10px; height: 28px; font-size: 11.5px; border-radius: 4px; border: 2px solid #F5B0AD; cursor: pointer; display: flex; align-items: center; gap: 4px; box-shadow: 0 2px 6px rgba(220,53,69,0.15); flex-shrink: 1; white-space: nowrap;" onclick="clearAllSaleFilters()">
               🚨 필터 적용 중 (전체보기 🔄)
             </button>
           </div>
@@ -1007,9 +1004,9 @@
       </div>
       
       <!-- 오른쪽 그룹 -->
-      <div style="display: flex; align-items: center; gap: 6px;">
-        <button class="btn btn-history" onclick="copyAllSalesData()" style="padding: 6px 10px; height: 28px; font-weight: bold; border-color:#2F80ED; color:#2F80ED;" title="실시간 판매내역 전체를 클립보드에 복사합니다">📋 전체 복사</button>
-        <button class="btn btn-primary" onclick="sendSalesToSheet()" style="padding: 6px 12px; height: 28px; font-weight: 800;" title="구글시트 출력결과 시트로 전송하고, 동시에 클립보드에도 복사합니다">☁️ API 전송 & 복사</button>
+      <div style="display: flex; align-items: center; gap: 6px; flex-shrink: 0;">
+        <button class="btn btn-history" onclick="copyAllSalesData()" style="padding: 6px 10px; height: 28px; font-weight: bold; border-color:#2F80ED; color:#2F80ED; white-space: nowrap;" title="실시간 판매내역 전체를 클립보드에 복사합니다">📋 전체 복사</button>
+        <button class="btn btn-primary" onclick="sendSalesToSheet()" style="padding: 6px 12px; height: 28px; font-weight: 800; white-space: nowrap;" title="구글시트 출력결과 시트로 전송하고, 동시에 클립보드에도 복사합니다">☁️ API 전송 & 복사</button>
       </div>
     </div>
     
