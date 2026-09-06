@@ -2830,7 +2830,7 @@ window.alignCopyButton = function() {
 // 브라우저 창 크기가 변할 때도 자동 위치 조절
 window.addEventListener('resize', window.alignCopyButton);
 
-// 🍒 우클릭 상품명 필터 시 구매고객 목록 복사 함수
+// 🍒 우클릭 상품명 필터 시 구매고객 목록 복사 함수 (✅ 타이틀 + 고객명 우선 + 괄호 옵션/수량)
 window.copyFilteredBuyers = function() {
   const prodName = activeSaleFilters['name'];
   if (!prodName) {
@@ -2871,20 +2871,72 @@ window.copyFilteredBuyers = function() {
     if (/^\d+$/.test(pNum)) pNum += '번';
   }
 
-  // 2. 제목 구성 (품번 유무 분기)
-  const title = pNum ? `${pNum} ${prodName} 구매고객` : `${prodName} 구매고객`;
+  // 2. 제목 구성 (맨 앞 기호 ✅ 적용)
+  const cleanPName = prodName.trim();
+  const title = `✅${pNum ? pNum + ' ' : ''}${cleanPName} 구매고객`.replace(/\s+/g, ' ').trim();
 
-  // 3. 구매고객별 [색상 사이즈 고객명] 조합 (공란 자동 제외)
-  const buyerList = targets.map(s => {
-    const color = (s.color || '').trim();
-    const size = (s.size || '').trim();
-    const nick = (s.nickname || '').trim();
-    return [color, size, nick].filter(Boolean).join(' ');
+  // 3. 구매고객별 [고객명 (옵션×수량개)] 조합
+  const processedGroupIds = new Set();
+  const buyerList = [];
+
+  targets.forEach(s => {
+    // 🎁 1+1 또는 📦 세트 그룹인 경우 (두 줄이 묶여 있는 상품)
+    if (s.groupId) {
+      if (processedGroupIds.has(s.groupId)) return;
+      processedGroupIds.add(s.groupId);
+
+      const groupRows = targets.filter(t => t.groupId === s.groupId);
+      const nick = (s.nickname || groupRows[0]?.nickname || '').trim();
+      const groupType = s.groupType;
+
+      if (groupType === '세트') {
+        const parts = groupRows.map(r => {
+          const roleLabel = r.groupRole === 'start' ? '상' : (r.groupRole === 'end' ? '하' : '');
+          const opt = [roleLabel, (r.color || '').trim(), (r.size || '').trim()].filter(Boolean).join(' ').trim();
+          const q = Number(r.qty) || 1;
+          const qTxt = q > 1 ? `×${q}개` : '';
+          const content = opt ? (opt + (qTxt ? ` ${qTxt}` : '')) : qTxt;
+          return content ? `(${content})` : '';
+        }).filter(Boolean).join(' ');
+
+        buyerList.push(parts ? `${nick} ${parts}` : nick);
+      } else if (groupType === '1+1') {
+        const parts = groupRows.map(r => {
+          const opt = [(r.color || '').trim(), (r.size || '').trim()].filter(Boolean).join(' ').trim();
+          const q = Number(r.qty) || 1;
+          const qTxt = q > 1 ? `×${q}개` : '';
+          const content = opt ? (opt + (qTxt ? ` ${qTxt}` : '')) : qTxt;
+          return content ? `(${content})` : '';
+        }).filter(Boolean).join(' ');
+
+        buyerList.push(parts ? `${nick} ${parts}` : nick);
+      } else {
+        const opt = [(s.color || '').trim(), (s.size || '').trim()].filter(Boolean).join(' ').trim();
+        const q = Number(s.qty) || 1;
+        const insideBracket = q > 1 ? (opt ? `${opt}×${q}개` : `×${q}개`) : opt;
+        buyerList.push(insideBracket ? `${nick} (${insideBracket})` : nick);
+      }
+    } else {
+      // 📋 일반 단품 주문인 경우
+      const nick = (s.nickname || '').trim();
+      const color = (s.color || '').trim();
+      const size = (s.size || '').trim();
+      const qty = Number(s.qty) || 1;
+      const optPart = [color, size].filter(Boolean).join(' ').trim();
+
+      let insideBracket = optPart;
+      if (qty > 1) {
+        insideBracket = optPart ? `${optPart}×${qty}개` : `×${qty}개`;
+      }
+      const buyerStr = insideBracket ? `${nick} (${insideBracket})` : nick;
+      buyerList.push(buyerStr.replace(/\s+/g, ' ').trim());
+    }
   });
 
   // 4. 최종 문자열 생성 및 클립보드 복사 (강제 레드 컬러 이모지 적용)
   const redHeart = '\u2764\uFE0F';
-  const resultText = `🍒${title}${redHeart}${buyerList.join(redHeart)}`;
+  const resultText = `${title}${redHeart}${buyerList.join(redHeart)}`;
+
   navigator.clipboard.writeText(resultText).then(() => {
     toast(`📋 구매고객 목록이 복사되었습니다: ${resultText}`);
   }).catch(() => {
