@@ -1104,9 +1104,9 @@
       <!-- 오른쪽 그룹 -->
       <div style="display: flex; align-items: center; gap: 6px; flex-shrink: 0;">
         <button class="btn btn-history" onclick="copyAllSalesData()" style="padding: 6px 10px; height: 28px; font-weight: bold; border-color:#2F80ED; color:#2F80ED; white-space: nowrap;" title="실시간 판매내역 전체를 클립보드에 복사합니다">📋 전체 복사</button>
-        <button class="btn btn-primary" onclick="sendSalesToSheet()" style="padding: 6px 12px; height: 28px; font-weight: 800; white-space: nowrap;" title="구글시트와 데이터를 양방향으로 실시간 동기화합니다.">☁️ 실시간 동기화</button>
+        <button class="btn btn-primary" onclick="sendSalesToSheet()" style="padding: 6px 12px; height: 28px; font-weight: 800; white-space: nowrap;" title="구글시트 전송 및 판매자 간 실시간 동기화를 진행합니다">☁️ API 전송 & 동기화</button>
       </div>
-    </div>
+    </div> <!-- 👈 💡 누락되었던 이 닫는 태그를 넣어주세요! -->
     
     <div class="search-container" style="display: flex; justify-content: space-between; align-items: center; width: 100%; flex-wrap: nowrap; gap: 8px;">
   <!-- 좌측: 검색창 및 버튼 그룹 (화면이 줄어도 형태 고정) -->
@@ -5669,61 +5669,99 @@ document.getElementById('file-import-share').addEventListener('change', async fu
 async function copyTsvToClipboard(rows) { const text = rows.map(r => r.join('\t')).join('\n'); try { await navigator.clipboard.writeText(text); return true; } catch (e) { return false; } }
 
 window.sendSalesToSheet = async function() {
-  // 빈 깡통 데이터(아무 내용도 없는 행)만 제외하고 모든 유효 데이터를 선택
-  const targets = sales.filter(s => s.prodNum || s.name || s.nickname || s.salePrice || s.depositPrice);
+  // 1. 상단 메뉴의 날짜 + 회차 조합값 준비
+  const menuDate = (document.getElementById('ledger-date')?.value || '').trim();
+  const menuSession = (document.getElementById('ledger-session')?.value || '').trim();
+  const combinedMenuDate = [menuDate, menuSession].filter(Boolean).join(' ');
 
+  // 2. 작업 방식 선택 팝업 (1, 2, 3번 전송 및 4번 동료 데이터 불러오기)
   const modeChoice = prompt(
-    `☁️ 실시간 동기화 방식을 선택하세요:\n\n` +
-    `1 : [양방향 동기화] 내 데이터를 서버로 올리고, 다른 사람의 데이터를 가져옵니다.\n` +
-    `2 : [내려받기] 서버에 있는 데이터만 무조건 가져옵니다. (내 변경사항 무시)\n` +
-    `3 : [덮어쓰기] 서버 시트를 모두 지우고 현재 내 화면의 데이터로만 덮어씌웁니다.\n\n` +
-    `(취소를 누르면 동기화가 취소됩니다)`,
+    `☁️ 구글시트 전송 및 실시간 동기화 방식을 선택하세요:\n\n` +
+    `1 : [전송] 동일 날짜 덮어쓰기 (새 날짜/2부는 이어서 붙이기)\n` +
+    `2 : [전송] 날짜 상관없이 무조건 맨 아래에 [이어서 붙이기]\n` +
+    `3 : [전송] 출력결과 전체 초기화 후 [새로 덮어쓰기] (적립금 보존)\n` +
+    `4 : [가져오기] 동료가 올린 최신 실시간 장부 [불러오기]\n\n` +
+    `(취소를 누르면 작업이 취소됩니다)`,
     "1"
   );
 
-  if (modeChoice !== "1" && modeChoice !== "2" && modeChoice !== "3") return;
-  
-  let mode = "sync";
-  if (modeChoice === "2") mode = "download";
-  if (modeChoice === "3") mode = "overwrite_all";
+  if (modeChoice !== "1" && modeChoice !== "2" && modeChoice !== "3" && modeChoice !== "4") return;
 
-  let modeText = mode === 'sync' ? '양방향 병합' : (mode === 'download' ? '데이터 내려받기' : '전체 덮어쓰기');
-  toast(`☁️ 구글시트와 ${modeText} 중입니다... 잠시만 기다려주세요.`); 
+  // [옵션 4: 동료 장부 불러오기]
+  if (modeChoice === "4") {
+    toast(`📥 실시간동기화 시트에서 최신 데이터를 가져오는 중...`);
+    const res = await callGAS('loadLiveSalesRecords', [combinedMenuDate]);
+    if (res && res.success) {
+      if (!res.records || res.records.length === 0) {
+        toast(`⚠️ 불러올 수 있는 실시간 장부 데이터가 없습니다.`);
+        return;
+      }
+      if (!confirm(`📥 서버에서 ${res.records.length}건의 판매 내역을 찾았습니다.\n현재 화면에 불러오시겠습니까? (기존 내용은 되돌리기가 가능합니다)`)) return;
 
-  const globalDate = (document.getElementById('ledger-date')?.value || '').replace(/\s+/g, '');
-  const records = targets.map(s => {
-    if (!(s.rowDate || '').trim()) s.rowDate = globalDate;
-    return s;
+      saveState();
+      sales = res.records;
+      sales = sortSalesGroupPreserved(sales);
+      if (sales.length === 0) sales.push(createEmptySaleObject());
+
+      saveToLocalStorage();
+      populateAutocompleteLists();
+      renderSales();
+      toast(`✅ 동료 작업자의 실시간 장부(${sales.length}건)를 화면에 반영했습니다!`);
+    } else {
+      toast(`⚠️ 불러오기 실패: ` + (res && res.message ? res.message : '오류'));
+    }
+    return;
+  }
+
+  // [옵션 1, 2, 3: 구글 시트 전송 및 동기화 시트 저장]
+  const targets = sales.filter(s => (s.nickname || '').trim() !== '' && !s.isExcluded);
+  if (targets.length === 0) {
+    toast('☁️ 전송할 판매 내역 레코드가 존재하지 않습니다.');
+    return;
+  }
+
+  // 날짜 우선순위 판별 엔진: 행의 날짜 우선 -> 비어있으면 상단 메뉴(날짜+회차) 상속
+  const preparedRecords = targets.map(s => {
+    let finalRowDate = (s.rowDate || '').trim();
+    if (!finalRowDate) {
+      finalRowDate = combinedMenuDate || formatDateYYMMDD_(new Date());
+    }
+    return {
+      ...s,
+      rowDate: finalRowDate,
+      date: finalRowDate
+    };
   });
 
-  // 새롭게 만든 동기화 전용 API 호출
-  const res = await callGAS('syncLiveSalesRecords', [records, mode]);
+  let mode = "smart";
+  let modeText = "동일 날짜 덮어쓰기/이어붙이기";
+  if (modeChoice === "2") { mode = "append"; modeText = "맨 아래 이어붙이기"; }
+  if (modeChoice === "3") { mode = "overwrite_all"; modeText = "출력결과 표1 전체 덮어쓰기"; }
+
+  toast(`☁️ 구글시트로 데이터(${targets.length}건, ${modeText}) 전송 중...`);
+
+  // 백엔드의 신규 syncLiveSalesRecords 호출 (출력결과 A~G열 갱신 + 실시간동기화 시트 격리 저장)
+  const res = await callGAS('syncLiveSalesRecords', [preparedRecords, mode, combinedMenuDate]);
+
+  // 클립보드 복사 병행
+  const copyRows = preparedRecords.map(r => {
+    let pName = (r.name || '').trim();
+    let pNum = (r.prodNum || '').trim();
+    if (pNum !== '') {
+      if (/^\d+$/.test(pNum)) pNum += '번';
+      if (pName.indexOf(pNum) === -1) pName = (pNum + ' ' + pName).trim();
+    }
+    let colorSize = [r.color, r.size].map(x => (x || '').trim()).filter(Boolean).join('/');
+    return [r.rowDate, pName, colorSize, r.nickname, r.salePrice || '', r.qty || '1'];
+  });
+  const copied = await copyTsvToClipboard(copyRows);
 
   if (res && res.success) {
-    // 1. 서버에서 내려준 최신 전체 데이터로 로컬 덮어씌우기
-    sales = res.records;
-    sales.forEach(s => s.sent = true); // 동기화 완료 마크
-    
-    // 2. 구버전 앱이 올린 OLD 데이터가 섞여 있을 경우, 그룹 순서를 안전하게 재정렬
-    sales = sortSalesGroupPreserved(sales);
-    if (sales.length === 0) sales.push(createEmptySaleObject());
-
-    // 3. 브라우저 저장 및 화면 갱신
+    targets.forEach(s => s.sent = true);
     saveToLocalStorage();
-    populateAutocompleteLists();
-    renderSales();
-    
-    // 클립보드 복사 여부 묻기 (편의성 유지)
-    if (mode === 'sync' || mode === 'overwrite_all') {
-        const rows = records.map(r => [r.rowDate, r.name, (r.color || '')+'/'+(r.size || ''), r.nickname, r.salePrice || '', r.qty || '1']); 
-        await copyTsvToClipboard(rows);
-        toast(`✅ 실시간 동기화(${modeText}) 완료! (총 ${sales.length}건, 클립보드 복사됨)`);
-    } else {
-        toast(`✅ 실시간 동기화(${modeText}) 완료! (현재 총 ${sales.length}건)`);
-    }
-    
+    toast(`✅ 구글시트 전송 및 실시간 동기화 완료! (${modeText})` + (copied ? ' (+클립보드 복사)' : ''));
   } else {
-    toast('⚠️ 동기화 실패: ' + (res && res.message ? res.message : '오류'));
+    toast(`⚠️ 전송 실패: ` + (res && res.message ? res.message : '오류') + (copied ? ' / 클립보드 복사는 완료되었습니다.' : ''));
   }
 };
 
