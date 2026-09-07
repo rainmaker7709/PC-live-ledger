@@ -2798,8 +2798,12 @@ function loadFromLocalStorage() {
   if (sales.length === 0) { sales.push(createEmptySaleObject()); }
 // (이 아래의 if (storedDate... 부터는 기존 코드와 동일하게 두시면 됩니다.)
   if (storedDate && document.getElementById('ledger-date')) { 
-    // 기존에 '26.05.12'처럼 년도가 붙어있던 저장값에서 년도(숫자2자리.)를 자동 제거
-    document.getElementById('ledger-date').value = storedDate.replace(/^\d{2}\./, ''); 
+    // 비정상적으로 잘려나간 기존 잔여값('08화요일' 등)만 오늘 날짜로 교정하고, 그 외에는 사용자가 적은 값 그대로 복원
+    if (!/^\d{2}\./.test(storedDate)) {
+      initDefaultDate();
+    } else {
+      document.getElementById('ledger-date').value = storedDate;
+    }
   } else { 
     initDefaultDate(); 
   }
@@ -6609,18 +6613,6 @@ window.addEventListener('mousemove', function(e) {
     localStorage.setItem('live_deposit_flex_right', rightPanel.style.flex);
   });
 })();
-
-function initDefaultDate() {
-  const dateEl = document.getElementById('ledger-date'); 
-  if (!dateEl || dateEl.value) return;
-  const now = new Date();
-  const yy = String(now.getFullYear()).slice(-2); 
-  const mm = String(now.getMonth() + 1).padStart(2, '0');
-  const dd = String(now.getDate()).padStart(2, '0');
-  const week = ['일요일', '월요일', '화요일', '수요일', '목요일', '금요일', '토요일'];
-  const dayName = week[now.getDay()];
-  dateEl.value = `${yy}.${mm}.${dd}${dayName}`; 
-}
 
 loadFromLocalStorage(); loadAutocompleteCache(); renderProducts(); renderSales(); updateHistoryButtons();
 loadAutocompleteData(true); syncColorPickerUI(); loadCopySymbols();
