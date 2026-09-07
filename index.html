@@ -1104,7 +1104,7 @@
       <!-- 오른쪽 그룹 -->
       <div style="display: flex; align-items: center; gap: 6px; flex-shrink: 0;">
         <button class="btn btn-history" onclick="copyAllSalesData()" style="padding: 6px 10px; height: 28px; font-weight: bold; border-color:#2F80ED; color:#2F80ED; white-space: nowrap;" title="실시간 판매내역 전체를 클립보드에 복사합니다">📋 전체 복사</button>
-        <button class="btn btn-primary" onclick="sendSalesToSheet()" style="padding: 6px 12px; height: 28px; font-weight: 800; white-space: nowrap;" title="구글시트 출력결과 시트로 전송하고, 동시에 클립보드에도 복사합니다">☁️ API 전송 & 복사</button>
+        <button class="btn btn-primary" onclick="sendSalesToSheet()" style="padding: 6px 12px; height: 28px; font-weight: 800; white-space: nowrap;" title="구글시트와 데이터를 양방향으로 실시간 동기화합니다.">☁️ 실시간 동기화</button>
       </div>
     </div>
     
@@ -5669,76 +5669,61 @@ document.getElementById('file-import-share').addEventListener('change', async fu
 async function copyTsvToClipboard(rows) { const text = rows.map(r => r.join('\t')).join('\n'); try { await navigator.clipboard.writeText(text); return true; } catch (e) { return false; } }
 
 window.sendSalesToSheet = async function() {
-  const targets = sales.filter(s => (s.nickname || '').trim() !== '' && !s.isExcluded); 
-  if (targets.length === 0) { 
-    toast('☁️ 전송할 판매 내역 레코드가 존재하지 않습니다.'); 
-    return; 
-  }
-  
-  // 1. 전송 방식 선택 팝업창 띄우기 (3번 선택지 추가)
+  // 빈 깡통 데이터(아무 내용도 없는 행)만 제외하고 모든 유효 데이터를 선택
+  const targets = sales.filter(s => s.prodNum || s.name || s.nickname || s.salePrice || s.depositPrice);
+
   const modeChoice = prompt(
-    `☁️ 구글시트로 데이터를 전송하는 방식을 선택하세요:\n\n` +
-    `1 : 기존 동일 날짜 데이터 삭제 후 [덮어쓰기]\n` +
-    `2 : 기존 데이터 아래에 그대로 [이어서 붙이기]\n` +
-    `3 : 날짜 상관없이 시트 전체 초기화 후 [전체 덮어씌우기]\n\n` +
-    `(취소를 누르면 전송이 취소됩니다)`,
+    `☁️ 실시간 동기화 방식을 선택하세요:\n\n` +
+    `1 : [양방향 동기화] 내 데이터를 서버로 올리고, 다른 사람의 데이터를 가져옵니다.\n` +
+    `2 : [내려받기] 서버에 있는 데이터만 무조건 가져옵니다. (내 변경사항 무시)\n` +
+    `3 : [덮어쓰기] 서버 시트를 모두 지우고 현재 내 화면의 데이터로만 덮어씌웁니다.\n\n` +
+    `(취소를 누르면 동기화가 취소됩니다)`,
     "1"
   );
 
-  // 1, 2, 3이 아니거나 취소를 누른 경우 실행 중단
   if (modeChoice !== "1" && modeChoice !== "2" && modeChoice !== "3") return;
   
-  // 선택한 번호에 따라 mode 설정
-  let mode = "overwrite";
-  if (modeChoice === "2") mode = "append";
+  let mode = "sync";
+  if (modeChoice === "2") mode = "download";
   if (modeChoice === "3") mode = "overwrite_all";
-  
-  // 💡 상단에 입력된 공통 날짜값을 미리 가져옵니다.
-  const globalDate = (document.getElementById('ledger-date')?.value || '').replace(/\s+/g, '');
 
+  let modeText = mode === 'sync' ? '양방향 병합' : (mode === 'download' ? '데이터 내려받기' : '전체 덮어쓰기');
+  toast(`☁️ 구글시트와 ${modeText} 중입니다... 잠시만 기다려주세요.`); 
+
+  const globalDate = (document.getElementById('ledger-date')?.value || '').replace(/\s+/g, '');
   const records = targets.map(s => {
-    let combinedName = (s.name || '').trim();
-    let pNum = (s.prodNum || '').trim();
+    if (!(s.rowDate || '').trim()) s.rowDate = globalDate;
+    return s;
+  });
+
+  // 새롭게 만든 동기화 전용 API 호출
+  const res = await callGAS('syncLiveSalesRecords', [records, mode]);
+
+  if (res && res.success) {
+    // 1. 서버에서 내려준 최신 전체 데이터로 로컬 덮어씌우기
+    sales = res.records;
+    sales.forEach(s => s.sent = true); // 동기화 완료 마크
     
-    if (pNum !== '') {
-      if (/^\d+$/.test(pNum)) {
-        pNum += '번';
-      }
-      combinedName = (pNum + ' ' + combinedName).trim();
+    // 2. 구버전 앱이 올린 OLD 데이터가 섞여 있을 경우, 그룹 순서를 안전하게 재정렬
+    sales = sortSalesGroupPreserved(sales);
+    if (sales.length === 0) sales.push(createEmptySaleObject());
+
+    // 3. 브라우저 저장 및 화면 갱신
+    saveToLocalStorage();
+    populateAutocompleteLists();
+    renderSales();
+    
+    // 클립보드 복사 여부 묻기 (편의성 유지)
+    if (mode === 'sync' || mode === 'overwrite_all') {
+        const rows = records.map(r => [r.rowDate, r.name, (r.color || '')+'/'+(r.size || ''), r.nickname, r.salePrice || '', r.qty || '1']); 
+        await copyTsvToClipboard(rows);
+        toast(`✅ 실시간 동기화(${modeText}) 완료! (총 ${sales.length}건, 클립보드 복사됨)`);
+    } else {
+        toast(`✅ 실시간 동기화(${modeText}) 완료! (현재 총 ${sales.length}건)`);
     }
     
-    // ✅ 각 행의 날짜가 비어있을 경우, 상단 공통 날짜(globalDate)를 끌어와서 강제로 채워줍니다.
-    let finalDate = (s.rowDate || '').replace(/\s+/g, '');
-    if (finalDate === '') finalDate = globalDate;
-    
-    return { 
-      date: finalDate, 
-      name: combinedName,    
-      colorSize: `${s.color || ''}${s.size || ''}`, 
-      nickname: s.nickname, 
-      price: s.salePrice,
-      qty: s.qty
-    };
-  });
-  
-  // 안내용 텍스트 변환
-  let modeText = '덮어쓰기';
-  if (mode === 'append') modeText = '이어서 붙이기';
-  if (mode === 'overwrite_all') modeText = '전체 초기화 후 덮어씌우기';
-
-  toast(`☁️ 구글시트로 데이터(${targets.length}건, ${modeText}) 전송 중...`); 
-  
-  // 2. 구글시트 백엔드(GAS)로 records와 함께 mode 전달
-  const res = await callGAS('appendSalesRecords', [records, mode]);
-  const rows = records.map(r => [r.date, r.name, r.colorSize, r.nickname, r.price || '', r.qty || '1']); 
-  const copied = await copyTsvToClipboard(rows);
-  
-  if (res && res.success) { 
-    targets.forEach(s => s.sent = true);
-    saveToLocalStorage();
-    toast(`✅ 구글시트 데이터(${targets.length}건) ${modeText} 완료!` + (copied ? ' (+클립보드 복사)' : '')); 
-  } else { 
-    toast('⚠️ 구글시트 전송 실패: ' + (res && res.message ? res.message : '오류') + (copied ? ' / 클립보드 복사는 완료되었습니다.' : '')); 
+  } else {
+    toast('⚠️ 동기화 실패: ' + (res && res.message ? res.message : '오류'));
   }
 };
 

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'live-ledger-v7.7'; // v7.7으로 강제 업데이트
+const CACHE_NAME = 'live-ledger-v7.8'; // v7.8으로 업데이트 (캐시 초기화)
 const ASSETS_TO_CACHE = [
   './',
   './index.html'
