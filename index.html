@@ -1582,6 +1582,73 @@
   </div>
 </div>
 
+<!-- ☁️ 구글시트 API 전송 & 실시간 동기화 전용 고시인성 모달 -->
+<div id="pc-sync-modal" class="modal-overlay" onclick="if(event.target === this) closeSyncModal()">
+  <div class="modal-content" style="max-width: 580px; padding: 22px; border-radius: 12px; box-shadow: 0 12px 36px rgba(0,0,0,0.22);">
+    <div class="modal-header" style="padding-bottom: 12px; margin-bottom: 14px;">
+      <h3 style="font-size: 17px; font-weight: 800; color: #111827; display: flex; align-items: center; gap: 8px;">
+        ☁️ 구글시트 전송 & 실시간 동기화
+      </h3>
+      <button class="btn-close" onclick="closeSyncModal()" style="font-size: 22px; font-weight: bold;">✕</button>
+    </div>
+
+    <!-- 현재 적용 대상 날짜/회차 안내 바 -->
+    <div style="background: #F8FAFC; border: 1.5px solid #CBD5E1; border-radius: 8px; padding: 10px 14px; margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between;">
+      <div style="font-size: 13.5px; font-weight: 800; color: #334155;">
+        📅 적용 방송 기준: <span id="sync-target-date-display" style="color: #2F80ED; font-size: 15px; margin-left: 4px;">-</span>
+      </div>
+      <span style="font-size: 11.5px; color: #64748B; font-weight: 600;">(상단 장부 날짜·회차 기준)</span>
+    </div>
+
+    <!-- 4가지 대형 선택 버튼 목록 -->
+    <div style="display: flex; flex-direction: column; gap: 10px;">
+      <!-- 1번 버튼 -->
+      <button type="button" onclick="executeSyncAction('1')" style="background: #F0F7FF; border: 2px solid #93C5FD; text-align: left; padding: 12px 16px; border-radius: 8px; cursor: pointer; transition: 0.15s;">
+        <div style="font-size: 15px; font-weight: 800; color: #1E40AF; margin-bottom: 3px;">
+          1. 스마트 전송 <span style="font-size: 11.5px; font-weight: 800; background: #DBEAFE; color: #1E40AF; padding: 2px 8px; border-radius: 12px; margin-left: 6px;">가장 추천</span>
+        </div>
+        <div style="font-size: 12.5px; color: #3B82F6; font-weight: 600; line-height: 1.4;">
+          시트에 같은 날짜/회차가 있으면 <b>그 구간만 덮어쓰고</b>, 다른 날짜(또는 2부)면 이전 기록 아래로 <b>이어서 붙입니다.</b>
+        </div>
+      </button>
+
+      <!-- 2번 버튼 -->
+      <button type="button" onclick="executeSyncAction('2')" style="background: #ECFDF5; border: 2px solid #A7F3D0; text-align: left; padding: 12px 16px; border-radius: 8px; cursor: pointer; transition: 0.15s;">
+        <div style="font-size: 15px; font-weight: 800; color: #065F46; margin-bottom: 3px;">
+          2. 무조건 맨 아래 이어붙이기
+        </div>
+        <div style="font-size: 12.5px; color: #059669; font-weight: 600; line-height: 1.4;">
+          날짜·회차와 상관없이 기존 기록을 그대로 두고, <b>시트 맨 마지막 줄 아래에 추가</b>합니다.
+        </div>
+      </button>
+
+      <!-- 3번 버튼 -->
+      <button type="button" onclick="executeSyncAction('3')" style="background: #FFF1F2; border: 2px solid #FDA4AF; text-align: left; padding: 12px 16px; border-radius: 8px; cursor: pointer; transition: 0.15s;">
+        <div style="font-size: 15px; font-weight: 800; color: #9F1239; margin-bottom: 3px;">
+          3. 출력결과 전체 초기화 후 덮어쓰기 <span style="font-size: 11.5px; font-weight: 800; background: #FFE4E6; color: #E11D48; padding: 2px 8px; border-radius: 12px; margin-left: 6px;">주의</span>
+        </div>
+        <div style="font-size: 12.5px; color: #E11D48; font-weight: 600; line-height: 1.4;">
+          출력결과 표1(A~G열)을 깨끗이 비우고 <b>새로 씁니다.</b> (적립금 표2는 안전하게 보존)
+        </div>
+      </button>
+
+      <!-- 4번 버튼 -->
+      <button type="button" onclick="executeSyncAction('4')" style="background: #FAF5FF; border: 2px solid #D8B4FE; text-align: left; padding: 12px 16px; border-radius: 8px; cursor: pointer; transition: 0.15s;">
+        <div style="font-size: 15px; font-weight: 800; color: #5B21B6; margin-bottom: 3px;">
+          4. 📥 최신 실시간 장부 불러오기
+        </div>
+        <div style="font-size: 12.5px; color: #7C3AED; font-weight: 600; line-height: 1.4;">
+          동료 작업자(PC 또는 모바일)가 작업해 올린 <b>최신 장부를 내 화면으로 가져와 일치시킵니다.</b>
+        </div>
+      </button>
+    </div>
+
+    <div style="display: flex; justify-content: flex-end; margin-top: 18px;">
+      <button type="button" class="btn btn-history" style="padding: 8px 24px; font-size: 13px; font-weight: bold;" onclick="closeSyncModal()">닫기 / 취소</button>
+    </div>
+  </div>
+</div>
+
 <div id="ac-dropdown" class="ac-dropdown"></div>
 <!-- 👇 추가: 가격 전용 드롭다운 컨테이너 -->
 <div id="ac-price-dropdown" class="ac-price-dropdown"></div>
@@ -5680,36 +5747,45 @@ document.getElementById('file-import-share').addEventListener('change', async fu
 
 async function copyTsvToClipboard(rows) { const text = rows.map(r => r.join('\t')).join('\n'); try { await navigator.clipboard.writeText(text); return true; } catch (e) { return false; } }
 
-window.sendSalesToSheet = async function() {
-  // 1. 상단 메뉴의 날짜 + 회차 조합값 준비
+// 1. [신규] API 전송 버튼 클릭 시 모달 열기
+window.sendSalesToSheet = function() {
+  const modal = document.getElementById('pc-sync-modal');
+  if (!modal) return;
+
+  const menuDate = (document.getElementById('ledger-date')?.value || '').trim();
+  const menuSession = (document.getElementById('ledger-session')?.value || '').trim();
+  const combined = [menuDate, menuSession].filter(Boolean).join(' ') || '당일 날짜 자동 적용';
+
+  const dateDisplay = document.getElementById('sync-target-date-display');
+  if (dateDisplay) dateDisplay.textContent = combined;
+
+  modal.style.display = 'flex';
+};
+
+window.closeSyncModal = function() {
+  const modal = document.getElementById('pc-sync-modal');
+  if (modal) modal.style.display = 'none';
+};
+
+// 2. [신규] 버튼 클릭 시 동작 및 2단계 확인 안전장치
+window.executeSyncAction = async function(modeChoice) {
   const menuDate = (document.getElementById('ledger-date')?.value || '').trim();
   const menuSession = (document.getElementById('ledger-session')?.value || '').trim();
   const combinedMenuDate = [menuDate, menuSession].filter(Boolean).join(' ');
 
-  // 2. 작업 방식 선택 팝업 (1, 2, 3번 전송 및 4번 동료 데이터 불러오기)
-  const modeChoice = prompt(
-    `☁️ 구글시트 전송 및 실시간 동기화 방식을 선택하세요:\n\n` +
-    `1 : [전송] 동일 날짜 덮어쓰기 (새 날짜/2부는 이어서 붙이기)\n` +
-    `2 : [전송] 날짜 상관없이 무조건 맨 아래에 [이어서 붙이기]\n` +
-    `3 : [전송] 출력결과 전체 초기화 후 [새로 덮어쓰기] (적립금 보존)\n` +
-    `4 : [가져오기] 동료가 올린 최신 실시간 장부 [불러오기]\n\n` +
-    `(취소를 누르면 작업이 취소됩니다)`,
-    "1"
-  );
-
-  if (modeChoice !== "1" && modeChoice !== "2" && modeChoice !== "3" && modeChoice !== "4") return;
-
-  // [옵션 4: 동료 장부 불러오기]
+  // [옵션 4: 최신 장부 불러오기]
   if (modeChoice === "4") {
+    if (!confirm(`📥 [옵션 4: 실시간 장부 불러오기]\n\n적용 기준: [${combinedMenuDate || '전체'}]\n\n서버에 올라온 최신 데이터를 화면에 불러오시겠습니까?\n(기존 화면 내용은 되돌리기(Ctrl+Z)로 복원 가능합니다)`)) return;
+
+    closeSyncModal();
     toast(`📥 실시간동기화 시트에서 최신 데이터를 가져오는 중...`);
+
     const res = await callGAS('loadLiveSalesRecords', [combinedMenuDate]);
     if (res && res.success) {
       if (!res.records || res.records.length === 0) {
         toast(`⚠️ 불러올 수 있는 실시간 장부 데이터가 없습니다.`);
         return;
       }
-      if (!confirm(`📥 서버에서 ${res.records.length}건의 판매 내역을 찾았습니다.\n현재 화면에 불러오시겠습니까? (기존 내용은 되돌리기가 가능합니다)`)) return;
-
       saveState();
       sales = res.records;
       sales = sortSalesGroupPreserved(sales);
@@ -5718,19 +5794,38 @@ window.sendSalesToSheet = async function() {
       saveToLocalStorage();
       populateAutocompleteLists();
       renderSales();
-      toast(`✅ 동료 작업자의 실시간 장부(${sales.length}건)를 화면에 반영했습니다!`);
+      toast(`✅ 최신 실시간 장부(${sales.length}건)를 화면에 반영했습니다!`);
     } else {
       toast(`⚠️ 불러오기 실패: ` + (res && res.message ? res.message : '오류'));
     }
     return;
   }
 
-  // [옵션 1, 2, 3: 구글 시트 전송 및 동기화 시트 저장]
+  // [옵션 1, 2, 3: 구글 시트 전송]
   const targets = sales.filter(s => (s.nickname || '').trim() !== '' && !s.isExcluded);
   if (targets.length === 0) {
-    toast('☁️ 전송할 판매 내역 레코드가 존재하지 않습니다.');
+    toast('☁️ 전송할 판매 내역(고객명이 입력된 유효 항목)이 없습니다.');
     return;
   }
+
+  // 실수 방지 안내 및 승인창 문구 구성
+  let mode = "smart";
+  let modeText = "동일 날짜 덮어쓰기/이어붙이기";
+  let confirmMsg = `☁️ [옵션 1: 스마트 전송 확인]\n\n적용 날짜/회차: [${combinedMenuDate || '당일 날짜'}]\n전송 데이터: 총 ${targets.length}건\n\n시트에 동일 날짜/회차가 있으면 해당 구간만 덮어쓰고, 없으면 이어붙입니다.\n전송하시겠습니까?`;
+
+  if (modeChoice === "2") {
+    mode = "append";
+    modeText = "맨 아래 이어붙이기";
+    confirmMsg = `☁️ [옵션 2: 맨 아래 이어붙이기 확인]\n\n적용 날짜/회차: [${combinedMenuDate || '당일 날짜'}]\n전송 데이터: 총 ${targets.length}건\n\n기존 시트 내용과 상관없이 표1 맨 마지막 줄에 무조건 추가합니다.\n전송하시겠습니까?`;
+  } else if (modeChoice === "3") {
+    mode = "overwrite_all";
+    modeText = "출력결과 표1 전체 덮어쓰기";
+    confirmMsg = `🚨 [경고 - 옵션 3: 전체 초기화 후 덮어쓰기]\n\n적용 날짜/회차: [${combinedMenuDate || '당일 날짜'}]\n전송 데이터: 총 ${targets.length}건\n\n출력결과 시트 표1(A~G열)의 기존 판매 기록을 모두 지우고 현재 장부 데이터로 완전히 새로 덮어씁니다!\n(I~L열 적립금은 안전하게 보존됩니다)\n\n정말 진행하시겠습니까?`;
+  }
+
+  if (!confirm(confirmMsg)) return;
+
+  closeSyncModal();
 
   // 날짜 우선순위 판별 엔진: 행의 날짜 우선 -> 비어있으면 상단 메뉴(날짜+회차) 상속
   const preparedRecords = targets.map(s => {
@@ -5745,14 +5840,8 @@ window.sendSalesToSheet = async function() {
     };
   });
 
-  let mode = "smart";
-  let modeText = "동일 날짜 덮어쓰기/이어붙이기";
-  if (modeChoice === "2") { mode = "append"; modeText = "맨 아래 이어붙이기"; }
-  if (modeChoice === "3") { mode = "overwrite_all"; modeText = "출력결과 표1 전체 덮어쓰기"; }
-
   toast(`☁️ 구글시트로 데이터(${targets.length}건, ${modeText}) 전송 중...`);
 
-  // 백엔드의 신규 syncLiveSalesRecords 호출 (출력결과 A~G열 갱신 + 실시간동기화 시트 격리 저장)
   const res = await callGAS('syncLiveSalesRecords', [preparedRecords, mode, combinedMenuDate]);
 
   // 클립보드 복사 병행
