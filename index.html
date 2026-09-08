@@ -4155,6 +4155,25 @@ function toggleRowMemoTagInPopup(tag) {
     else el.classList.remove('on');
   }
 
+  // 👇👇👇 추가된 로직 (무배 연동 - 옵션 B 적용) 👇👇👇
+  if (tag === 'fs' && s.tags[tag] === true) {
+    const nick = (s.nickname || '').trim();
+    if (nick) {
+      // 적립금&무배 리스트에 해당 고객이 있는지 확인
+      let existingRow = rewardTableData.find(r => (r.nickname || '').trim() === nick);
+      if (existingRow) {
+        // 이미 있으면 무배 체크만 추가
+        existingRow.freeShip = true;
+      } else {
+        // 없으면 새롭게 리스트업하고 무배 체크
+        rewardTableData.push({ nickname: nick, reward: 0, freeShip: true, memo: '' });
+      }
+      // 백그라운드에서 적립금&무배 테이블도 최신화
+      if (typeof renderRewardTable === 'function') renderRewardTable();
+    }
+  }
+  // 👆👆👆 여기까지 👆👆👆
+
   saveToLocalStorage();
   renderSales();
 }
