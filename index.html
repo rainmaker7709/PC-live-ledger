@@ -5860,6 +5860,19 @@ window.executeSyncAction = async function(modeChoice) {
     toast(`📥 실시간동기화 시트에서 최신 데이터를 가져오는 중...`);
 
     const res = await callGAS('loadLiveSalesRecords', [combinedMenuDate]);
+    
+    // 👇👇👇 추가되는 부분: 적립금&무배 데이터 동시 불러오기 👇👇👇
+    try {
+      const rewardRes = await callGAS('loadRewardTable2', []);
+      if (rewardRes && rewardRes.success) {
+        rewardTableData = rewardRes.records || [];
+        if (typeof renderRewardTable === 'function') renderRewardTable(); // 모달창 즉시 갱신
+      }
+    } catch (e) {
+      console.log('적립금 데이터 동기화 실패', e);
+    }
+    // 👆👆👆 여기까지 👆👆👆
+
     if (res && res.success) {
       if (!res.records || res.records.length === 0) {
         toast(`⚠️ 불러올 수 있는 실시간 장부 데이터가 없습니다.`);
