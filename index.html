@@ -1185,6 +1185,11 @@
     <h2 style="display: flex; align-items: center; width: 100%;">
       <span>📊 마감 정산 요약</span>
       <button class="btn btn-purple" id="btn-calc-profit" style="margin-left: auto; font-size: 12px; padding: 4px 10px; font-weight: 800;" onclick="toggleProfitDisplay()">수익금액</button>
+      
+      <!-- 👇 구글시트 초기화 버튼 새 위치 (안전 구역) 👇 -->
+      <button class="action-text text-del" onclick="executeClearSheetRecords()" style="margin-left: 15px; font-size: 12px; padding: 0;" title="구글 시트의 표1 데이터를 완전히 지웁니다">⚠️ 구글시트 초기화</button>
+      <!-- 👆 여기까지 👆 -->
+
     </h2>
     <div class="totals" id="settle-summary-box"></div>
   </div>
@@ -4623,6 +4628,26 @@ window.clearAllSettleFilters = function() {
   renderSettleDetail(); 
   toast('🔄 전체 판매 목록의 모든 필터가 완전히 초기화되었습니다.');
 };
+
+// 👇👇👇 여기에 구글시트 초기화 함수를 붙여넣습니다 👇👇👇
+window.executeClearSheetRecords = async function() {
+  if (!confirm("🚨 [경고] 구글 시트의 메인 장부 데이터(표1)와 실시간 동기화 시트를 완전히 삭제하여 초기화하시겠습니까?\n\n※ 고객 적립금 및 무배 내역(표2)은 안전하게 유지됩니다.")) {
+    return;
+  }
+
+  toast('🧹 구글 시트 데이터를 초기화하는 중입니다...');
+  try {
+    const res = await callGAS('clearLiveSalesRecords', []);
+    if (res && res.success) {
+      toast('✅ 구글 시트 메인 장부 초기화가 완료되었습니다!');
+    } else {
+      toast('⚠️ 초기화 실패: ' + (res && res.message ? res.message : '오류'));
+    }
+  } catch (e) {
+    toast('⚠️ 네트워크 오류: ' + e.message);
+  }
+};
+// 👆👆👆 여기까지 👆👆👆
 
 window.settleUpdateField = function(id, field, value) { updateRowField(id, field, value); saveToLocalStorage(); renderSales(); };
 window.settleAddRow = function() { saveState(); const row = createEmptySaleObject(); sales.unshift(row); renderSales(); };
