@@ -3054,7 +3054,7 @@ window.enterEditMode = function(event, id, field, isPopup = false, isUserInitiat
     const input = wrap.querySelector('input');
     if (input) {
       setTimeout(() => {
-        input.select();
+        // input.select(); 👈 이 줄을 삭제하거나 주석 처리합니다.
         if (field === 'color' || field === 'size') {
           if (typeof openChipPicker === 'function') openChipPicker(input, field, 'sale', id);
         } else if (field === 'salePrice' || field === 'depositPrice') {
@@ -3131,7 +3131,7 @@ window.enterProdEditMode = function(event, id, field, isPopup = false) {
     const input = wrap.querySelector('input');
     if (input) {
       setTimeout(() => {
-        input.select();
+        // input.select(); 👈 이 줄을 삭제하거나 주석 처리합니다.
         if (field === 'color' || field === 'size') {
           openChipPicker(input, field, 'prod', id);
         } else if (field === 'price') {
@@ -6466,9 +6466,12 @@ window.isDragPending = false;
 function setupUnifiedListEvents(elementId, prefixStr, dataArray, renderCallback) {
   const targetContainer = document.getElementById(elementId); if (!targetContainer) return;
   targetContainer.addEventListener('mousedown', function(e) {
-    // 💡 [수정] || e.target.tagName === 'INPUT' 구문을 제거하여 커서가 들어가 있는 상태에서도 드래그 감지
     if (e.target.closest('button') || e.target.closest('.status-badge')) return;
     
+    // 👇👇👇 추가된 부분: 편집 중인 입력창 내부 텍스트 드래그 정상 허용 👇👇👇
+    if (e.target.tagName === 'INPUT') return;
+    // 👆👆👆 여기까지 👆👆👆
+
     const dragHandle = e.target.closest('.drag-handle');
     const cellWrap = e.target.closest('.cell-wrap'); const tr = e.target.closest('tr'); if (!tr) return;
     const id = tr.id.replace(prefixStr + 'row-', '').replace('settle-row-', '').replace('pop-', ''); if (!id || id === tr.id) return;
