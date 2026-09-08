@@ -3327,7 +3327,7 @@ window.copyFilteredBuyers = function() {
   const itemWithNum = targets.find(t => (t.prodNum || '').trim() !== '');
   if (itemWithNum) {
     pNum = (itemWithNum.prodNum || '').trim();
-    if (/^\d+$/.test(pNum)) pNum += '번';
+    if (/^\d+(-\d+)?$/.test(pNum)) pNum += '번';
   }
 
   // 2. 제목 접두사 구성 (1개 행만 남아있으면 '1+1 단품', '세트 단품' 자동 부여)
