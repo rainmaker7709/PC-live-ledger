@@ -1840,6 +1840,20 @@ let currentNewStock = null; let activeStockContext = { type: 'new', prodId: null
 let dragScrollInterval = null;
 
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbwLhT6zwSjVKGna_MugQwaeEC6gQjO8TBV10_xyrg-9Q64OYW1FDQsfO_yjRxVmBuzw/exec';
+
+// 🔒 판매자 보안키 조회 및 기기 내 1회 등록 엔진
+function getSellerSecretKey() {
+  let key = localStorage.getItem('vera_seller_secret_key');
+  if (!key) {
+    key = prompt('🔒 판매자 전용 보안키를 입력해주세요:\n(최초 1회만 등록하면 이 기기에 자동 저장됩니다)');
+    if (key) {
+      key = key.trim();
+      localStorage.setItem('vera_seller_secret_key', key);
+    }
+  }
+  return key || '';
+}
+
 let autoNicknames = [];
 let autoBrands = [];
 
@@ -1862,7 +1876,7 @@ async function callGAS(fn, args) {
     const res = await fetch(GAS_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({ fn, args: args || [] })
+      body: JSON.stringify({ fn, args: args || [], secretKey: getSellerSecretKey() })
     });
     return await res.json();
   } catch (e) {
