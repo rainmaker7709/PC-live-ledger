@@ -5898,21 +5898,55 @@ window.executeSyncAction = async function(modeChoice) {
     }
     // 👆👆👆 여기까지 👆👆👆
 
-    if (res && res.success) {
-      if (!res.records || res.records.length === 0) {
-        toast(`⚠️ 불러올 수 있는 실시간 장부 데이터가 없습니다.`);
-        return;
-      }
-      saveState();
-      sales = res.records;
-      sales = sortSalesGroupPreserved(sales);
-      if (sales.length === 0) sales.push(createEmptySaleObject());
+    // [수정 후]
+if (res && res.success) {
+  if (!res.records || res.records.length === 0) {
+    toast(`⚠️ 불러올 수 있는 실시간 장부 데이터가 없습니다.`);
+    return;
+  }
+  saveState();
 
-      saveToLocalStorage();
-      populateAutocompleteLists();
-      renderSales();
-      toast(`✅ 최신 실시간 장부(${sales.length}건)를 화면에 반영했습니다!`);
-    } else {
+  // 💡 [핵심 해결] ID 중복 방지 및 모바일에서 입력한 '품번/상품명' 자동 분리 (1+1, 세트 머리말 완벽 대응 및 중복 방지)
+      const seenIds = new Set();
+      sales = res.records.map(r => {
+        let rowId = r.id;
+        if (!rowId || seenIds.has(rowId)) {
+          rowId = uid();
+        }
+        seenIds.add(rowId);
+
+        let pName = (r.name || '').trim();
+        let pNum = (r.prodNum || '').trim();
+
+        // 💡 모바일에서 자동 결합된 "품번 상품명" 중복 표기 방지 및 분리 로직
+        // 패턴: [머리말] + 숫자(또는 숫자-숫자) + '번' 또는 '띄어쓰기' + 진짜 상품명
+        const match = pName.match(/^(\[[^\]]+\]\s*)?(\d+(?:-\d+)?)(?:번\s*|\s+)(.*)$/);
+        
+        if (match) {
+          const matchedNum = match[2];
+          // 품번이 비어있거나, 이미 있는 품번과 방금 찾은 숫자가 일치할 때만 상품명에서 숫자를 지워줌(분리)
+          if (!pNum || pNum === matchedNum) {
+            pNum = matchedNum;
+            pName = (match[1] || '') + match[3].trim(); 
+          }
+        }
+
+        return {
+          ...r,
+          id: rowId,
+          prodNum: pNum, // 분리된 품번 적용
+          name: pName    // 숫자가 제거된 깔끔한 상품명 적용
+        };
+      });
+
+  sales = sortSalesGroupPreserved(sales);
+  if (sales.length === 0) sales.push(createEmptySaleObject());
+
+  saveToLocalStorage();
+  populateAutocompleteLists();
+  renderSales();
+  toast(`✅ 최신 실시간 장부(${sales.length}건)를 화면에 반영했습니다!`);
+} else {
       toast(`⚠️ 불러오기 실패: ` + (res && res.message ? res.message : '오류'));
     }
     return;
@@ -6653,6 +6687,7 @@ setTimeout(() => {
 window.addEventListener('mouseup', function() { 
   // 💡 [수정 3번] 드래그 대기 상태 리셋
   window.isDragPending = false;
+  isDragging = false; // 💡 이 줄을 추가하여 일반 드래그 상태를 안전하게 리셋
 
   if (isFillDragging && startCell) {
   const startRowId = startCell.id;
@@ -7827,8 +7862,8 @@ window.toggleChipItem = function(val, event) {
   const rId = (activeSaleBarContext && activeSaleBarContext.rowId) || (activeChipContext && activeChipContext.rowId);
   const f = (activeSaleBarContext && activeSaleBarContext.field) || (activeChipContext && activeChipContext.type);
 
-  // 💡 화면에 현재 살아있는 실제 input을 DOM에서 직접 찾음
-  let inputEl = (rId && f) ? (document.querySelector(`#wrap-${rId}-${f} input`) || document.querySelector(`#wrap-prod-${rId}-${f} input`)) : null;
+  // 💡 화면에 현재 살아있는 실제 input을 DOM에서 직접 찾음 (마감정산 칸 추가 보완)
+  let inputEl = (rId && f) ? (document.querySelector(`#wrap-${rId}-${f} input`) || document.querySelector(`#wrap-prod-${rId}-${f} input`) || document.querySelector(`#wrap-settle-${rId}-${f} input`)) : null;
   if (!inputEl) inputEl = activeChipContext.input;
   if (!inputEl) return;
 
@@ -7838,12 +7873,19 @@ window.toggleChipItem = function(val, event) {
   let currentVal = (inputEl.value || '').trim();
   let tokens = currentVal.split(/[\s,]+/).filter(Boolean);
 
-  // 💡 점등(추가) / 점멸(제거) 토글
-  const idx = tokens.indexOf(val);
-  if (idx > -1) {
-    tokens.splice(idx, 1); // 켜져 있던 항목이면 제거
+  // 💡 [핵심 추가] 실시간 판매내역(sale) 및 정산(settle)의 '사이즈'는 중복 방지 및 즉시 단일 선택
+  const isSaleSize = (activeChipContext.contextType === 'sale' || activeChipContext.contextType === 'settle') && f === 'size';
+
+  if (isSaleSize) {
+    tokens = [val]; // 기존 내용 무시하고 클릭한 값 하나만 확정
   } else {
-    tokens.push(val); // 꺼져 있던 항목이면 추가
+    // 💡 기존 점등(추가) / 점멸(제거) 토글 (상품등록, 색상 등에서는 다중 선택 유지)
+    const idx = tokens.indexOf(val);
+    if (idx > -1) {
+      tokens.splice(idx, 1); // 켜져 있던 항목이면 제거
+    } else {
+      tokens.push(val); // 꺼져 있던 항목이면 추가
+    }
   }
 
   const resultStr = tokens.join(' ');
@@ -7867,7 +7909,14 @@ window.toggleChipItem = function(val, event) {
     }
   }
 
-  // 💡 1. [핵심 추가] 팝업창(chip-picker-popup) 안의 칩 아이템 점등/점멸(active) 실시간 동기화
+  // 💡 [추가] 사이즈 단일 선택인 경우, 값 입력 후 가로 바/팝업창 즉시 닫기
+  if (isSaleSize) {
+    if (typeof closeSaleAcBar === 'function') closeSaleAcBar(true);
+    if (typeof closeChipPicker === 'function') closeChipPicker(true);
+    return; // 아래 UI 점멸 로직은 실행할 필요 없이 종료
+  }
+
+  // 💡 1. 팝업창(chip-picker-popup) 안의 칩 아이템 점등/점멸(active) 실시간 동기화
   const popup = document.getElementById('chip-picker-popup');
   if (popup && popup.style.display !== 'none') {
     popup.querySelectorAll('.chip-item').forEach(item => {
