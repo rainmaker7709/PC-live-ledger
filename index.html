@@ -5960,8 +5960,8 @@ if (res && res.success) {
         let pName = (r.name || '').trim();
         let pNum = (r.prodNum || '').trim();
 
-        // 💡 선물 여부 3중 엄격 판별 (단순 단어 포함은 제외하고 공식 머리말/플래그만 인정)
-        const isGiftItem = !!(r.isGift || (r.name && /^\[선물\]/.test(r.name.trim())));
+        // 💡 선물 여부 3중 엄격 판별 (플래그, 그룹타입, 머리말 검사)
+        const isGiftItem = !!(r.isGift || r.groupType === 'gift' || (r.name && /^\[선물\]/.test(r.name.trim())));
 
         const match = pName.match(/^(\[[^\]]+\]\s*)?(\d+(?:-\d+)?)(?:번\s*|\s+)(.*)$/);
         
@@ -5970,6 +5970,17 @@ if (res && res.success) {
           if (!pNum || pNum === matchedNum) {
             pNum = matchedNum;
             pName = (match[1] || '') + match[3].trim(); 
+          }
+        }
+
+        // 🎁 선물 항목일 때 상품명에 [선물] 대괄호 머리말 강제 조립
+        if (isGiftItem) {
+          if (/^\[선물\]/.test(pName)) {
+            // 이미 [선물]로 시작하면 그대로 유지
+          } else if (pName === '선물' || pName === '') {
+            pName = '[선물] ';
+          } else {
+            pName = `[선물] ${pName}`.trim();
           }
         }
 
@@ -6021,17 +6032,27 @@ if (res && res.success) {
 
   closeSyncModal();
 
-  // 날짜 우선순위 판별 및 선물(isGift) 플래그 H열 연동 준비
+  // 날짜 우선순위 판별 및 [선물] 머리말 분리(B열: 순수 상품명 / H열: 선물)
   const preparedRecords = targets.map(s => {
     let finalRowDate = (s.rowDate || '').trim();
     if (!finalRowDate) {
       finalRowDate = combinedMenuDate || formatDateYYMMDD_(new Date());
     }
+
+    let cleanName = (s.name || '').trim();
+    const isGiftItem = !!(s.isGift || s.groupType === 'gift' || /^\[선물\]/.test(cleanName));
+
+    // 💡 시트로 올라갈 때는 [선물] 머리말을 떼어내어 B열을 깔끔하게 유지
+    if (isGiftItem) {
+      cleanName = cleanName.replace(/^\[선물\]\s*/, '').trim();
+    }
+
     return {
       ...s,
+      name: cleanName,
       rowDate: finalRowDate,
       date: finalRowDate,
-      isGift: !!s.isGift // 💡 구글 시트 H열(선물&기타) 기록 트리거 플래그
+      isGift: isGiftItem // 💡 백엔드에서 H열에 "선물"을 기록하는 트리거
     };
   });
 
