@@ -458,15 +458,18 @@
   .total-box{ background:#F7F5F0; border-radius:8px; padding:16px; text-align:center; transition: all 0.2s ease; }
   .total-box .n{ font-size:20px; font-weight:800; }
 
-  .color-picker-container { display: inline-flex; align-items: center; gap: 6px; background: #fff; padding: 4px 10px; border: 1px solid var(--line); border-radius: 6px; margin-left: 10px; }
-  .color-chip { width: 24px; height: 24px; border-radius: 50%; cursor: pointer; border: 1px solid rgba(0,0,0,0.18); position: relative; transition: transform 0.1s; }
+  .color-picker-container { display: inline-flex; align-items: center; gap: 3px; background: #fff; padding: 2px 6px; border: 1px solid var(--line); border-radius: 6px; margin-left: 6px; flex-shrink: 0; }
+  .color-chip { width: 19px; height: 19px; border-radius: 50%; cursor: pointer; border: 1px solid rgba(0,0,0,0.18); position: relative; transition: transform 0.1s; flex-shrink: 0; }
   .color-chip:hover { transform: scale(1.15); }
-  .color-chip.active::after { content: '✓'; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 12px; font-weight: 900; color: #111; }
+  .color-chip.active::after { content: '✓'; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 10px; font-weight: 900; color: #111; }
   
-  .btn-highlight-set { background: var(--accent); color: var(--accent-ink); font-size: 12px; font-weight: 800; padding: 5px 10px; border-radius: 4px; border: 1px solid var(--accent); cursor: pointer; margin-left: 6px; transition: opacity 0.1s; }
+  .btn-highlight-set { background: var(--accent); color: var(--accent-ink); font-size: 11px; font-weight: 800; padding: 3px 6px; border-radius: 4px; border: 1px solid var(--accent); cursor: pointer; margin-left: 4px; transition: opacity 0.1s; flex-shrink: 0; }
   .btn-highlight-set:hover { opacity: 0.85; }
-  .btn-highlight-clear { background: #F4F6F8; color: var(--ink-soft); font-size: 12px; font-weight: 800; padding: 5px 10px; border-radius: 4px; border: 1px solid var(--line); cursor: pointer; margin-left: 4px; transition: background 0.1s; }
+  .btn-highlight-clear { background: #F4F6F8; color: var(--ink-soft); font-size: 11px; font-weight: 800; padding: 3px 6px; border-radius: 4px; border: 1px solid var(--line); cursor: pointer; margin-left: 3px; transition: background 0.1s; flex-shrink: 0; }
   .btn-highlight-clear:hover { background: #E4E7EB; }
+
+  /* 🎁 선물 전용 행 스타일 (은은한 파스텔 웜레드 배경) */
+  tr.row-gift td { background-color: #FFF2F2 !important; }
 
   .matrix-table th, .matrix-table td { border: 1px solid var(--line); padding: 8px 6px; text-align: center; }
   .matrix-table th { background: #FAFBFB; font-weight: bold; }
@@ -1068,35 +1071,34 @@
   </div>
 
 <div id="sale-card" class="card" style="border-top: 3px solid var(--purple-ink);">
-    <h2>
-      <div style="display: flex; flex-direction: column; align-items: flex-start; gap: 4px;">
-        <div style="display: flex; align-items: center; gap: 6px;">
-          <span onclick="toggleFullscreen('sale-card')" class="title-toggle-btn" style="cursor: pointer; display: inline-flex; align-items: center; gap: 6px; user-select: none;" title="클릭하면 화면을 확대/축소할 수 있습니다.">
-            실시간 판매 내역 
-            <span class="fullscreen-indicator">
-            <span style="color:var(--ink-soft); font-size:11px; font-weight:normal; background:#F4F6F8; padding:2px 6px; border-radius:4px; border:1px solid var(--line);">⛶ 창 확대</span>
+    <h2 style="display: flex; align-items: center; flex-wrap: nowrap; overflow-x: auto; gap: 4px; white-space: nowrap; padding-bottom: 2px;">
+      <div style="display: flex; align-items: center; gap: 4px; flex-shrink: 0;">
+        <span onclick="toggleFullscreen('sale-card')" class="title-toggle-btn" style="cursor: pointer; display: inline-flex; align-items: center; gap: 4px; user-select: none;" title="화면 확대/축소">
+          실시간 판매 내역 
+          <span class="fullscreen-indicator">
+            <span style="color:var(--ink-soft); font-size:10.5px; background:#F4F6F8; padding:1px 4px; border-radius:3px; border:1px solid var(--line);">⛶ 확대</span>
           </span>
         </span>
-        <button class="btn-purple" id="btn-title-add" style="margin-left: 8px; padding: 5px 10px;" onclick="addEmptySaleRow()">＋ 항목 추가</button>
-        <button class="btn-pink" style="margin-left: 4px; padding: 5px 10px; border-radius: 4px; height: auto; font-size: 12px; font-weight: 800;" onclick="addSetGroupRow('1+1')">🎁 1+1 추가</button>
-        <button class="btn-purple" style="margin-left: 4px; padding: 5px 10px; border-radius: 4px; height: auto; font-size: 12px; font-weight: 800; background:#896BB5; color:#fff;" onclick="addSetGroupRow('세트')">📦 세트 추가</button>
-      </div>
-      <span class="count" id="count-sale" style="margin-left: 0; font-size: 13px; font-weight: normal; margin-top: 2px;">0건 기록됨</span>
+        <button class="btn-purple" id="btn-title-add" style="padding: 4px 7px; font-size: 11.5px; font-weight: 800;" onclick="addEmptySaleRow()">＋ 추가</button>
+        <button class="btn-pink" style="padding: 4px 7px; border-radius: 4px; font-size: 11.5px; font-weight: 800; height: auto;" onclick="addSetGroupRow('1+1')">🎁 1+1</button>
+        <button class="btn-purple" style="padding: 4px 7px; border-radius: 4px; font-size: 11.5px; font-weight: 800; background:#896BB5; color:#fff; height: auto;" onclick="addSetGroupRow('세트')">📦 세트</button>
+        <button class="btn" style="padding: 4px 7px; border-radius: 4px; font-size: 11.5px; font-weight: 800; background:#EF4444; color:#fff; border: 1px solid #DC2626; height: auto;" onclick="addGiftRow()">🎁 선물</button>
+        <span class="count" id="count-sale" style="font-size: 11.5px; margin-left: 2px;">0건</span>
       </div>
       
-      <!-- 🎨 강조 파레트 -->
-<div class="color-picker-container">
-  <span style="font-size:14px; margin-right:2px;" title="강조 파레트">🎨</span>
-  <div class="color-chip active" style="background:#FFDD6B;" onclick="toggleMasterHighlightColor('#FFDD6B')" title="진한 파스텔 노랑"></div>
-  <div class="color-chip" style="background:#FFA3A8;" onclick="toggleMasterHighlightColor('#FFA3A8')" title="진한 파스텔 핑크"></div>
-  <div class="color-chip" style="background:#A2E8B4;" onclick="toggleMasterHighlightColor('#A2E8B4')" title="진한 파스텔 녹색"></div>
-  <div class="color-chip" style="background:#D3A1FF;" onclick="toggleMasterHighlightColor('#D3A1FF')" title="진한 파스텔 보라"></div>
-  <button class="btn-highlight-clear" onclick="clearAllHighlights()" style="background: #FFF0F0; border-color: #F5B0AD; color: var(--danger); margin-left: 6px;">전체취소</button>
-</div>
+      <!-- 🎨 콤팩트 강조 파레트 (1줄 슬림화) -->
+      <div class="color-picker-container" style="margin-left: 4px;">
+        <span style="font-size:12px; margin-right:1px;" title="강조 파레트">🎨</span>
+        <div class="color-chip active" style="background:#FFDD6B;" onclick="toggleMasterHighlightColor('#FFDD6B')" title="노랑"></div>
+        <div class="color-chip" style="background:#FFA3A8;" onclick="toggleMasterHighlightColor('#FFA3A8')" title="핑크"></div>
+        <div class="color-chip" style="background:#A2E8B4;" onclick="toggleMasterHighlightColor('#A2E8B4')" title="녹색"></div>
+        <div class="color-chip" style="background:#D3A1FF;" onclick="toggleMasterHighlightColor('#D3A1FF')" title="보라"></div>
+        <button class="btn-highlight-clear" onclick="clearAllHighlights()" style="background: #FFF0F0; border-color: #F5B0AD; color: var(--danger); padding: 1px 5px; font-size: 11px;">취소</button>
+      </div>
       
-      <!-- 우측 끝: 전체삭제 버튼만 남김 -->
-      <div style="margin-left: auto; display: flex; align-items: center;">
-        <button class="action-text text-del" onclick="clearAllSales()" style="font-size: 12px; padding: 0;">⚠️ 전체삭제</button>
+      <!-- 우측 끝: 전체삭제 -->
+      <div style="margin-left: auto; display: flex; align-items: center; flex-shrink: 0;">
+        <button class="action-text text-del" onclick="clearAllSales()" style="font-size: 11.5px; padding: 2px 4px; white-space: nowrap;">⚠️ 전체삭제</button>
       </div>
     </h2>
 
@@ -2745,7 +2747,31 @@ window.viewLedgerDetail = function(nickname) {
 };
 
 function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,5); }
-function createEmptySaleObject() { return { id: uid(), rowDate: '', prodNum: '', name: '', color: '', size: '', nickname: '', qty: '', salePrice: '', depositPrice: '', memo: '', autoReward: 0, tags: { yt:false, tt:false, fs:false, kp:false, nw:false }, createdAt: Date.now(), highlighted: false, sent: false }; }
+function createEmptySaleObject() { return { id: uid(), rowDate: '', prodNum: '', name: '', color: '', size: '', nickname: '', qty: '', salePrice: '', depositPrice: '', memo: '', autoReward: 0, isGift: false, tags: { yt:false, tt:false, fs:false, kp:false, nw:false }, createdAt: Date.now(), highlighted: false, sent: false }; }
+
+// 🎁 [선물] 전용 신규 행 생성 함수
+window.addGiftRow = function() {
+  saveState();
+  const row = createEmptySaleObject();
+  row.isGift = true;
+  row.name = '[선물] ';
+  row.salePrice = 0;
+  row.depositPrice = 0;
+  sales.push(row);
+  renderSales();
+  scrollToRow(`row-${row.id}`);
+
+  setTimeout(() => {
+    enterEditMode(null, row.id, 'name', false, true);
+    const wrap = document.getElementById(`wrap-${row.id}-name`);
+    if (wrap) {
+      const input = wrap.querySelector('input');
+      if (input) {
+        input.setSelectionRange(input.value.length, input.value.length);
+      }
+    }
+  }, 50);
+};
 
 let rewardTableData = []; // 전용 적립금/무배 데이터 배열
 
@@ -4228,6 +4254,7 @@ function getRowHtml(s, index, isPopup = false, hasDivider = false) {
     else trClasses.push(`${groupPrefix}-middle`);
   }
 
+  if (s.isGift) trClasses.push('row-gift');
   if (s.isExcluded) trClasses.push('row-excluded');
 
   const classStr = trClasses.length > 0 ? `class="${trClasses.join(' ')}"` : '';
@@ -5230,7 +5257,7 @@ window.duplicateRow = function(id) {
     return;
   }
 
-  // 📋 일반 단품 항목인 경우 (기존 동작)
+  // 📋 일반 단품 항목인 경우 (선물 속성 승계)
   const index = sales.findIndex(x => x.id === id);
   const newRow = {
     id: uid(),
@@ -5248,6 +5275,7 @@ window.duplicateRow = function(id) {
     tags: { yt: false, tt: false, fs: false, kp: false },
     createdAt: Date.now(),
     highlighted: src.highlighted,
+    isGift: !!src.isGift,
     sent: false
   };
   sales.splice(index + 1, 0, newRow);
@@ -5920,7 +5948,7 @@ if (res && res.success) {
   }
   saveState();
 
-  // 💡 [핵심 해결] ID 중복 방지 및 모바일에서 입력한 '품번/상품명' 자동 분리 (1+1, 세트 머리말 완벽 대응 및 중복 방지)
+  // 💡 [핵심 해결] ID 중복 방지, 품번 자동 분리, 선물(isGift) 엄격 판별 적용
       const seenIds = new Set();
       sales = res.records.map(r => {
         let rowId = r.id;
@@ -5932,13 +5960,13 @@ if (res && res.success) {
         let pName = (r.name || '').trim();
         let pNum = (r.prodNum || '').trim();
 
-        // 💡 모바일에서 자동 결합된 "품번 상품명" 중복 표기 방지 및 분리 로직
-        // 패턴: [머리말] + 숫자(또는 숫자-숫자) + '번' 또는 '띄어쓰기' + 진짜 상품명
+        // 💡 선물 여부 3중 엄격 판별 (단순 단어 포함은 제외하고 공식 머리말/플래그만 인정)
+        const isGiftItem = !!(r.isGift || (r.name && /^\[선물\]/.test(r.name.trim())));
+
         const match = pName.match(/^(\[[^\]]+\]\s*)?(\d+(?:-\d+)?)(?:번\s*|\s+)(.*)$/);
         
         if (match) {
           const matchedNum = match[2];
-          // 품번이 비어있거나, 이미 있는 품번과 방금 찾은 숫자가 일치할 때만 상품명에서 숫자를 지워줌(분리)
           if (!pNum || pNum === matchedNum) {
             pNum = matchedNum;
             pName = (match[1] || '') + match[3].trim(); 
@@ -5948,8 +5976,9 @@ if (res && res.success) {
         return {
           ...r,
           id: rowId,
-          prodNum: pNum, // 분리된 품번 적용
-          name: pName    // 숫자가 제거된 깔끔한 상품명 적용
+          prodNum: pNum,
+          name: pName,
+          isGift: isGiftItem
         };
       });
 
@@ -5992,7 +6021,7 @@ if (res && res.success) {
 
   closeSyncModal();
 
-  // 날짜 우선순위 판별 엔진: 행의 날짜 우선 -> 비어있으면 상단 메뉴(날짜+회차) 상속
+  // 날짜 우선순위 판별 및 선물(isGift) 플래그 H열 연동 준비
   const preparedRecords = targets.map(s => {
     let finalRowDate = (s.rowDate || '').trim();
     if (!finalRowDate) {
@@ -6001,7 +6030,8 @@ if (res && res.success) {
     return {
       ...s,
       rowDate: finalRowDate,
-      date: finalRowDate
+      date: finalRowDate,
+      isGift: !!s.isGift // 💡 구글 시트 H열(선물&기타) 기록 트리거 플래그
     };
   });
 
@@ -7394,6 +7424,7 @@ window.toggleRowExclude = function(id) {
 };
 
 function getGroupLabelText(s, forWarehouse = false) {
+  if (s.isGift) return '선물';
   if (!s.groupType) return '';
   
   // 동일 그룹 내 유효(미제외) 행 수 확인
