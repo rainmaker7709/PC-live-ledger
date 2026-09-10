@@ -309,10 +309,10 @@
 
   tr.group-divider td { border-bottom: 3px solid var(--accent) !important; }
   
-  /* 🎁 1+1 그룹 스타일 (파스텔 핑크 테두리 & 배경) */
-  tr.group-1plus1-start td { border-top: 2px solid #D86B8A !important; background-color: #FFF2F5 !important; }
-  tr.group-1plus1-end td { border-bottom: 2px solid #D86B8A !important; background-color: #FFF2F5 !important; }
-  tr.group-1plus1-middle td { background-color: #FFF2F5 !important; }
+  /* ✌️ 1+1 그룹 스타일 (파스텔 에메랄드 테두리 & 배경) */
+  tr.group-1plus1-start td { border-top: 2px solid #10B981 !important; background-color: #ECFDF5 !important; }
+  tr.group-1plus1-end td { border-bottom: 2px solid #10B981 !important; background-color: #ECFDF5 !important; }
+  tr.group-1plus1-middle td { background-color: #ECFDF5 !important; }
 
   /* 📦 세트 그룹 스타일 (파스텔 보라 테두리 & 배경) */
   tr.group-set-start td { border-top: 2px solid #896BB5 !important; background-color: #F6F0FC !important; }
@@ -468,8 +468,12 @@
   .btn-highlight-clear { background: #F4F6F8; color: var(--ink-soft); font-size: 11px; font-weight: 800; padding: 3px 6px; border-radius: 4px; border: 1px solid var(--line); cursor: pointer; margin-left: 3px; transition: background 0.1s; flex-shrink: 0; }
   .btn-highlight-clear:hover { background: #E4E7EB; }
 
-  /* 🎁 선물 전용 행 스타일 (은은한 파스텔 웜레드 배경) */
-  tr.row-gift td { background-color: #FFF2F2 !important; }
+  /* 🎁 선물 전용 행 스타일 (파스텔톤 진한 붉은 계열) */
+  tr.row-gift td { 
+    background-color: #FEE8E8 !important; 
+    border-top: 2px solid #E05666 !important; 
+    border-bottom: 2px solid #E05666 !important; 
+  }
 
   .matrix-table th, .matrix-table td { border: 1px solid var(--line); padding: 8px 6px; text-align: center; }
   .matrix-table th { background: #FAFBFB; font-weight: bold; }
@@ -842,10 +846,11 @@
     margin-right: 6px;
     flex-shrink: 0;
   }
-  .badge-1plus1 { background: #FFF0F5; color: #D86B8A; border: 1px solid #F5C6D3; }
+  .badge-1plus1 { background: #ECFDF5; color: #059669; border: 1px solid #A7F3D0; }
   .badge-set { background: #F6F0FC; color: #896BB5; border: 1px solid #D8C7ED; }
   .badge-single { background: #FFF9E6; color: #B45309; border: 1px solid #FDE68A; }
   .badge-part { background: #EFF6FF; color: #2563EB; border: 1px solid #BFDBFE; }
+  .badge-gift { background: #FEE8E8; color: #E05666; border: 1px solid #FDA4AF; }
 
   /* 👇 [추가] 필터 초기화 버튼 깜빡임 애니메이션 */
   @keyframes filter-blink {
@@ -1080,9 +1085,9 @@
           </span>
         </span>
         <button class="btn-purple" id="btn-title-add" style="padding: 4px 7px; font-size: 11.5px; font-weight: 800;" onclick="addEmptySaleRow()">＋ 추가</button>
-        <button class="btn-pink" style="padding: 4px 7px; border-radius: 4px; font-size: 11.5px; font-weight: 800; height: auto;" onclick="addSetGroupRow('1+1')">🎁 1+1</button>
+        <button class="btn" style="padding: 4px 7px; border-radius: 4px; font-size: 11.5px; font-weight: 800; background: #10B981; color: #ffffff; border: 1px solid #059669; height: auto;" onclick="addSetGroupRow('1+1')">✌️ 1+1</button>
         <button class="btn-purple" style="padding: 4px 7px; border-radius: 4px; font-size: 11.5px; font-weight: 800; background:#896BB5; color:#fff; height: auto;" onclick="addSetGroupRow('세트')">📦 세트</button>
-        <button class="btn" style="padding: 4px 7px; border-radius: 4px; font-size: 11.5px; font-weight: 800; background:#EF4444; color:#fff; border: 1px solid #DC2626; height: auto;" onclick="addGiftRow()">🎁 선물</button>
+<button class="btn" style="padding: 4px 7px; border-radius: 4px; font-size: 11.5px; font-weight: 800; background:#E05666; color:#fff; border: 1px solid #C93B4C; height: auto;" onclick="addGiftRow()">🎁 선물</button>
         <span class="count" id="count-sale" style="font-size: 11.5px; margin-left: 2px;">0건</span>
       </div>
       
@@ -4451,6 +4456,7 @@ function getSettleRowHtml(s, index, hasDivider = false) {
     else if (s.groupRole === 'end') trClasses.push(`${groupPrefix}-end`);
     else trClasses.push(`${groupPrefix}-middle`);
   }
+  if (s.isGift || (s.name && s.name.startsWith('[선물]'))) trClasses.push('row-gift');
   if (s.isExcluded) trClasses.push('row-excluded');
 
   const classStr = trClasses.length > 0 ? `class="${trClasses.join(' ')}"` : ''; 
@@ -6319,14 +6325,18 @@ window.executeAutofill = function(id, field) {
     const val = sales[idx][fName];
     if (val === undefined || val === null || String(val).trim() === '') return;
 
-    // 아래 방향으로 연속된 빈 셀 채우기
+    // 아래 방향으로 셀 채우기
     for (let i = idx + 1; i < sales.length; i++) {
-      if (String(sales[i][fName]).trim() === '') {
+      const currentCellVal = String(sales[i][fName]).trim();
+      const isSetGroup = sales[i].groupType === '세트';
+      
+      // 💡 [수정] 셀이 빈칸이거나, '세트' 그룹의 0원일 때만 덮어쓰기 (1+1의 0원은 보호막 역할)
+      if (currentCellVal === '' || (currentCellVal === '0' && isSetGroup)) {
         sales[i][fName] = val;
         sales[i].sent = false;
         fillCount++;
       } else {
-        break; // 데이터가 있는 셀을 만나면 중단
+        break; // 데이터가 있는 셀(또는 보호된 1+1의 0원)을 만나면 중단
       }
     }
   });
@@ -7555,7 +7565,7 @@ function renderPaperLedger() {
 
   // 2. 개별 상품 문자열 생성 헬퍼 함수 (상품명 + 색상 + 사이즈)
   const formatItemDetail = (item) => {
-    let cleanName = (item.name || '').replace(/^\[(1\+1|세트)\]\s*/, '').trim();
+    let cleanName = (item.name || '').replace(/^\[(1\+1|세트|선물)\]\s*/, '').trim();
     let pNum = (item.prodNum || '').trim();
     if (pNum !== '') {
       if (/^\d+$/.test(pNum)) pNum += '번';
@@ -7655,12 +7665,14 @@ function renderPaperLedger() {
         }
       }
     } else {
-      // 📋 일반 단품 주문
+      // 📋 일반 단품 주문 (선물 배지 판별 적용)
+      const isGift = !!(s.isGift || (s.name && s.name.startsWith('[선물]')));
+      const badgeHtml = isGift ? '<span class="paper-badge badge-gift">선물</span>' : '';
       const p = Number(s.salePrice) || 0;
       const q = Number(s.qty) || 1;
       displayItems.push({
-        badge: '',
-        detailText: formatItemDetail(s) || '(상품명 없음)',
+        badge: badgeHtml,
+        detailText: formatItemDetail(s) || (isGift ? '(선물 상품)' : '(상품명 없음)'),
         nickname: s.nickname || '',
         qty: q,
         unitPrice: p,
@@ -8023,6 +8035,9 @@ document.addEventListener('mousedown', function(e) {
 let lastFocusedPriceInput = null;
 
 window.handlePCPriceFocus = function(inputEl, id, field, isProd) {
+  // 💡 [수정] Ctrl 또는 Cmd 키를 누른 상태(자동채우기)일 경우 칩스 바를 열지 않고 즉시 종료
+  if (window.event && (window.event.ctrlKey || window.event.metaKey)) return;
+  
   lastFocusedPriceInput = inputEl;
   // 💡 상품등록, 실시간 판매내역 모두 가로 플로팅 칩스 바(sale-ac-bar)로 통합 호출
   if (typeof renderSaleBarPriceStep1 === 'function') {
@@ -8109,37 +8124,26 @@ function enableBarDragScroll(bar) {
 function showFloatingSaleBar(bar, forceReposition = false) {
   bar.style.display = 'flex';
 
-  if (!bar.dataset.userMoved) {
+  if (!bar.dataset.userMoved || forceReposition) {
     const liveInput = activeSaleBarContext.input;
     if (liveInput) {
       const rect = liveInput.getBoundingClientRect();
       if (rect.width > 0 || rect.height > 0 || rect.top > 0) {
         let top = rect.bottom + 5;
+        
+        // 💡 1순위: 품번 쪽으로 강제 이동하지 않고, 현재 입력 중인 셀 바로 아래에 위치
         let left = rect.left;
 
-        // 💡 [수정] 1. 고정 입력 패널(#new-prod-price)인 경우: 고정 품번(#new-prod-num) 위치에 맞춤
-        const fixedBox = liveInput.closest('.fixed-add-box');
-        if (fixedBox) {
-          const fixedNum = fixedBox.querySelector('#new-prod-num');
-          if (fixedNum) {
-            left = fixedNum.getBoundingClientRect().left;
-          }
-        } else {
-          // 💡 2. 일반 테이블 행(tr)인 경우: 해당 행의 품번 칸에 맞춤
-          const tr = liveInput.closest('tr');
-          if (tr) {
-            const prodNumCell = tr.querySelector('[id*="-prodNum"]');
-            if (prodNumCell) {
-              left = prodNumCell.getBoundingClientRect().left;
-            }
-          }
+        // 💡 2순위: 툴바가 화면 오른쪽 밖으로 삐져나갈 경우 화면 우측 안쪽으로 당김 (Clamping)
+        const barWidth = bar.offsetWidth || 380;
+        if (left + barWidth > window.innerWidth) {
+          left = Math.max(10, window.innerWidth - barWidth - 15);
         }
 
-        if (left + 380 > window.innerWidth) {
-          left = Math.max(10, window.innerWidth - 390);
-        }
-        if (top + 55 > window.innerHeight) {
-          top = Math.max(10, rect.top - 50);
+        // 💡 3순위: 화면 맨 아래쪽이라 잘릴 경우 입력 셀 위쪽으로 띄움
+        const barHeight = bar.offsetHeight || 50;
+        if (top + barHeight > window.innerHeight) {
+          top = Math.max(10, rect.top - barHeight - 5);
         }
 
         bar.style.top = `${Math.round(top)}px`;
