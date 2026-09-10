@@ -177,7 +177,7 @@
   .chip-picker-popup {
     position: fixed;
     display: none;
-    z-index: 6000;
+    z-index: 10050; /* 💡 테이블 팝업창 및 전체화면보다 항상 위에 표시 */
     background: #FFFFFF;
     border: 2px solid var(--purple-ink);
     border-radius: 8px;
@@ -4325,8 +4325,12 @@ window.openStockPopup = function(type, prodId = null) {
   let stockData = (type === 'new') ? currentNewStock : products.find(x => x.id === prodId)?.stock;
   if (stockData) { 
     renderStockMatrix(stockData); 
-    renderStockOrderMatrix(stockData); // 💡 [추가] 팝업을 열 때 현장 주문 입력 테이블도 즉시 빈 상태로 새로고침
+    renderStockOrderMatrix(stockData);
   }
+
+  // 💡 테이블 팝업 오픈 시 항상 '현장 주문 입력' 탭을 기본 첫 화면으로 전환
+  switchStockPopupTab('orders');
+
   document.getElementById('stock-popup').style.display = 'flex';
 };
 window.closeStockPopup = function() { document.getElementById('stock-popup').style.display = 'none'; };
@@ -4354,7 +4358,7 @@ window.removeStockCol = function() { let sd = getActiveStockData(); if (sd && sd
 window.addStockRow = function() { let sd = getActiveStockData(); if (sd) { sd.sizes.push(''); refreshCurrentStockPopup(); } };
 window.removeStockRow = function() { let sd = getActiveStockData(); if (sd && sd.sizes.length > 0) { sd.sizes.pop(); refreshCurrentStockPopup(); } };
 
-// 💡 항목명(색상/사이즈) 클릭 시 수정 모드 전환 (주문 탭 아이디 지원)
+// 💡 항목명(색상/사이즈) 클릭 시 수정 모드 전환 및 칩스 팔레트 자동 호출
 window.editStockHeader = function(e, type, idx, isOrd = false) {
   if(e) e.preventDefault(); 
   const idPrefix = isOrd ? `stock-header-${type}-ord-${idx}` : `stock-header-${type}-${idx}`;
@@ -4365,6 +4369,7 @@ window.editStockHeader = function(e, type, idx, isOrd = false) {
   inp.style.display = 'block'; 
   inp.focus(); 
   inp.select();
+  openStockHeaderChipPicker(inp, type, idx);
 };
 
 // 💡 항목명 변경 저장 시 양쪽 표 및 메인 화면 동시 반영
@@ -4411,11 +4416,11 @@ function renderStockMatrix(sd) {
   const table = document.getElementById('stock-matrix-table');
   let html = '<tr><th style="background:#F4F6F8; border:1px solid var(--line); text-align:center; font-weight:bold; padding:4px; width:70px;">사이즈\\색상</th>';
   sd.colors.forEach((col, cIdx) => {
-    html += `<th style="border:1px solid var(--line); text-align:center; padding:4px; background:#F4F6F8;" oncontextmenu="editStockHeader(event, 'color', ${cIdx})" onclick="editStockHeader(event, 'color', ${cIdx})"><div id="stock-header-color-${cIdx}"><span class="stock-header-text" style="cursor:pointer; display:block; min-height:16px; font-weight:bold;">${escapeHtml(col) || '&nbsp;&nbsp;'}</span><input type="text" class="inline-input" value="${escapeHtml(col)}" style="display:none; width:100%; text-align:center; font-size:11px; padding:1px; background:#fff; border:1px solid var(--blue);" onblur="saveStockHeader('color', ${cIdx}, this.value)" onkeydown="if(event.key==='Enter') this.blur()"></div></th>`;
+    html += `<th style="border:1px solid var(--line); text-align:center; padding:4px; background:#F4F6F8;" oncontextmenu="editStockHeader(event, 'color', ${cIdx})" onclick="editStockHeader(event, 'color', ${cIdx})"><div id="stock-header-color-${cIdx}"><span class="stock-header-text" style="cursor:pointer; display:block; min-height:16px; font-weight:bold;">${escapeHtml(col) || '&nbsp;&nbsp;'}</span><input type="text" class="inline-input" value="${escapeHtml(col)}" style="display:none; width:100%; text-align:center; font-size:11px; padding:1px; background:#fff; border:1px solid var(--blue);" onclick="event.stopPropagation(); openStockHeaderChipPicker(this, 'color', ${cIdx})" onfocus="openStockHeaderChipPicker(this, 'color', ${cIdx})" onblur="saveStockHeader('color', ${cIdx}, this.value)" onkeydown="if(event.key==='Enter') this.blur()"></div></th>`;
   });
   html += '</tr>';
   sd.sizes.forEach((sz, rIdx) => {
-    html += `<tr><td style="background:#FAFBFB; border:1px solid var(--line); text-align:center; font-weight:bold; padding:4px;" oncontextmenu="editStockHeader(event, 'size', ${rIdx})" onclick="editStockHeader(event, 'size', ${rIdx})"><div id="stock-header-size-${rIdx}"><span class="stock-header-text" style="cursor:pointer; display:block; min-height:16px;">${escapeHtml(sz) || '&nbsp;&nbsp;'}</span><input type="text" class="inline-input" value="${escapeHtml(sz)}" style="display:none; width:100%; text-align:center; font-size:11px; padding:1px; background:#fff; border:1px solid var(--blue);" onblur="saveStockHeader('size', ${rIdx}, this.value)" onkeydown="if(event.key==='Enter') this.blur()"></div></td>`;
+    html += `<tr><td style="background:#FAFBFB; border:1px solid var(--line); text-align:center; font-weight:bold; padding:4px;" oncontextmenu="editStockHeader(event, 'size', ${rIdx})" onclick="editStockHeader(event, 'size', ${rIdx})"><div id="stock-header-size-${rIdx}"><span class="stock-header-text" style="cursor:pointer; display:block; min-height:16px;">${escapeHtml(sz) || '&nbsp;&nbsp;'}</span><input type="text" class="inline-input" value="${escapeHtml(sz)}" style="display:none; width:100%; text-align:center; font-size:11px; padding:1px; background:#fff; border:1px solid var(--blue);" onclick="event.stopPropagation(); openStockHeaderChipPicker(this, 'size', ${rIdx})" onfocus="openStockHeaderChipPicker(this, 'size', ${rIdx})" onblur="saveStockHeader('size', ${rIdx}, this.value)" onkeydown="if(event.key==='Enter') this.blur()"></div></td>`;
     sd.colors.forEach((col, cIdx) => {
       const key = `${cIdx}_${rIdx}`; const val = sd.matrix[key] || '';
       html += `<td style="border:1px solid var(--line); padding:2px; background:#fff;"><input type="text" class="inline-input num" value="${escapeHtml(val)}" style="width:100%; text-align:right; font-weight:600; padding:2px;" oninput="updateStockValue('${key}', this.value)" placeholder="0"></td>`;
@@ -8335,6 +8340,82 @@ window.closeChipPicker = function(resetPosition = true) {
     if (resetPosition) delete popup.dataset.userMoved; // 닫힐 때만 위치 기억 리셋
   }
   activeChipContext = { input: null, type: null, contextType: null, rowId: null, replaceOnFirstClick: false };
+};
+
+// 💡 [추가] 테이블 팝업 전용 색상/사이즈 자동완성 칩스 엔진
+window.openStockHeaderChipPicker = function(inputEl, type, idx) {
+  if (!inputEl) return;
+  const popup = document.getElementById('chip-picker-popup');
+  if (!popup) return;
+
+  const isColor = (type === 'color');
+  const titleText = isColor ? '🎨 테이블 색상 선택' : '📏 테이블 사이즈 선택';
+  const currentVal = (inputEl.value || '').trim();
+
+  popup.style.maxWidth = isColor ? '380px' : 'none';
+  popup.style.width = isColor ? 'auto' : 'max-content';
+  const gridWrapStyle = isColor ? 'flex-wrap: wrap;' : 'flex-wrap: nowrap;';
+
+  let html = `
+    <div class="chip-picker-header" title="마우스로 잡고 위치를 이동할 수 있습니다">
+      <span>⠿ ${titleText}</span>
+      <span style="cursor:pointer; color:var(--ink-soft); font-size:14px;" onclick="closeChipPicker()">✕</span>
+    </div>
+    <div class="chip-picker-grid" style="${gridWrapStyle}">
+  `;
+
+  if (isColor) {
+    CHIP_COLORS.forEach(c => {
+      const isActive = (currentVal === c.name);
+      const isGrad = c.dot.includes('gradient');
+      const dotStyle = isGrad ? `background: ${c.dot};` : `background-color: ${c.dot};`;
+      const borderStyle = c.border ? 'border: 1px solid #CBD5E1;' : '';
+      html += `
+        <div class="chip-item ${isActive ? 'active' : ''}" onmousedown="event.preventDefault()" onclick="selectStockHeaderChip('${type}', ${idx}, '${c.name}')">
+          <span class="chip-color-dot" style="${dotStyle} ${borderStyle}"></span>
+          <span>${c.name}</span>
+        </div>
+      `;
+    });
+  } else {
+    CHIP_SIZES.forEach(sz => {
+      const isActive = (currentVal === sz);
+      html += `
+        <div class="chip-item ${isActive ? 'active' : ''}" onmousedown="event.preventDefault()" onclick="selectStockHeaderChip('${type}', ${idx}, '${sz}')">
+          <span>${sz}</span>
+        </div>
+      `;
+    });
+  }
+
+  html += `</div>`;
+  popup.innerHTML = html;
+
+  // 테이블 팝업창 위치를 고려한 화면 안전 배치
+  const rect = inputEl.getBoundingClientRect();
+  let left = rect.left;
+  let top = rect.bottom + 4;
+  const expectedWidth = isColor ? 380 : 465;
+  const expectedHeight = isColor ? 260 : 85;
+
+  if (left + expectedWidth > window.innerWidth) {
+    left = Math.max(10, window.innerWidth - (expectedWidth + 15));
+  }
+  if (top + expectedHeight > window.innerHeight) {
+    top = Math.max(10, rect.top - expectedHeight - 4);
+  }
+
+  popup.style.left = Math.round(left) + 'px';
+  popup.style.top = Math.round(top) + 'px';
+  popup.style.display = 'block';
+
+  const header = popup.querySelector('.chip-picker-header');
+  if (header) makeChipPickerDraggable(popup, header);
+};
+
+window.selectStockHeaderChip = function(type, idx, val) {
+  saveStockHeader(type, idx, val);
+  closeChipPicker(false);
 };
 
 function renderChipPickerContent() {
