@@ -1005,13 +1005,21 @@
         <button class="btn btn-history" onclick="clearAllProdFilters()" style="padding: 6px 12px; height: 28px; background: #FFF0F0; border-color: #F5B0AD; color: var(--danger); font-weight: 800;">전체 필터 초기화 🔄</button>
         <button class="btn btn-purple" onclick="sortProductsByContext()">품목정렬</button>
         
-        <!-- 💡 [추가] 복사 기호 커스텀 박스 -->
+        <!-- 💡 [수정] 복사 기호 커스텀 박스 (기호 선택 팝업 & 빠른 단독 복사 추가) -->
         <div style="display: inline-flex; align-items: center; gap: 3px; background: #fff; padding: 2px 6px; border: 1px solid var(--line); border-radius: 6px; margin-left: 4px;">
           <span style="font-size: 11px; font-weight: 800; color: var(--ink-soft);">기호:</span>
-          <input type="text" id="symbol-num" value="✨" style="width: 26px; height: 22px; text-align: center; border: 1px solid var(--line); border-radius: 4px; font-size: 12px; padding: 0;" placeholder="품번" oninput="saveCopySymbols()">
-          <input type="text" id="symbol-price" value="💲" style="width: 26px; height: 22px; text-align: center; border: 1px solid var(--line); border-radius: 4px; font-size: 12px; padding: 0;" placeholder="가격" oninput="saveCopySymbols()">
-          <input type="text" id="symbol-specs" value="📌" style="width: 26px; height: 22px; text-align: center; border: 1px solid var(--line); border-radius: 4px; font-size: 12px; padding: 0;" placeholder="제원" oninput="saveCopySymbols()">
-          <input type="text" id="symbol-stock" value="📢" style="width: 26px; height: 22px; text-align: center; border: 1px solid var(--line); border-radius: 4px; font-size: 12px; padding: 0;" placeholder="재고" oninput="saveCopySymbols()">
+          <!-- 1~3번째: 일반 양식용 -->
+          <input type="text" id="symbol-num" value="✨" style="width: 26px; height: 22px; text-align: center; border: 1px solid var(--line); border-radius: 4px; font-size: 12px; padding: 0; cursor: pointer;" placeholder="품번" oninput="saveCopySymbols()" onclick="this.select(); openSymbolPicker(this)">
+          <input type="text" id="symbol-price" value="💲" style="width: 26px; height: 22px; text-align: center; border: 1px solid var(--line); border-radius: 4px; font-size: 12px; padding: 0; cursor: pointer;" placeholder="가격" oninput="saveCopySymbols()" onclick="this.select(); openSymbolPicker(this)">
+          <input type="text" id="symbol-specs" value="📌" style="width: 26px; height: 22px; text-align: center; border: 1px solid var(--line); border-radius: 4px; font-size: 12px; padding: 0; cursor: pointer;" placeholder="제원" oninput="saveCopySymbols()" onclick="this.select(); openSymbolPicker(this)">
+          
+          <div style="width: 1px; height: 16px; background: var(--line); margin: 0 2px;"></div> <!-- 구분선 -->
+          
+          <!-- 4번째: 빠른 단독 복사용 (눈에 띄게 강조) -->
+          <div style="display: flex; align-items: center; gap: 2px; background: #F0F7FF; padding: 1px; border-radius: 4px; border: 2px solid var(--blue);">
+            <input type="text" id="symbol-stock" value="📢" style="width: 24px; height: 20px; text-align: center; border: none; background: transparent; color: var(--blue); font-weight: 900; font-size: 13px; padding: 0; cursor: pointer;" title="클릭하여 기호 변경" oninput="saveCopySymbols()" onclick="this.select(); openSymbolPicker(this)">
+            <button class="btn" style="padding: 0; width: 22px; height: 20px; background: var(--blue); color: #fff; font-size: 12px; border: none; border-radius: 3px; cursor: pointer; display: flex; align-items: center; justify-content: center;" onclick="copyQuickSymbol()" title="이 기호만 바로 복사">📋</button>
+          </div>
         </div>
       </div>
       
@@ -1037,8 +1045,12 @@
       
       <div style="width: 65px; flex-shrink: 0;"><input type="text" id="new-prod-price" class="inline-input num" style="background:#fff; border:1px solid var(--line); text-align: right;" placeholder="판매가" onkeydown="handleFixedProdKeydown(event)" onfocus="handlePCPriceFocus(this, 'new', 'price', true)" onclick="handlePCPriceFocus(this, 'new', 'price', true)"></div>
       
-      <!-- 👇 가변형(flex) 적용칸 -->
-      <div style="flex: 1.5; min-width: 80px;"><input type="text" id="new-prod-specs" class="inline-input reduced-font" style="background:#fff; border:1px solid var(--line);" placeholder="세부 제원 치수" onkeydown="handleFixedProdKeydown(event)"></div>
+      <!-- 👇 가변형(flex) 적용칸: 세부제원 입력 + 📏 표 + 📋 복사 -->
+      <div style="flex: 1.5; min-width: 130px; display: flex; align-items: center; gap: 2px;">
+        <input type="text" id="new-prod-specs" class="inline-input reduced-font" style="background:#fff; border:1px solid var(--line); flex: 1; min-width: 50px;" placeholder="세부 제원 치수" onkeydown="handleFixedProdKeydown(event)">
+        <button type="button" class="btn btn-history" onclick="openSpecsPopup('new')" style="padding: 2px 5px; height: 26px; font-size: 11px; flex-shrink: 0;" title="제원 입력 표 열기">📏</button>
+        <button type="button" class="btn btn-history" onclick="copySpecsOnly('new')" style="padding: 2px 5px; height: 26px; font-size: 11px; flex-shrink: 0;" title="세부제원 복사">📋</button>
+      </div>
       
       <div style="width: 55px; flex-shrink: 0;"><button id="btn-fixed-stock" class="btn" onclick="openStockPopup('new')" style="width: 100%; padding: 6px 0; font-weight: bold; background: #fff; border: 1px solid var(--line); color: var(--ink);">테이블</button></div>
       <div style="width: 90px; flex-shrink: 0;"><button class="btn btn-primary" onclick="addProductFromFixed()" style="width: 100%; padding: 6px 0; font-weight: bold;">상품등록</button></div>
@@ -1535,6 +1547,64 @@
   </div>
 </div>
 
+<!-- 📏 세부 제원 치수 매트릭스 입력 모달 -->
+<div id="specs-modal" class="modal-overlay" onclick="if(event.target === this) closeSpecsPopup()">
+  <div class="modal-content" onclick="event.stopPropagation()" style="max-width: 540px; padding: 18px; border-radius: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.25);">
+    <div class="modal-header" style="padding-bottom: 10px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;">
+      <h3 id="specs-modal-title" style="margin: 0; font-size: 15px; font-weight: 800; color: #1E293B; display: flex; align-items: center; gap: 6px;">
+        📏 세부 제원 치수 매트릭스 입력
+      </h3>
+      <button class="btn-close" onclick="closeSpecsPopup()" style="font-size: 20px; font-weight: bold; background: none; border: none; cursor: pointer; color: var(--ink-soft);">✕</button>
+    </div>
+
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+      <div style="font-size: 11.5px; color: var(--ink-soft); font-weight: 600;">
+        💡 숫자를 적은 사이즈만 문장으로 자동 결합됩니다.
+      </div>
+      <div style="display: flex; gap: 4px;">
+        <button type="button" class="btn btn-history" onclick="addSpecsRow()" style="padding: 2px 7px; font-size: 11px; font-weight: 800; border-color: var(--blue); color: var(--blue);">+ 사이즈 ↕</button>
+        <button type="button" class="btn btn-history" onclick="clearAllSpecsInputs()" style="padding: 2px 7px; font-size: 11px; font-weight: 800; color: var(--danger); background: #FFF0F0; border-color: #F5B0AD;">비우기 🔄</button>
+      </div>
+    </div>
+
+    <!-- 매트릭스 표 영역 -->
+    <div style="max-height: 52vh; overflow-y: auto; border: 1px solid var(--line); border-radius: 6px; background: #FAFBFB; margin-bottom: 12px;">
+      <table style="width: 100%; border-collapse: collapse; font-size: 12.5px; table-layout: fixed;">
+        <colgroup>
+          <col style="width: 80px;">
+          <col style="width: 85px;">
+          <col style="width: 85px;">
+          <col style="width: 85px;">
+          <col style="width: 85px;">
+          <col style="width: 45px;">
+        </colgroup>
+        <thead>
+          <tr style="background: #F1F5F9; border-bottom: 2px solid var(--line);">
+            <th style="text-align: center; padding: 7px 4px; font-weight: 800; color: #334155;">사이즈</th>
+            <th style="text-align: center; padding: 7px 4px; font-weight: 800; color: #334155;">총장</th>
+            <th style="text-align: center; padding: 7px 4px; font-weight: 800; color: #334155;">가단</th>
+            <th style="text-align: center; padding: 7px 4px; font-weight: 800; color: #334155;">허단</th>
+            <th style="text-align: center; padding: 7px 4px; font-weight: 800; color: #334155;">엉단</th>
+            <th style="text-align: center; padding: 7px 4px; font-weight: 800; color: #334155;">삭제</th>
+          </tr>
+        </thead>
+        <tbody id="specs-modal-tbody"></tbody>
+      </table>
+    </div>
+
+    <!-- 실시간 조합 텍스트 미리보기 -->
+    <div style="background: #F8FAFC; border: 1px solid #CBD5E1; border-radius: 6px; padding: 8px 10px; margin-bottom: 14px;">
+      <div style="font-size: 11px; font-weight: 800; color: var(--purple-ink); margin-bottom: 4px;">🔍 완성 문장 미리보기:</div>
+      <div id="specs-preview-text" style="font-size: 12px; color: #1E293B; min-height: 18px; word-break: break-all; font-weight: 600;">(치수를 입력하면 여기에 미리보기가 표시됩니다)</div>
+    </div>
+
+    <div style="display: flex; justify-content: flex-end; gap: 8px;">
+      <button type="button" class="btn btn-history" onclick="closeSpecsPopup()" style="padding: 7px 18px; font-size: 12px; font-weight: bold;">취소</button>
+      <button type="button" class="btn btn-purple" onclick="applySpecsPopup()" style="padding: 7px 22px; font-size: 12.5px; font-weight: 800;">완료 및 적용</button>
+    </div>
+  </div>
+</div>
+
 <div id="matrix-modal" class="modal-overlay" onclick="closeMatrixPopup()">
   <div class="modal-content" onclick="event.stopPropagation()" style="max-width: 960px;">
     <div class="modal-header">
@@ -1686,6 +1756,15 @@
 <!-- 👇 추가: 가격 전용 드롭다운 컨테이너 -->
 <div id="ac-price-dropdown" class="ac-price-dropdown"></div>
 <div id="chip-picker-popup" class="chip-picker-popup"></div>
+
+<!-- 👇 [추가] 팝업: 자주 쓰는 기호 선택 -->
+<div id="symbol-picker-popup" style="position: fixed; display: none; z-index: 6100; background: #fff; border: 2px solid var(--blue); border-radius: 8px; box-shadow: 0 8px 24px rgba(0,0,0,0.2); width: 280px; padding: 10px; user-select: none;">
+  <div style="font-size: 11.5px; font-weight: 800; color: var(--blue); border-bottom: 1px solid var(--line); padding-bottom: 6px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
+    <span>✨ 자주 쓰는 기호 선택</span>
+    <span style="cursor: pointer; color: var(--ink-soft); font-size: 14px;" onclick="closeSymbolPicker()">✕</span>
+  </div>
+  <div id="symbol-picker-grid" style="display: flex; flex-wrap: wrap; gap: 6px;"></div>
+</div>
 <div id="toast" class="toast"></div>
 
 <input type="file" id="file-import-share" accept="application/json,.json" multiple style="display:none;">
@@ -1746,7 +1825,7 @@ let depositFileName = "";    // 업로드된 엑셀 파일명 브리핑 전용 �
 let depositGlobalShipping = 0;   // 상단 일괄 적용 배송비
 let depositDeductionMap = {};     // 고객별 수동 차감 제외금액 저장소
 let depositRowHighlights = {};    // 고객별 완료체크 강조색 오브젝트
-let depositMasterHighlightColor = '#FFDD6B'; // 입금정산 탭 선택 강조색
+let depositActiveHighlightColors = ['#FFDD6B']; // 입금정산 탭 다중 선택 강조색 배열
 let depositShippingMap = {}; // 고객별 수동 배송비 입력값 저장소
 let depositUnmatchedHighlights = {}; // 미매칭 목록 완료체크 강조색 저장소
 
@@ -2623,21 +2702,36 @@ window.updateDepositDeduction = function(nickname, valStr, inputEl) {
  * 입금정산 탭 완료체크용 파레트 UI 제어 함수 스위트
  */
 window.changeDepositHighlightColor = function(colorVal) {
-  depositMasterHighlightColor = colorVal;
+  const idx = depositActiveHighlightColors.indexOf(colorVal);
+  if (idx > -1) {
+    if (depositActiveHighlightColors.length > 1) { // 최소 1개는 유지
+      depositActiveHighlightColors.splice(idx, 1);
+    }
+  } else {
+    depositActiveHighlightColors.push(colorVal);
+  }
   saveToLocalStorage();
-  
-  // 파레트 선택 상태의 테두리 보정 시각화 동기화
+  syncDepositColorPickerUI();
+};
+
+function syncDepositColorPickerUI() {
+  // 파레트 다중 선택 상태의 테두리 보정 시각화 동기화
   document.querySelectorAll('#view-deposit .color-chip').forEach(chip => {
     const chipBg = chip.style.backgroundColor;
-    let isMatch = chipBg.toLowerCase() === colorVal.toLowerCase();
-    if (chipBg.startsWith('rgb')) {
-      let canvas = document.createElement('canvas'); canvas.width = 1; canvas.height = 1;
-      let ctx = canvas.getContext('2d'); ctx.fillStyle = colorVal; ctx.fillRect(0,0,1,1);
-      let d = ctx.getImageData(0,0,1,1).data; isMatch = (chipBg === `rgb(${d[0]}, ${d[1]}, ${d[2]})`);
-    }
+    let isMatch = false;
+    depositActiveHighlightColors.forEach(colorVal => {
+      if (chipBg.startsWith('rgb')) {
+        let canvas = document.createElement('canvas'); canvas.width = 1; canvas.height = 1;
+        let ctx = canvas.getContext('2d'); ctx.fillStyle = colorVal; ctx.fillRect(0,0,1,1);
+        let d = ctx.getImageData(0,0,1,1).data;
+        if (chipBg === `rgb(${d[0]}, ${d[1]}, ${d[2]})`) isMatch = true;
+      } else if (chipBg.toLowerCase() === colorVal.toLowerCase()) {
+        isMatch = true;
+      }
+    });
     chip.classList.toggle('active', isMatch);
   });
-};
+}
 
 window.clearAllDepositHighlights = function() {
   if (Object.keys(depositRowHighlights).length === 0 && Object.keys(depositUnmatchedHighlights).length === 0) return;
@@ -2650,10 +2744,20 @@ window.clearAllDepositHighlights = function() {
 
 window.handleDepositRowClick = function(nickname, event) {
   if (event.target.tagName === 'INPUT' || event.target.tagName === 'BUTTON') return;
-  if (depositRowHighlights[nickname]) {
+  
+  if (depositActiveHighlightColors.length === 0) {
     delete depositRowHighlights[nickname];
   } else {
-    depositRowHighlights[nickname] = depositMasterHighlightColor;
+    const curColor = depositRowHighlights[nickname];
+    const curIdx = depositActiveHighlightColors.indexOf(curColor);
+    
+    if (curIdx === -1) {
+      depositRowHighlights[nickname] = depositActiveHighlightColors[0];
+    } else if (curIdx < depositActiveHighlightColors.length - 1) {
+      depositRowHighlights[nickname] = depositActiveHighlightColors[curIdx + 1];
+    } else {
+      delete depositRowHighlights[nickname];
+    }
   }
   saveToLocalStorage();
   renderDepositAnalysisTable();
@@ -2665,10 +2769,20 @@ window.handleDepositRowClick = function(nickname, event) {
 window.handleUnmatchedRowClick = function(nickname, timeStr, event) {
   if (event.target.tagName === 'INPUT' || event.target.tagName === 'BUTTON') return;
   const uKey = nickname + ':::' + timeStr;
-  if (depositUnmatchedHighlights[uKey]) {
+  
+  if (depositActiveHighlightColors.length === 0) {
     delete depositUnmatchedHighlights[uKey];
   } else {
-    depositUnmatchedHighlights[uKey] = depositMasterHighlightColor;
+    const curColor = depositUnmatchedHighlights[uKey];
+    const curIdx = depositActiveHighlightColors.indexOf(curColor);
+    
+    if (curIdx === -1) {
+      depositUnmatchedHighlights[uKey] = depositActiveHighlightColors[0];
+    } else if (curIdx < depositActiveHighlightColors.length - 1) {
+      depositUnmatchedHighlights[uKey] = depositActiveHighlightColors[curIdx + 1];
+    } else {
+      delete depositUnmatchedHighlights[uKey];
+    }
   }
   saveToLocalStorage();
   renderDepositAnalysisTable();
@@ -2870,6 +2984,86 @@ function loadCopySymbols() {
   }
 }
 
+// 💡 [추가] 자주 쓰는 기호 팝업 & 4번째 기호 빠른 복사 기능
+const COMMON_SYMBOLS = ['✅', '✨', '❤️', '🎀', '🍒', '💲', '👆', '👇', '👈', '👉', '👍', '❗', '📍', '🚨', '📢', '❌'];
+let activeSymbolInput = null;
+
+window.openSymbolPicker = function(inputEl) {
+  activeSymbolInput = inputEl;
+  const popup = document.getElementById('symbol-picker-popup');
+  const grid = document.getElementById('symbol-picker-grid');
+  if (!popup || !grid) return;
+
+  // 팝업 내용 채우기 (호버 시 파란색 반응 효과 추가)
+  grid.innerHTML = COMMON_SYMBOLS.map(sym => `
+    <div style="display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; font-size: 16px; background: #F8FAFC; border: 1px solid #CBD5E1; border-radius: 6px; cursor: pointer; transition: 0.1s;"
+         onmouseover="this.style.background='#E6F0FA'; this.style.borderColor='var(--blue)';"
+         onmouseout="this.style.background='#F8FAFC'; this.style.borderColor='#CBD5E1';"
+         onclick="selectSymbol('${sym}')">
+      ${sym}
+    </div>
+  `).join('');
+
+  // 팝업 위치 자동 계산 (클릭한 입력칸 바로 아래)
+  const rect = inputEl.getBoundingClientRect();
+  let left = rect.left;
+  let top = rect.bottom + 6;
+
+  // 창 밖으로 잘리지 않도록 안전 장치
+  if (left + 280 > window.innerWidth) left = window.innerWidth - 290;
+  if (top + 150 > window.innerHeight) top = rect.top - 160;
+
+  popup.style.left = Math.max(10, left) + 'px';
+  popup.style.top = Math.max(10, top) + 'px';
+  popup.style.display = 'block';
+};
+
+window.closeSymbolPicker = function() {
+  const popup = document.getElementById('symbol-picker-popup');
+  if (popup) popup.style.display = 'none';
+  activeSymbolInput = null;
+};
+
+window.selectSymbol = function(sym) {
+  if (activeSymbolInput) {
+    activeSymbolInput.value = sym;
+    saveCopySymbols(); // 선택 즉시 브라우저에 저장
+  }
+  closeSymbolPicker();
+};
+
+window.copyQuickSymbol = function() {
+  const inputEl = document.getElementById('symbol-stock');
+  if (!inputEl) return;
+  const val = inputEl.value || '';
+  if (!val) {
+    toast('⚠️ 복사할 기호가 비어있습니다.');
+    return;
+  }
+  
+  navigator.clipboard.writeText(val).then(() => {
+    toast(`📋 단독 기호 [ ${val} ] 복사 완료!`);
+  }).catch(() => {
+    // 클립보드 권한이 막혀있을 때를 위한 대체 복사 로직
+    const ta = document.createElement('textarea');
+    ta.value = val;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    toast(`📋 단독 기호 [ ${val} ] 복사 완료!`);
+  });
+};
+
+// 외부 영역 클릭 시 기호 팝업 닫기
+document.addEventListener('mousedown', function(e) {
+  const popup = document.getElementById('symbol-picker-popup');
+  if (!popup || popup.style.display === 'none') return;
+  if (popup.contains(e.target)) return;
+  if (activeSymbolInput && e.target === activeSymbolInput) return;
+  closeSymbolPicker();
+});
+
 // 💡 [수정] 커스텀 기호가 반영된 복사 기능
 function formatProductCopyText(p) {
   const symNum = document.getElementById('symbol-num')?.value ?? '✨';
@@ -2913,7 +3107,7 @@ function saveToLocalStorage() {
   localStorage.setItem('live_deposit_deduction_map', JSON.stringify(depositDeductionMap));
   localStorage.setItem('live_deposit_row_highlights', JSON.stringify(depositRowHighlights));
   localStorage.setItem('live_deposit_unmatched_highlights', JSON.stringify(depositUnmatchedHighlights)); // 💡 복사해서 삽입
-  localStorage.setItem('live_deposit_master_color', depositMasterHighlightColor);
+  localStorage.setItem('live_deposit_active_colors', JSON.stringify(depositActiveHighlightColors));
   localStorage.setItem('live_settle_group_highlights', JSON.stringify(settleGroupHighlights));
   localStorage.setItem('live_ledger_reward_data', JSON.stringify(rewardTableData)); // 적립금 모달 저장
   localStorage.setItem('live_bank_records', JSON.stringify(bankRecords));
@@ -2986,8 +3180,10 @@ function loadFromLocalStorage() {
   const storedDepUnmatchHigh = localStorage.getItem('live_deposit_unmatched_highlights');
   if (storedDepUnmatchHigh) depositUnmatchedHighlights = JSON.parse(storedDepUnmatchHigh);
 
-  const storedDepMColor = localStorage.getItem('live_deposit_master_color');
-  if (storedDepMColor) depositMasterHighlightColor = storedDepMColor;
+  const storedDepActiveColors = localStorage.getItem('live_deposit_active_colors');
+  if (storedDepActiveColors) {
+    try { depositActiveHighlightColors = JSON.parse(storedDepActiveColors); } catch(e) {}
+  }
 
   const storedSettleGroupHigh = localStorage.getItem('live_settle_group_highlights');
   if (storedSettleGroupHigh) settleGroupHighlights = JSON.parse(storedSettleGroupHigh);
@@ -3263,10 +3459,7 @@ window.handleProdCellFilter = function(event, id, field) {
   if (value === '') return;
 
   if (field === 'specs') {
-    const symSpecs = document.getElementById('symbol-specs')?.value ?? '📌';
-    const textToCopy = `${symSpecs}${value}`;
-    navigator.clipboard.writeText(textToCopy);
-    toast(`📋 세부제원이 복사되었습니다: ${textToCopy}`);
+    copySpecsOnly('edit', id);
     return;
   }
 
@@ -3278,6 +3471,272 @@ window.handleProdCellFilter = function(event, id, field) {
     toast(`🔍 [${value}] 조건이 필터 체인에 추가되었습니다.`);
   }
   renderProducts();
+};
+
+// =========================================================================
+// 📏 세부 제원 치수 매트릭스 입력 및 양방향 파싱 & 퀵 복사 엔진
+// =========================================================================
+let activeSpecsContext = { type: 'new', prodId: null };
+let specsRowsData = [];
+
+// 기존 텍스트를 분석하여 표의 행 데이터로 분해하는 파싱 함수
+function parseSpecsText(str) {
+  if (!str || !str.trim()) return [];
+  const parts = str.split('/').map(s => s.trim()).filter(Boolean);
+  const rows = [];
+
+  parts.forEach(part => {
+    const sizeMatch = part.match(/^([^\s,:]+)\s*기준/);
+    const sz = sizeMatch ? sizeMatch[1].trim() : '';
+
+    const getVal = (label) => {
+      const m = part.match(new RegExp(label + '\\s*[:\\s]*([\\d.]+)'));
+      return m ? m[1] : '';
+    };
+
+    const chong = getVal('총장');
+    const ga = getVal('가단');
+    const heo = getVal('허단');
+    const eong = getVal('엉단');
+
+    if (sz || chong || ga || heo || eong) {
+      rows.push({ size: sz, chong, ga, heo, eong });
+    }
+  });
+
+  return rows;
+}
+
+window.openSpecsPopup = function(type, prodId = null) {
+  activeSpecsContext = { type, prodId };
+  let rawSpecs = '';
+  let rawSizes = '';
+
+  if (type === 'new') {
+    rawSpecs = document.getElementById('new-prod-specs')?.value || '';
+    rawSizes = document.getElementById('new-prod-size')?.value || '';
+  } else {
+    const p = products.find(x => x.id === prodId);
+    rawSpecs = p ? (p.specs || '') : '';
+    rawSizes = p ? (p.size || '') : '';
+  }
+
+  // 1. 기존 제원 텍스트 파싱
+  const parsed = parseSpecsText(rawSpecs);
+  const parsedMap = new Map();
+  parsed.forEach(p => {
+    if (p.size) parsedMap.set(p.size.trim().toLowerCase(), p);
+  });
+
+  // 2. 기준 사이즈 목록 설정 (사이즈 칸이 비어있으면 전체 기본 사이즈 사용)
+  let targetSizes = rawSizes.trim().split(/[\s,]+/).filter(Boolean);
+  if (targetSizes.length === 0) {
+    targetSizes = (typeof CHIP_SIZES !== 'undefined') ? [...CHIP_SIZES] : ['프리', 'S', 'M', 'L', 'XL', '2XL', '44', '55', '66', '77'];
+  }
+
+  // 3. 사이즈 칸 목록을 기준으로 표의 행을 구성하되, 기존에 입력된 치수가 있으면 채워넣음
+  specsRowsData = targetSizes.map(sz => {
+    const existing = parsedMap.get(sz.trim().toLowerCase());
+    if (existing) {
+      parsedMap.delete(sz.trim().toLowerCase()); // 이미 매칭된 제원은 삭제
+      return { size: sz, chong: existing.chong, ga: existing.ga, heo: existing.heo, eong: existing.eong };
+    }
+    // 아직 치수를 입력하지 않은 사이즈는 빈칸 행으로 유지
+    return { size: sz, chong: '', ga: '', heo: '', eong: '' };
+  });
+
+  // 4. 사이즈 칸에는 없지만 제원 텍스트에만 별도로 남아있던 사이즈가 있다면 유실 방지를 위해 하단에 유지
+  parsedMap.forEach(p => {
+    specsRowsData.push(p);
+  });
+
+  renderSpecsRows();
+  const modal = document.getElementById('specs-modal');
+  if (modal) {
+    // 💡 키보드 엔터(저장 후 닫기) 및 ESC(닫기) 이벤트 리스너 등록
+    modal.onkeydown = function(e) {
+      if (e.key === 'Enter') {
+        if (e.isComposing) return; // 한글 조합 중 엔터 씹힘 방지
+        e.preventDefault();
+        applySpecsPopup();
+      } else if (e.key === 'Escape') {
+        e.preventDefault();
+        closeSpecsPopup();
+      }
+    };
+    modal.style.display = 'flex';
+
+    // 💡 표가 열리면 첫 번째 치수 입력칸으로 자동 포커스
+    setTimeout(() => {
+      const firstInput = modal.querySelector('#specs-modal-tbody input.num') || modal.querySelector('#specs-modal-tbody input');
+      if (firstInput) {
+        firstInput.focus();
+        firstInput.select();
+      }
+    }, 50);
+  }
+};
+
+window.closeSpecsPopup = function(showToast = false) {
+  if (activeSpecsContext && activeSpecsContext.type) {
+    const resultText = buildSpecsString();
+    let isChanged = false;
+
+    if (activeSpecsContext.type === 'new') {
+      const el = document.getElementById('new-prod-specs');
+      if (el) {
+        if (el.value !== resultText) isChanged = true;
+        el.value = resultText;
+      }
+    } else if (activeSpecsContext.type === 'edit' && activeSpecsContext.prodId) {
+      const p = products.find(x => x.id === activeSpecsContext.prodId);
+      if (p) {
+        if (p.specs !== resultText) isChanged = true;
+        saveState();
+        p.specs = resultText;
+        saveToLocalStorage();
+        renderProducts();
+      }
+    }
+
+    if (showToast === true) {
+      toast('✅ 세부 제원 치수가 적용되었습니다.');
+    } else if (isChanged) {
+      toast('💾 세부 제원 치수가 자동 저장되었습니다.');
+    }
+  }
+
+  const modal = document.getElementById('specs-modal');
+  if (modal) modal.style.display = 'none';
+  activeSpecsContext = { type: 'new', prodId: null };
+};
+
+function renderSpecsRows() {
+  const tbody = document.getElementById('specs-modal-tbody');
+  if (!tbody) return;
+
+  tbody.innerHTML = specsRowsData.map((row, idx) => `
+    <tr style="border-bottom: 1px solid var(--line);">
+      <td style="padding: 4px; text-align: center; background: #FAFBFB;">
+        <input type="text" class="inline-input" value="${escapeHtml(row.size)}" style="text-align: center; font-weight: bold; background: #fff; border: 1px solid var(--line); padding: 3px;" oninput="updateSpecsRowVal(${idx}, 'size', this.value)" placeholder="사이즈">
+      </td>
+      <td style="padding: 4px;">
+        <input type="text" class="inline-input num" value="${escapeHtml(row.chong)}" style="text-align: right; background: #fff; border: 1px solid var(--line); padding: 3px;" oninput="updateSpecsRowVal(${idx}, 'chong', this.value)" placeholder="0">
+      </td>
+      <td style="padding: 4px;">
+        <input type="text" class="inline-input num" value="${escapeHtml(row.ga)}" style="text-align: right; background: #fff; border: 1px solid var(--line); padding: 3px;" oninput="updateSpecsRowVal(${idx}, 'ga', this.value)" placeholder="0">
+      </td>
+      <td style="padding: 4px;">
+        <input type="text" class="inline-input num" value="${escapeHtml(row.heo)}" style="text-align: right; background: #fff; border: 1px solid var(--line); padding: 3px;" oninput="updateSpecsRowVal(${idx}, 'heo', this.value)" placeholder="0">
+      </td>
+      <td style="padding: 4px;">
+        <input type="text" class="inline-input num" value="${escapeHtml(row.eong)}" style="text-align: right; background: #fff; border: 1px solid var(--line); padding: 3px;" oninput="updateSpecsRowVal(${idx}, 'eong', this.value)" placeholder="0">
+      </td>
+      <td style="padding: 4px; text-align: center;">
+        <button type="button" class="action-text text-del" onclick="removeSpecsRow(${idx})" style="font-size: 13px;">✕</button>
+      </td>
+    </tr>
+  `).join('');
+
+  updateSpecsPreview();
+}
+
+window.updateSpecsRowVal = function(idx, field, val) {
+  if (specsRowsData[idx]) {
+    specsRowsData[idx][field] = val;
+    updateSpecsPreview();
+  }
+};
+
+window.addSpecsRow = function() {
+  specsRowsData.push({ size: '', chong: '', ga: '', heo: '', eong: '' });
+  renderSpecsRows();
+  setTimeout(() => {
+    const tbody = document.getElementById('specs-modal-tbody');
+    const inputs = tbody ? tbody.querySelectorAll('input') : [];
+    if (inputs.length > 0) inputs[inputs.length - 5].focus();
+  }, 50);
+};
+
+window.removeSpecsRow = function(idx) {
+  specsRowsData.splice(idx, 1);
+  if (specsRowsData.length === 0) {
+    specsRowsData.push({ size: '', chong: '', ga: '', heo: '', eong: '' });
+  }
+  renderSpecsRows();
+};
+
+window.clearAllSpecsInputs = function() {
+  specsRowsData.forEach(row => {
+    row.chong = '';
+    row.ga = '';
+    row.heo = '';
+    row.eong = '';
+  });
+  renderSpecsRows();
+};
+
+// 표의 행 데이터를 규격화된 문장으로 조립하는 함수
+function buildSpecsString() {
+  const parts = [];
+  specsRowsData.forEach(r => {
+    const sz = (r.size || '').trim();
+    const items = [];
+    if (r.chong && r.chong.trim()) items.push(`총장${r.chong.trim()}`);
+    if (r.ga && r.ga.trim()) items.push(`가단${r.ga.trim()}`);
+    if (r.heo && r.heo.trim()) items.push(`허단${r.heo.trim()}`);
+    if (r.eong && r.eong.trim()) items.push(`엉단${r.eong.trim()}`);
+
+    // 숫자를 적은 항목이 최소 1개 이상 있는 사이즈 줄만 문장으로 생성
+    if (items.length > 0) {
+      const prefix = sz ? `${sz}기준 ` : '';
+      parts.push(`${prefix}${items.join(', ')}`);
+    }
+  });
+  return parts.join(' / ');
+}
+
+function updateSpecsPreview() {
+  const previewEl = document.getElementById('specs-preview-text');
+  if (!previewEl) return;
+  const str = buildSpecsString();
+  previewEl.textContent = str || '(치수를 입력하면 여기에 조합 문장이 표시됩니다)';
+}
+
+window.applySpecsPopup = function() {
+  window.closeSpecsPopup(true);
+};
+
+// 3번째 기호를 자동으로 붙여서 복사하는 전용 퀵 복사 함수
+window.copySpecsOnly = function(type, prodId = null) {
+  let specsVal = '';
+
+  if (type === 'new') {
+    specsVal = (document.getElementById('new-prod-specs')?.value || '').trim();
+  } else {
+    const p = products.find(x => x.id === prodId);
+    specsVal = p ? (p.specs || '').trim() : '';
+  }
+
+  if (!specsVal) {
+    toast('⚠️ 복사할 세부제원이 비어있습니다.');
+    return;
+  }
+
+  const symSpecs = document.getElementById('symbol-specs')?.value ?? '📌';
+  const textToCopy = `${symSpecs}${specsVal}`;
+
+  navigator.clipboard.writeText(textToCopy).then(() => {
+    toast(`📋 세부제원 복사 완료: ${textToCopy}`);
+  }).catch(() => {
+    const ta = document.createElement('textarea');
+    ta.value = textToCopy;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    toast(`📋 세부제원 복사 완료: ${textToCopy}`);
+  });
 };
 
 function renderProdFilterTags() {
@@ -3996,7 +4455,16 @@ function renderProducts(){
       <td><div class="cell-wrap" id="wrap-prod-${p.id}-color" data-cell-id="${p.id}:::color" oncontextmenu="handleProdCellFilter(event, '${p.id}', 'color')" ondblclick="enterProdEditMode(event, '${p.id}', 'color', false)"><span class="view-text reduced-font${blankClass(p.color)}">${escapeHtml(p.color) || '&nbsp;'}</span><input type="text" class="inline-input reduced-font" value="${escapeHtml(p.color)}" data-field="color" onfocus="trackFocus('product', '${p.id}', 'color', this)" onblur="exitProdEditMode('${p.id}', 'color', false)" onkeydown="handleProdKeydown(event, '${p.id}', false)" oninput="updateProdField('${p.id}', 'color', this.value)" placeholder="색상"></div></td>
       <td><div class="cell-wrap" id="wrap-prod-${p.id}-size" data-cell-id="${p.id}:::size" oncontextmenu="handleProdCellFilter(event, '${p.id}', 'size')" ondblclick="enterProdEditMode(event, '${p.id}', 'size', false)"><span class="view-text reduced-font${blankClass(p.size)}">${escapeHtml(p.size) || '&nbsp;'}</span><input type="text" class="inline-input reduced-font" value="${escapeHtml(p.size)}" data-field="size" onfocus="trackFocus('product', '${p.id}', 'size', false)" onblur="exitProdEditMode('${p.id}', 'size', false)" onkeydown="handleProdKeydown(event, '${p.id}', false)" oninput="updateProdField('${p.id}', 'size', this.value)" placeholder="사이즈"></div></td>
       <td><div class="cell-wrap num-wrap" id="wrap-prod-${p.id}-price" data-cell-id="${p.id}:::price" oncontextmenu="handleProdCellFilter(event, '${p.id}', 'price')" ondblclick="enterProdEditMode(event, '${p.id}', 'price', false)"><span class="view-text${blankClass(p.price)}">${p.price ? escapeHtml(p.price) : '&nbsp;'}</span><input type="text" class="inline-input num" value="${p.price || ''}" data-field="price" onfocus="trackFocus('product', '${p.id}', 'price', this); handlePCPriceFocus(this, '${p.id}', 'price', true)" onclick="handlePCPriceFocus(this, '${p.id}', 'price', true)" onblur="exitProdEditMode('${p.id}', 'price', false)" onkeydown="handleProdKeydown(event, '${p.id}', false)" oninput="updateProdField('${p.id}', 'price', this.value)" placeholder="0"></div></td>
-      <td><div class="cell-wrap" id="wrap-prod-${p.id}-specs" data-cell-id="${p.id}:::specs" oncontextmenu="handleProdCellFilter(event, '${p.id}', 'specs')" ondblclick="enterProdEditMode(event, '${p.id}', 'specs', false)"><span class="view-text reduced-font${blankClass(p.specs)}">${escapeHtml(p.specs) || '&nbsp;'}</span><input type="text" class="inline-input reduced-font" value="${escapeHtml(p.specs)}" data-field="specs" onfocus="trackFocus('product', '${p.id}', 'specs', false)" onblur="exitProdEditMode('${p.id}', 'specs', false)" onkeydown="handleProdKeydown(event, '${p.id}', false)" oninput="updateProdField('${p.id}', 'specs', this.value)" placeholder="세부 제원 치수"></div></td>
+      <td>
+        <div style="display: flex; align-items: center; gap: 2px; width: 100%;">
+          <div class="cell-wrap" id="wrap-prod-${p.id}-specs" data-cell-id="${p.id}:::specs" oncontextmenu="handleProdCellFilter(event, '${p.id}', 'specs')" ondblclick="enterProdEditMode(event, '${p.id}', 'specs', false)" style="flex: 1; min-width: 0;">
+            <span class="view-text reduced-font${blankClass(p.specs)}">${escapeHtml(p.specs) || '&nbsp;'}</span>
+            <input type="text" class="inline-input reduced-font" value="${escapeHtml(p.specs)}" data-field="specs" onfocus="trackFocus('product', '${p.id}', 'specs', false)" onblur="exitProdEditMode('${p.id}', 'specs', false)" onkeydown="handleProdKeydown(event, '${p.id}', false)" oninput="updateProdField('${p.id}', 'specs', this.value)" placeholder="세부 제원 치수">
+          </div>
+          <button type="button" class="btn btn-history" onclick="openSpecsPopup('edit', '${p.id}')" style="padding: 1px 4px; height: 22px; font-size: 10px; flex-shrink: 0;" title="제원 입력 표 열기">📏</button>
+          <button type="button" class="btn btn-history" onclick="copySpecsOnly('edit', '${p.id}')" style="padding: 1px 4px; height: 22px; font-size: 10px; flex-shrink: 0;" title="세부제원 복사">📋</button>
+        </div>
+      </td>
       <td><button id="btn-stock-${p.id}" class="btn" style="padding:4px 8px; font-size:11px; font-weight:bold; border:1px solid var(--line); background:#fff; color:var(--ink);" onclick="openStockPopup('edit', '${p.id}')">테이블</button></td>
       <td><div style="display:flex; gap:4px;"><button class="action-text text-add-row" onclick="copyProductToClipboard('${p.id}')">복사</button><button class="action-text text-del" onclick="deleteProdRow('${p.id}')">삭제</button></div></td>
     </tr>`}).join('');
@@ -6938,7 +7406,7 @@ window.addEventListener('mousemove', function(e) {
 
 loadFromLocalStorage(); loadAutocompleteCache(); renderProducts(); renderSales(); updateHistoryButtons();
 loadAutocompleteData(true); syncColorPickerUI(); loadCopySymbols();
-changeDepositHighlightColor(depositMasterHighlightColor);
+syncDepositColorPickerUI();
 
 // 💡 [추가] 마지막으로 쓰던 탭 기억해서 그대로 복원 및 입금정산 표 첫 화면 자동 렌더링 기믹
 const storedActiveTabId = localStorage.getItem('live_active_tab_id');
