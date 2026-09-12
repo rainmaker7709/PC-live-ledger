@@ -1761,48 +1761,6 @@
   </div>
 </div>
 
-<!-- 📥 2단계: 장부 불러오기 상세 옵션 모달 -->
-<div id="pc-sync-step2-modal" class="modal-overlay" onclick="if(event.target === this) closeSyncStep2Modal()">
-  <div class="modal-content" style="max-width: 500px; padding: 22px; border-radius: 12px; box-shadow: 0 12px 36px rgba(0,0,0,0.22);">
-    <div class="modal-header" style="padding-bottom: 12px; margin-bottom: 14px;">
-      <h3 style="font-size: 17px; font-weight: 800; color: #111827; display: flex; align-items: center; gap: 8px;">
-        📥 장부 불러오기 상세 설정
-      </h3>
-      <button class="btn-close" onclick="closeSyncStep2Modal()" style="font-size: 22px; font-weight: bold;">✕</button>
-    </div>
-
-    <div style="display: flex; flex-direction: column; gap: 16px;">
-      <!-- 1. 불러올 날짜 범위 -->
-      <div style="background: #F8FAFC; border: 1.5px solid #CBD5E1; border-radius: 8px; padding: 14px;">
-        <div style="font-size: 14px; font-weight: 800; margin-bottom: 10px; color: #1E293B;">1. 불러올 데이터 범위</div>
-        <label style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px; cursor: pointer; font-size: 13.5px;">
-          <input type="radio" name="fetch_range" value="all" checked onchange="toggleFetchDateInput()"> 전체 데이터 가져오기
-        </label>
-        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 13.5px;">
-          <input type="radio" name="fetch_range" value="specific" onchange="toggleFetchDateInput()"> 특정 날짜만 선택 가져오기
-        </label>
-        <input type="text" id="fetch-specific-dates" class="inline-input" style="display: none; margin-top: 10px; border: 1px solid var(--blue); background: #fff; padding: 8px; font-weight:bold;" placeholder="예: 09.08수요일, 09.09목요일 (쉼표로 구분)">
-      </div>
-
-      <!-- 2. 적용 방식 -->
-      <div style="background: #F8FAFC; border: 1.5px solid #CBD5E1; border-radius: 8px; padding: 14px;">
-        <div style="font-size: 14px; font-weight: 800; margin-bottom: 10px; color: #1E293B;">2. 현재 화면에 적용할 방식</div>
-        <label style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px; cursor: pointer; font-size: 13.5px;">
-          <input type="radio" name="fetch_method" value="overwrite" checked> 기존 화면 내용 지우고 <b style="color:var(--danger);">새로 덮어씌우기</b>
-        </label>
-        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 13.5px;">
-          <input type="radio" name="fetch_method" value="append"> 기존 화면 내용 유지하고 <b style="color:var(--blue);">아래에 이어서 붙이기</b>
-        </label>
-      </div>
-    </div>
-
-    <div style="display: flex; justify-content: space-between; margin-top: 20px;">
-      <button type="button" class="btn btn-history" style="padding: 8px 16px; font-weight: bold;" onclick="backToSyncStep1()">◀ 뒤로</button>
-      <button type="button" class="btn btn-purple" style="padding: 8px 24px; font-size: 14px; font-weight: 800;" onclick="executeFetchStep2()">📥 불러오기 실행</button>
-    </div>
-  </div>
-</div>
-
 <div id="ac-dropdown" class="ac-dropdown"></div>
 <!-- 👇 추가: 가격 전용 드롭다운 컨테이너 -->
 <div id="ac-price-dropdown" class="ac-price-dropdown"></div>
@@ -6450,15 +6408,89 @@ window.executeSyncAction = async function(modeChoice) {
   const menuSession = (document.getElementById('ledger-session')?.value || '').trim();
   const combinedMenuDate = [menuDate, menuSession].filter(Boolean).join(' ');
 
-  // [옵션 4: 최신 장부 불러오기 (2단계 팝업으로 연결)]
+  // [옵션 4: 최신 장부 불러오기]
   if (modeChoice === "4") {
+    if (!confirm(`📥 [옵션 4: 실시간 장부 불러오기]\n\n적용 기준: [${combinedMenuDate || '전체'}]\n\n서버에 올라온 최신 데이터를 화면에 불러오시겠습니까?\n(기존 화면 내용은 되돌리기(Ctrl+Z)로 복원 가능합니다)`)) return;
+
     closeSyncModal();
-    document.getElementById('pc-sync-step2-modal').style.display = 'flex';
+    toast(`📥 실시간동기화 시트에서 최신 데이터를 가져오는 중...`);
+
+    const res = await callGAS('loadLiveSalesRecords', [combinedMenuDate]);
     
-    // 장부 상단에 적어둔 날짜가 있으면 입력창에 미리 세팅해줌
-    const fetchDateInput = document.getElementById('fetch-specific-dates');
-    if (fetchDateInput && combinedMenuDate) {
-      fetchDateInput.value = combinedMenuDate;
+    // 👇👇👇 추가되는 부분: 적립금&무배 데이터 동시 불러오기 👇👇👇
+    try {
+      const rewardRes = await callGAS('loadRewardTable2', []);
+      if (rewardRes && rewardRes.success) {
+        rewardTableData = rewardRes.records || [];
+        if (typeof renderRewardTable === 'function') renderRewardTable(); // 모달창 즉시 갱신
+      }
+    } catch (e) {
+      console.log('적립금 데이터 동기화 실패', e);
+    }
+    // 👆👆👆 여기까지 👆👆👆
+
+    // [수정 후]
+if (res && res.success) {
+  if (!res.records || res.records.length === 0) {
+    toast(`⚠️ 불러올 수 있는 실시간 장부 데이터가 없습니다.`);
+    return;
+  }
+  saveState();
+
+  // 💡 [핵심 해결] ID 중복 방지, 품번 자동 분리, 선물(isGift) 엄격 판별 적용
+      const seenIds = new Set();
+      sales = res.records.map(r => {
+        let rowId = r.id;
+        if (!rowId || seenIds.has(rowId)) {
+          rowId = uid();
+        }
+        seenIds.add(rowId);
+
+        let pName = (r.name || '').trim();
+        let pNum = (r.prodNum || '').trim();
+
+        // 💡 선물 여부 3중 엄격 판별 (플래그, 그룹타입, 머리말 검사)
+        const isGiftItem = !!(r.isGift || r.groupType === 'gift' || (r.name && /^\[선물\]/.test(r.name.trim())));
+
+        const match = pName.match(/^(\[[^\]]+\]\s*)?(\d+(?:-\d+)?)(?:번\s*|\s+)(.*)$/);
+        
+        if (match) {
+          const matchedNum = match[2];
+          if (!pNum || pNum === matchedNum) {
+            pNum = matchedNum;
+            pName = (match[1] || '') + match[3].trim(); 
+          }
+        }
+
+        // 🎁 선물 항목일 때 상품명에 [선물] 대괄호 머리말 강제 조립
+        if (isGiftItem) {
+          if (/^\[선물\]/.test(pName)) {
+            // 이미 [선물]로 시작하면 그대로 유지
+          } else if (pName === '선물' || pName === '') {
+            pName = '[선물] ';
+          } else {
+            pName = `[선물] ${pName}`.trim();
+          }
+        }
+
+        return {
+          ...r,
+          id: rowId,
+          prodNum: pNum,
+          name: pName,
+          isGift: isGiftItem
+        };
+      });
+
+  sales = sortSalesGroupPreserved(sales);
+  if (sales.length === 0) sales.push(createEmptySaleObject());
+
+  saveToLocalStorage();
+  populateAutocompleteLists();
+  renderSales();
+  toast(`✅ 최신 실시간 장부(${sales.length}건)를 화면에 반영했습니다!`);
+} else {
+      toast(`⚠️ 불러오기 실패: ` + (res && res.message ? res.message : '오류'));
     }
     return;
   }
@@ -8887,143 +8919,6 @@ window.selectSaleBarPriceFinal = function(id, field, finalValue, isProd = false)
   }
 
   closeSaleAcBar();
-};
-
-
-// ==========================================
-// 📥 2단계 장부 불러오기 제어 함수 모음
-// ==========================================
-
-window.closeSyncStep2Modal = function() {
-  const modal = document.getElementById('pc-sync-step2-modal');
-  if (modal) modal.style.display = 'none';
-};
-
-// 뒤로가기 버튼
-window.backToSyncStep1 = function() {
-  closeSyncStep2Modal();
-  const modal1 = document.getElementById('pc-sync-modal');
-  if (modal1) modal1.style.display = 'flex';
-};
-
-// 특정 날짜 선택 시 입력창 표시/숨김 토글
-window.toggleFetchDateInput = function() {
-  const radio = document.querySelector('input[name="fetch_range"]:checked');
-  const input = document.getElementById('fetch-specific-dates');
-  if (radio && input) {
-    input.style.display = (radio.value === 'specific') ? 'block' : 'none';
-  }
-};
-
-// 2단계에서 '불러오기 실행' 클릭 시 작동
-window.executeFetchStep2 = async function() {
-  const rangeChoice = document.querySelector('input[name="fetch_range"]:checked').value;
-  const methodChoice = document.querySelector('input[name="fetch_method"]:checked').value;
-  let targetDatesStr = '';
-  
-  if (rangeChoice === 'specific') {
-    targetDatesStr = document.getElementById('fetch-specific-dates').value.trim();
-    if (!targetDatesStr) {
-      toast('⚠️ 가져올 특정 날짜를 입력해주세요. (예: 09.08수요일)');
-      return;
-    }
-  }
-
-  closeSyncStep2Modal();
-  toast(`📥 구글 시트에서 데이터를 분석하여 가져오는 중...`);
-
-  // 구글 시트에서 일단 최신 데이터를 모두 받아옴 (이후 프론트에서 안전하게 필터링)
-  const res = await callGAS('loadLiveSalesRecords', ['']); 
-  
-  try {
-    const rewardRes = await callGAS('loadRewardTable2', []);
-    if (rewardRes && rewardRes.success) {
-      rewardTableData = rewardRes.records || [];
-      if (typeof renderRewardTable === 'function') renderRewardTable();
-    }
-  } catch (e) {
-    console.log('적립금 데이터 동기화 실패', e);
-  }
-
-  if (res && res.success) {
-    if (!res.records || res.records.length === 0) {
-      toast(`⚠️ 불러올 수 있는 실시간 장부 데이터가 없습니다.`);
-      return;
-    }
-    
-    saveState(); // 현재 상태 백업 (Ctrl+Z 되돌리기용)
-
-    // 1. 가져온 데이터 중 [특정 날짜]만 필터링 (선택 시)
-    let fetchedRecords = res.records;
-    if (rangeChoice === 'specific') {
-      const dateKeywords = targetDatesStr.split(',').map(d => d.trim()).filter(Boolean);
-      
-      fetchedRecords = fetchedRecords.filter(r => {
-        const rowDate = (r.rowDate || r.date || '').replace(/\s+/g, '');
-        return dateKeywords.some(keyword => {
-          const kw = keyword.replace(/\s+/g, '');
-          return rowDate.includes(kw); // 쉼표로 적은 날짜 중 하나라도 일치하면 포함
-        });
-      });
-
-      if (fetchedRecords.length === 0) {
-        toast(`⚠️ 시트에 [${targetDatesStr}] 날짜에 해당하는 데이터가 없습니다.`);
-        return;
-      }
-    }
-
-    // 2. 데이터 가공 (선물, 품번 분리 로직 등 기존 로직 동일 적용)
-    const seenIds = new Set();
-    let newSales = fetchedRecords.map(r => {
-      let rowId = r.id;
-      if (!rowId || seenIds.has(rowId)) { rowId = uid(); }
-      seenIds.add(rowId);
-
-      let pName = (r.name || '').trim();
-      let pNum = (r.prodNum || '').trim();
-      const isGiftItem = !!(r.isGift || r.groupType === 'gift' || (r.name && /^\[선물\]/.test(r.name.trim())));
-
-      const match = pName.match(/^(\[[^\]]+\]\s*)?(\d+(?:-\d+)?)(?:번\s*|\s+)(.*)$/);
-      if (match) {
-        const matchedNum = match[2];
-        if (!pNum || pNum === matchedNum) {
-          pNum = matchedNum;
-          pName = (match[1] || '') + match[3].trim(); 
-        }
-      }
-
-      if (isGiftItem) {
-        if (/^\[선물\]/.test(pName)) { } 
-        else if (pName === '선물' || pName === '') { pName = '[선물] '; } 
-        else { pName = `[선물] ${pName}`.trim(); }
-      }
-
-      return { ...r, id: rowId, prodNum: pNum, name: pName, isGift: isGiftItem };
-    });
-
-    // 3. 덮어쓰기 or 이어붙이기 적용
-    if (methodChoice === 'overwrite') {
-      sales = newSales; // 덮어씌우기
-    } else if (methodChoice === 'append') {
-      // 이어붙이기 시, 기존 장부가 비어있는 깡통 상태라면 비워버리고 합침
-      if (sales.length === 1 && !sales[0].rowDate && !sales[0].prodNum && !sales[0].name && !sales[0].nickname) {
-        sales = [];
-      }
-      sales = sales.concat(newSales);
-    }
-
-    sales = sortSalesGroupPreserved(sales);
-    if (sales.length === 0) sales.push(createEmptySaleObject());
-
-    saveToLocalStorage();
-    populateAutocompleteLists();
-    renderSales();
-    
-    let msgType = methodChoice === 'overwrite' ? '덮어쓰기로' : '이어붙이기로';
-    toast(`✅ 설정한 방식(${msgType})으로 데이터(${newSales.length}건)를 화면에 반영했습니다!`);
-  } else {
-    toast(`⚠️ 불러오기 실패: ` + (res && res.message ? res.message : '오류'));
-  }
 };
 </script>
 
