@@ -1078,31 +1078,31 @@
       </div>
 
       <div id="prod-filter-tags" style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; align-items: center;"></div>
+    </div> <!-- /#prod-menu-area (💡 숨김 메뉴 영역을 고정입력란 위에서 닫아 분리) -->
 
-      <!-- 💡 [수정] 고정 상품등록 박스를 Flexbox 가변 레이아웃으로 변경 -->
-      <div class="fixed-add-box" style="display: flex; width: 100%; align-items: center; gap: 4px;">
-        <div style="width: 38px; flex-shrink: 0;"></div>
-        <div style="width: 45px; flex-shrink: 0;"><input type="text" id="new-prod-num" class="inline-input" style="background:#fff; border:1px solid var(--line);" placeholder="품번" onkeydown="handleFixedProdKeydown(event)"></div>
-        <div style="width: 65px; flex-shrink: 0;"><input type="text" id="new-prod-brand" class="inline-input" data-ac="brand" style="background:#fff; border:1px solid var(--line);" placeholder="브랜드" onkeydown="handleFixedProdKeydown(event)" oninput="acFilter(this,'brand')" onclick="this.select(); openChipPicker(this, 'brand', 'new')" onfocus="this.select(); openChipPicker(this, 'brand', 'new')"></div>
-        
-        <!-- 👇 불필요한 빈칸(48px) 제거 후 브랜드 옆으로 붙이고 가로 길이 flex 확장 -->
-        <div style="flex: 2.2; min-width: 120px;"><input type="text" id="new-prod-features" class="inline-input" style="background:#fff; border:1px solid var(--line);" placeholder="특징 (소재 등)" onkeydown="handleFixedProdKeydown(event)"></div>
-        <div style="flex: 1; min-width: 60px;"><input type="text" id="new-prod-color" class="inline-input reduced-font" style="background:#fff; border:1px solid var(--line);" placeholder="색상" onkeydown="handleFixedProdKeydown(event)" oninput="syncStockWithTextInputs('new')" onclick="this.select(); openChipPicker(this, 'color', 'new')" onfocus="this.select(); openChipPicker(this, 'color', 'new')"></div>
-        <div style="flex: 0.8; min-width: 50px;"><input type="text" id="new-prod-size" class="inline-input reduced-font" style="background:#fff; border:1px solid var(--line);" placeholder="사이즈" onkeydown="handleFixedProdKeydown(event)" oninput="syncStockWithTextInputs('new')" onclick="this.select(); openChipPicker(this, 'size', 'new')" onfocus="this.select(); openChipPicker(this, 'size', 'new')"></div>
-        
-        <div style="width: 65px; flex-shrink: 0;"><input type="text" id="new-prod-price" class="inline-input num" style="background:#fff; border:1px solid var(--line); text-align: right;" placeholder="판매가" onkeydown="handleFixedProdKeydown(event)" onfocus="if(typeof closeChipPicker==='function')closeChipPicker(); if(typeof closeSaleAcBar==='function')closeSaleAcBar(true); handlePCPriceFocus(this, 'new', 'price', true)" onclick="if(typeof closeChipPicker==='function')closeChipPicker(); if(typeof closeSaleAcBar==='function')closeSaleAcBar(true); handlePCPriceFocus(this, 'new', 'price', true)"></div>
-        
-        <!-- 👇 가변형(flex) 적용칸: 세부제원 입력 + 📏 표 + 📋 복사 -->
-        <div style="flex: 1.5; min-width: 130px; display: flex; align-items: center; gap: 2px;">
-          <input type="text" id="new-prod-specs" class="inline-input reduced-font" style="background:#fff; border:1px solid var(--line); flex: 1; min-width: 50px;" placeholder="세부 제원 치수" onkeydown="handleFixedProdKeydown(event)">
-          <button type="button" class="btn btn-history" onclick="openSpecsPopup('new')" style="padding: 2px 5px; height: 26px; font-size: 11px; flex-shrink: 0;" title="제원 입력 표 열기">📏</button>
-          <button type="button" class="btn btn-history" onclick="copySpecsOnly('new')" style="padding: 2px 5px; height: 26px; font-size: 11px; flex-shrink: 0;" title="세부제원 복사">📋</button>
-        </div>
-        
-        <div style="width: 55px; flex-shrink: 0;"><button id="btn-fixed-stock" class="btn" onclick="openStockPopup('new')" style="width: 100%; padding: 6px 0; font-weight: bold; background: #fff; border: 1px solid var(--line); color: var(--ink);">테이블</button></div>
-        <div style="width: 90px; flex-shrink: 0;"><button class="btn btn-primary" onclick="addProductFromFixed()" style="width: 100%; padding: 6px 0; font-weight: bold;">상품등록</button></div>
+    <!-- 💡 고정 상품등록 박스: 메뉴를 숨겨도 화면에 항상 유지됨 -->
+    <div class="fixed-add-box" style="display: flex; width: 100%; align-items: center; gap: 4px;">
+      <div style="width: 38px; flex-shrink: 0;"></div>
+      <div style="width: 45px; flex-shrink: 0;"><input type="text" id="new-prod-num" class="inline-input" style="background:#fff; border:1px solid var(--line);" placeholder="품번" onkeydown="handleFixedProdKeydown(event)"></div>
+      <div style="width: 65px; flex-shrink: 0;"><input type="text" id="new-prod-brand" class="inline-input" data-ac="brand" style="background:#fff; border:1px solid var(--line);" placeholder="브랜드" onkeydown="handleFixedProdKeydown(event)" oninput="acFilter(this,'brand')" onclick="this.select(); openChipPicker(this, 'brand', 'new')" onfocus="this.select(); openChipPicker(this, 'brand', 'new')"></div>
+      
+      <!-- 👇 불필요한 빈칸(48px) 제거 후 브랜드 옆으로 붙이고 가로 길이 flex 확장 -->
+      <div style="flex: 2.2; min-width: 120px;"><input type="text" id="new-prod-features" class="inline-input" style="background:#fff; border:1px solid var(--line);" placeholder="특징 (소재 등)" onkeydown="handleFixedProdKeydown(event)"></div>
+      <div style="flex: 1; min-width: 60px;"><input type="text" id="new-prod-color" class="inline-input reduced-font" style="background:#fff; border:1px solid var(--line);" placeholder="색상" onkeydown="handleFixedProdKeydown(event)" oninput="syncStockWithTextInputs('new')" onclick="this.select(); openChipPicker(this, 'color', 'new')" onfocus="this.select(); openChipPicker(this, 'color', 'new')"></div>
+      <div style="flex: 0.8; min-width: 50px;"><input type="text" id="new-prod-size" class="inline-input reduced-font" style="background:#fff; border:1px solid var(--line);" placeholder="사이즈" onkeydown="handleFixedProdKeydown(event)" oninput="syncStockWithTextInputs('new')" onclick="this.select(); openChipPicker(this, 'size', 'new')" onfocus="this.select(); openChipPicker(this, 'size', 'new')"></div>
+      
+      <div style="width: 65px; flex-shrink: 0;"><input type="text" id="new-prod-price" class="inline-input num" style="background:#fff; border:1px solid var(--line); text-align: right;" placeholder="판매가" onkeydown="handleFixedProdKeydown(event)" onfocus="if(typeof closeChipPicker==='function')closeChipPicker(); if(typeof closeSaleAcBar==='function')closeSaleAcBar(true); handlePCPriceFocus(this, 'new', 'price', true)" onclick="if(typeof closeChipPicker==='function')closeChipPicker(); if(typeof closeSaleAcBar==='function')closeSaleAcBar(true); handlePCPriceFocus(this, 'new', 'price', true)"></div>
+      
+      <!-- 👇 가변형(flex) 적용칸: 세부제원 입력 + 📏 표 + 📋 복사 -->
+      <div style="flex: 1.5; min-width: 130px; display: flex; align-items: center; gap: 2px;">
+        <input type="text" id="new-prod-specs" class="inline-input reduced-font" style="background:#fff; border:1px solid var(--line); flex: 1; min-width: 50px;" placeholder="세부 제원 치수" onkeydown="handleFixedProdKeydown(event)">
+        <button type="button" class="btn btn-history" onclick="openSpecsPopup('new')" style="padding: 2px 5px; height: 26px; font-size: 11px; flex-shrink: 0;" title="제원 입력 표 열기">📏</button>
+        <button type="button" class="btn btn-history" onclick="copySpecsOnly('new')" style="padding: 2px 5px; height: 26px; font-size: 11px; flex-shrink: 0;" title="세부제원 복사">📋</button>
       </div>
-    </div> <!-- /#prod-menu-area -->
+      
+      <div style="width: 55px; flex-shrink: 0;"><button id="btn-fixed-stock" class="btn" onclick="openStockPopup('new')" style="width: 100%; padding: 6px 0; font-weight: bold; background: #fff; border: 1px solid var(--line); color: var(--ink);">테이블</button></div>
+      <div style="width: 90px; flex-shrink: 0;"><button class="btn btn-primary" onclick="addProductFromFixed()" style="width: 100%; padding: 6px 0; font-weight: bold;">상품등록</button></div>
+    </div>
 
     <div class="table-responsive table-scroll-prod">
       <table>
@@ -9100,65 +9100,129 @@ function renderChipPickerContent() {
 
   const currentVal = (activeChipContext.input.value || '').trim();
   const currentTokens = currentVal.split(/[\s,]+/).filter(Boolean);
-
   const type = activeChipContext.type;
 
   // -----------------------------------------------------------
-  // 🏷️ [신규] 브랜드 칩스 렌더링 (상단 15개 고정 + 하단 가나다순 스크롤)
+  // 🏷️ 브랜드 칩스 렌더링 (상위 20개 직접 설정/편집 모드 탑재)
   // -----------------------------------------------------------
   if (type === 'brand') {
     popup.style.maxWidth = '420px';
     popup.style.width = '420px';
 
-    // 1. 구글 시트 상단 15개 추출
-    const top15 = [];
-    const top15Set = new Set();
-    (autoBrands || []).forEach(b => {
-      const s = String(b || '').trim();
-      if (s && !top15Set.has(s) && top15.length < 15) {
-        top15Set.add(s);
-        top15.push(s);
-      }
-    });
+    if (typeof window.isBrandEditMode === 'undefined') window.isBrandEditMode = false;
 
-    // 2. 나머지 브랜드 수집 (시트 16번째 이후 + 상품등록 대장 브랜드)
+    // 1. 브라우저에 저장된 커스텀 20개 브랜드 불러오기
+    let savedTopBrands = null;
+    try {
+      const stored = localStorage.getItem('live_custom_top_brands');
+      if (stored) savedTopBrands = JSON.parse(stored);
+    } catch(e) {}
+
+    // 저장된 설정이 없으면 기본값으로 구글 시트 상위 20개 적용
+    if (!savedTopBrands || !Array.isArray(savedTopBrands)) {
+      savedTopBrands = [];
+      const tempSet = new Set();
+      (autoBrands || []).forEach(b => {
+        const s = String(b || '').trim();
+        if (s && !tempSet.has(s) && savedTopBrands.length < 20) {
+          tempSet.add(s);
+          savedTopBrands.push(s);
+        }
+      });
+    }
+
+    const top20Set = new Set(savedTopBrands);
+
+    // 2. 전체 브랜드 수집 (상단 20개 제외 나머지 브랜드들)
     const restSet = new Set();
     (autoBrands || []).forEach(b => {
       const s = String(b || '').trim();
-      if (s && !top15Set.has(s)) restSet.add(s);
+      if (s && !top20Set.has(s)) restSet.add(s);
     });
     (products || []).forEach(p => {
       const s = String(p.brand || '').trim();
-      if (s && !top15Set.has(s)) restSet.add(s);
+      if (s && !top20Set.has(s)) restSet.add(s);
     });
     const restBrands = Array.from(restSet).sort((a, b) => a.localeCompare(b, 'ko-KR', { numeric: true }));
 
+    // 브랜드 추가/제거 및 기본값 복원 전역 함수 등록
+    window.toggleBrandEditMode = function(e) {
+      if (e) { e.preventDefault(); e.stopPropagation(); }
+      window.isBrandEditMode = !window.isBrandEditMode;
+      renderChipPickerContent();
+    };
+
+    window.removeTopBrand = function(brandName, e) {
+      if (e) { e.preventDefault(); e.stopPropagation(); }
+      let cur = [];
+      try { cur = JSON.parse(localStorage.getItem('live_custom_top_brands')) || savedTopBrands; } catch(err) { cur = [...savedTopBrands]; }
+      cur = cur.filter(b => b !== brandName);
+      localStorage.setItem('live_custom_top_brands', JSON.stringify(cur));
+      renderChipPickerContent();
+    };
+
+    window.addTopBrand = function(brandName, e) {
+      if (e) { e.preventDefault(); e.stopPropagation(); }
+      let cur = [];
+      try { cur = JSON.parse(localStorage.getItem('live_custom_top_brands')) || savedTopBrands; } catch(err) { cur = [...savedTopBrands]; }
+      if (cur.length >= 20) {
+        alert('⚠️ 상단 자주 쓰는 브랜드는 최대 20개까지만 등록할 수 있습니다.\n기존 항목을 먼저 ✕로 삭제한 후 추가해주세요.');
+        return;
+      }
+      if (!cur.includes(brandName)) {
+        cur.push(brandName);
+        localStorage.setItem('live_custom_top_brands', JSON.stringify(cur));
+      }
+      renderChipPickerContent();
+    };
+
+    window.resetTopBrandsToDefault = function(e) {
+      if (e) { e.preventDefault(); e.stopPropagation(); }
+      if (!confirm('자주 쓰는 브랜드를 구글 시트 원본 상위 20개 기준으로 복원하시겠습니까?')) return;
+      localStorage.removeItem('live_custom_top_brands');
+      window.isBrandEditMode = false;
+      renderChipPickerContent();
+    };
+
+    const isEditing = window.isBrandEditMode;
+
     let html = `
       <div class="chip-picker-header" title="마우스로 잡고 원하는 위치로 이동할 수 있습니다">
-        <span>⠿ 🏷️ 브랜드 선택</span>
-        <span style="cursor:pointer; color:var(--ink-soft); font-size:14px;" onclick="closeChipPicker()">✕</span>
+        <div style="display:flex; align-items:center; gap:6px;">
+          <span style="font-weight:900;">⠿ 🏷️ 브랜드 선택</span>
+          <button type="button" onmousedown="event.stopPropagation()" onclick="toggleBrandEditMode(event)" style="padding:2px 7px; font-size:11px; font-weight:800; border-radius:4px; cursor:pointer; ${isEditing ? 'background:#6D28D9; color:#FFF; border:1.5px solid #5B21B6;' : 'background:#FFFFFF; color:var(--purple-ink); border:1.5px solid var(--purple-ink);'}">
+            ${isEditing ? '✓ 설정 완료' : '⚙️ 20개 편집'}
+          </button>
+          ${isEditing ? `<button type="button" onmousedown="event.stopPropagation()" onclick="resetTopBrandsToDefault(event)" style="padding:2px 6px; font-size:10.5px; font-weight:800; background:#FFF0F0; border:1px solid #FCA5A5; color:var(--danger); border-radius:4px; cursor:pointer;">🔄 기본값</button>` : ''}
+        </div>
+        <span style="cursor:pointer; color:var(--ink-soft); font-size:14px;" onmousedown="event.stopPropagation()" onclick="window.isBrandEditMode=false; closeChipPicker()">✕</span>
       </div>
+
       <div style="max-height: 320px; overflow-y: auto; padding-right: 2px;">
-        <!-- 상단: 자주 쓰는 브랜드 (15개) -->
-        <div style="font-size: 11px; font-weight: 800; color: var(--accent-ink); background: #FFFDF0; border: 1px solid var(--accent); padding: 3px 6px; border-radius: 4px; margin-bottom: 6px;">
-          ⭐ 자주 쓰는 브랜드 (상단 15개)
+        <!-- 상단: 자주 쓰는 브랜드 (최대 20개) -->
+        <div style="display:flex; justify-content:space-between; align-items:center; font-size: 11px; font-weight: 800; color: var(--accent-ink); background: #FFFDF0; border: 1px solid var(--accent); padding: 3px 6px; border-radius: 4px; margin-bottom: 6px;">
+          <span>⭐ 자주 쓰는 브랜드 (${savedTopBrands.length}/20개)</span>
+          ${isEditing ? '<span style="font-size:10px; color:#D97706;">✕ 클릭 시 상단에서 제거</span>' : ''}
         </div>
         <div class="chip-picker-grid" style="flex-wrap: wrap; margin-bottom: 10px;">
-          ${top15.map(b => `
-            <div class="chip-item ${currentVal === b ? 'active' : ''}" style="border-color: #E2A63B; font-weight: 800;" onmousedown="event.preventDefault()" onclick="selectBrandChip('${escapeHtml(b)}', event)">
+          ${savedTopBrands.map(b => `
+            <div class="chip-item ${currentVal === b ? 'active' : ''}" style="border-color: #E2A63B; font-weight: 800; position:relative;" onmousedown="event.preventDefault()" onclick="${isEditing ? `removeTopBrand('${escapeHtml(b)}', event)` : `selectBrandChip('${escapeHtml(b)}', event)`}">
               <span>${escapeHtml(b)}</span>
+              ${isEditing ? `<span style="color:var(--danger); font-size:11px; margin-left:3px; font-weight:900;">✕</span>` : ''}
             </div>
           `).join('')}
         </div>
 
         <!-- 하단: 전체 브랜드 (가나다순) -->
-        <div style="font-size: 11px; font-weight: 800; color: var(--ink-soft); background: #F1F5F9; border: 1px solid var(--line); padding: 3px 6px; border-radius: 4px; margin-bottom: 6px;">
-          📜 전체 브랜드 (가나다순)
+        <div style="display:flex; justify-content:space-between; align-items:center; font-size: 11px; font-weight: 800; color: var(--ink-soft); background: #F1F5F9; border: 1px solid var(--line); padding: 3px 6px; border-radius: 4px; margin-bottom: 6px;">
+          <span>📜 전체 브랜드 (가나다순)</span>
+          ${isEditing ? '<span style="font-size:10px; color:#2563EB;">+ 클릭 시 상단에 추가</span>' : ''}
         </div>
         <div class="chip-picker-grid" style="flex-wrap: wrap;">
           ${restBrands.map(b => `
-            <div class="chip-item ${currentVal === b ? 'active' : ''}" onmousedown="event.preventDefault()" onclick="selectBrandChip('${escapeHtml(b)}', event)">
+            <div class="chip-item ${currentVal === b ? 'active' : ''}" onmousedown="event.preventDefault()" onclick="${isEditing ? `addTopBrand('${escapeHtml(b)}', event)` : `selectBrandChip('${escapeHtml(b)}', event)`}">
               <span>${escapeHtml(b)}</span>
+              ${isEditing ? `<span style="color:var(--blue); font-size:11px; margin-left:3px; font-weight:900;">+</span>` : ''}
             </div>
           `).join('')}
         </div>
@@ -9169,7 +9233,7 @@ function renderChipPickerContent() {
   }
 
   // -----------------------------------------------------------
-  // 기존 색상 / 사이즈 렌더링 유지
+  // 색상 / 사이즈 렌더링 유지
   // -----------------------------------------------------------
   const isColor = type === 'color';
   const titleText = isColor ? '🎨 색상 다중 선택' : '📏 사이즈 다중 선택';
@@ -9189,12 +9253,26 @@ function renderChipPickerContent() {
       <span>⠿ ${titleText}</span>
       <span style="cursor:pointer; color:var(--ink-soft); font-size:14px;" onclick="closeChipPicker()">✕</span>
     </div>
-    <div class="chip-picker-grid" style="${gridWrapStyle}">
   `;
 
   if (isColor) {
+    const getModStyle = (mod) => (window.activeColorMod === mod) 
+      ? 'background:var(--purple-ink); color:#fff; border-color:var(--purple-ink);' 
+      : 'background:#F8FAFC; color:var(--ink); border-color:#CBD5E1;';
+    
+    html += `
+    <div style="display:flex; gap:6px; margin: 4px 0 8px 0; padding-bottom:8px; border-bottom:1px dashed var(--line);">
+      <button class="btn btn-color-mod" data-mod="진" style="flex:1; padding:4px; font-size:12px; font-weight:800; border:1px solid #CBD5E1; border-radius:4px; cursor:pointer; transition:0.15s; ${getModStyle('진')}" onclick="toggleColorMod('진', event)">진 (Dark)</button>
+      <button class="btn btn-color-mod" data-mod="연" style="flex:1; padding:4px; font-size:12px; font-weight:800; border:1px solid #CBD5E1; border-radius:4px; cursor:pointer; transition:0.15s; ${getModStyle('연')}" onclick="toggleColorMod('연', event)">연 (Light)</button>
+    </div>
+    `;
+  }
+
+  html += `<div class="chip-picker-grid" style="${gridWrapStyle}">`;
+
+  if (isColor) {
     CHIP_COLORS.forEach(c => {
-      const isActive = currentTokens.includes(c.name);
+      const isActive = currentTokens.some(t => t.replace(/^(진|연)/, '') === c.name);
       const isGrad = c.dot.includes('gradient');
       const dotStyle = isGrad ? `background: ${c.dot};` : `background-color: ${c.dot};`;
       const borderStyle = c.border ? 'border: 1px solid #CBD5E1;' : '';
@@ -9509,125 +9587,37 @@ document.addEventListener('mousedown', function (e) {
 });
 
 // 💡 가로 바 렌더링: 색상 / 사이즈
-function renderChipPickerContent() {
-  const popup = document.getElementById('chip-picker-popup');
-  if (!popup || !activeChipContext.input) return;
+window.renderSaleBarChips = function(type, rowId, inputEl) {
+  const bar = document.getElementById('sale-ac-bar');
+  if (!bar || !inputEl) return;
 
-  const currentVal = (activeChipContext.input.value || '').trim();
-  const currentTokens = currentVal.split(/[\s,]+/).filter(Boolean);
+  activeSaleBarContext = { type, field: type, rowId, input: inputEl, isProd: false };
+  activeChipContext = { input: inputEl, type, contextType: 'sale', rowId };
 
-  const type = activeChipContext.type;
+  const prevScrollLeft = bar.scrollLeft;
+  const currentTokens = (inputEl.value || '').trim().split(/[\s,]+/).filter(Boolean);
+  const titleText = (type === 'color') ? '🎨 색상' : '📏 사이즈';
 
-  // -----------------------------------------------------------
-  // 브랜드 칩스 렌더링
-  // -----------------------------------------------------------
-  if (type === 'brand') {
-    popup.style.maxWidth = '420px';
-    popup.style.width = '420px';
+  let html = `<span class="bar-title" title="마우스로 잡고 창 위치 이동">${titleText}</span>`;
 
-    const top15 = [];
-    const top15Set = new Set();
-    (autoBrands || []).forEach(b => {
-      const s = String(b || '').trim();
-      if (s && !top15Set.has(s) && top15.length < 15) {
-        top15Set.add(s);
-        top15.push(s);
-      }
-    });
-
-    const restSet = new Set();
-    (autoBrands || []).forEach(b => {
-      const s = String(b || '').trim();
-      if (s && !top15Set.has(s)) restSet.add(s);
-    });
-    (products || []).forEach(p => {
-      const s = String(p.brand || '').trim();
-      if (s && !top15Set.has(s)) restSet.add(s);
-    });
-    const restBrands = Array.from(restSet).sort((a, b) => a.localeCompare(b, 'ko-KR', { numeric: true }));
-
-    let html = `
-      <div class="chip-picker-header" title="마우스로 잡고 원하는 위치로 이동할 수 있습니다">
-        <span>⠿ 🏷️ 브랜드 선택</span>
-        <span style="cursor:pointer; color:var(--ink-soft); font-size:14px;" onclick="closeChipPicker()">✕</span>
-      </div>
-      <div style="max-height: 320px; overflow-y: auto; padding-right: 2px;">
-        <div style="font-size: 11px; font-weight: 800; color: var(--accent-ink); background: #FFFDF0; border: 1px solid var(--accent); padding: 3px 6px; border-radius: 4px; margin-bottom: 6px;">
-          ⭐ 자주 쓰는 브랜드 (상단 15개)
-        </div>
-        <div class="chip-picker-grid" style="flex-wrap: wrap; margin-bottom: 10px;">
-          ${top15.map(b => `
-            <div class="chip-item ${currentVal === b ? 'active' : ''}" style="border-color: #E2A63B; font-weight: 800;" onmousedown="event.preventDefault()" onclick="selectBrandChip('${escapeHtml(b)}', event)">
-              <span>${escapeHtml(b)}</span>
-            </div>
-          `).join('')}
-        </div>
-
-        <div style="font-size: 11px; font-weight: 800; color: var(--ink-soft); background: #F1F5F9; border: 1px solid var(--line); padding: 3px 6px; border-radius: 4px; margin-bottom: 6px;">
-          📜 전체 브랜드 (가나다순)
-        </div>
-        <div class="chip-picker-grid" style="flex-wrap: wrap;">
-          ${restBrands.map(b => `
-            <div class="chip-item ${currentVal === b ? 'active' : ''}" onmousedown="event.preventDefault()" onclick="selectBrandChip('${escapeHtml(b)}', event)">
-              <span>${escapeHtml(b)}</span>
-            </div>
-          `).join('')}
-        </div>
-      </div>
-    `;
-    popup.innerHTML = html;
-    return;
-  }
-
-  // -----------------------------------------------------------
-  // 색상 / 사이즈 렌더링
-  // -----------------------------------------------------------
-  const isColor = type === 'color';
-  const titleText = isColor ? '🎨 색상 다중 선택' : '📏 사이즈 다중 선택';
-
-  if (isColor) {
-    popup.style.maxWidth = '380px';
-    popup.style.width = 'auto';
-  } else {
-    popup.style.maxWidth = 'none';
-    popup.style.width = 'max-content';
-  }
-
-  const gridWrapStyle = isColor ? 'flex-wrap: wrap;' : 'flex-wrap: nowrap;';
-
-  let html = `
-    <div class="chip-picker-header" title="마우스로 잡고 원하는 위치로 이동할 수 있습니다">
-      <span>⠿ ${titleText}</span>
-      <span style="cursor:pointer; color:var(--ink-soft); font-size:14px;" onclick="closeChipPicker()">✕</span>
-    </div>
-  `;
-
-  if (isColor) {
-    // 💡 [수정됨] 상품등록 팝업창 상단에 진/연 토글 버튼 추가
+  if (type === 'color') {
     const getModStyle = (mod) => (window.activeColorMod === mod) 
       ? 'background:var(--purple-ink); color:#fff; border-color:var(--purple-ink);' 
       : 'background:#F8FAFC; color:var(--ink); border-color:#CBD5E1;';
-    
+
     html += `
-    <div style="display:flex; gap:6px; margin: 4px 0 8px 0; padding-bottom:8px; border-bottom:1px dashed var(--line);">
-      <button class="btn btn-color-mod" data-mod="진" style="flex:1; padding:4px; font-size:12px; font-weight:800; border:1px solid #CBD5E1; border-radius:4px; cursor:pointer; transition:0.15s; ${getModStyle('진')}" onclick="toggleColorMod('진', event)">진 (Dark)</button>
-      <button class="btn btn-color-mod" data-mod="연" style="flex:1; padding:4px; font-size:12px; font-weight:800; border:1px solid #CBD5E1; border-radius:4px; cursor:pointer; transition:0.15s; ${getModStyle('연')}" onclick="toggleColorMod('연', event)">연 (Light)</button>
-    </div>
+      <div class="bar-item btn-color-mod" data-mod="진" style="border:1px solid #CBD5E1; font-weight:800; cursor:pointer; transition:0.15s; ${getModStyle('진')}" onmousedown="event.preventDefault()" onclick="toggleColorMod('진', event);">진</div>
+      <div class="bar-item btn-color-mod" data-mod="연" style="border:1px solid #CBD5E1; font-weight:800; margin-right:4px; cursor:pointer; transition:0.15s; ${getModStyle('연')}" onmousedown="event.preventDefault()" onclick="toggleColorMod('연', event);">연</div>
+      <div style="width:1px; height:16px; background:var(--line); margin:0 4px;"></div>
     `;
-  }
 
-  html += `<div class="chip-picker-grid" style="${gridWrapStyle}">`;
-
-  if (isColor) {
     CHIP_COLORS.forEach(c => {
-      // 진/연이 붙어있어도 칩스에 불이 들어오게 인식
       const isActive = currentTokens.some(t => t.replace(/^(진|연)/, '') === c.name);
       const isGrad = c.dot.includes('gradient');
       const dotStyle = isGrad ? `background: ${c.dot};` : `background-color: ${c.dot};`;
       const borderStyle = c.border ? 'border: 1px solid #CBD5E1;' : '';
-
       html += `
-        <div class="chip-item ${isActive ? 'active' : ''}" onmousedown="event.preventDefault()" onclick="toggleChipItem('${c.name}', event)">
+        <div class="bar-item ${isActive ? 'active' : ''}" onmousedown="event.preventDefault()" onclick="toggleChipItem('${c.name}', event);">
           <span class="chip-color-dot" style="${dotStyle} ${borderStyle}"></span>
           <span>${c.name}</span>
         </div>
@@ -9637,16 +9627,18 @@ function renderChipPickerContent() {
     CHIP_SIZES.forEach(sz => {
       const isActive = currentTokens.includes(sz);
       html += `
-        <div class="chip-item ${isActive ? 'active' : ''}" onmousedown="event.preventDefault()" onclick="toggleChipItem('${sz}', event)">
+        <div class="bar-item ${isActive ? 'active' : ''}" onmousedown="event.preventDefault()" onclick="toggleChipItem('${sz}', event);">
           <span>${sz}</span>
         </div>
       `;
     });
   }
 
-  html += `</div>`;
-  popup.innerHTML = html;
-}
+  html += `<span class="bar-close" onclick="closeSaleAcBar()">✕ 닫기</span>`;
+  bar.innerHTML = html;
+  bar.scrollLeft = prevScrollLeft;
+  showFloatingSaleBar(bar);
+};
 
 // 💡 가로 바 렌더링: 가격 1단계 (상품등록 소수점 모드 & 장부 원단위 모드 완벽 분기)
 window.renderSaleBarPriceStep1 = function(field, id, inputEl, isProd = false) {
