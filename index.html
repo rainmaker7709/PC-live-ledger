@@ -3001,10 +3001,13 @@ window.calculateDetailCheckedTotal = function() {
   });
   
   const totalSpan = document.getElementById('detail-checked-total');
-  if (totalSpan) {
-    totalSpan.textContent = `선택 합계: ${fmt(checkedSum)}원 / 총 ${fmt(totalSum)}원`;
-    totalSpan.style.display = 'inline-block';
-  }
+      if (totalSpan) {
+        // 💡 배경 대비를 높이고, 선택 합계는 짙은 먹색(#0F172A), 총 합계는 붉은색으로 또렷하게 구분
+        totalSpan.style.background = '#F1F5F9';
+        totalSpan.style.border = '1px solid #CBD5E1';
+        totalSpan.innerHTML = `<span style="color: #0F172A; font-weight: 800;">선택 합계: ${fmt(checkedSum)}원</span> / <span style="color: var(--danger); font-weight: 800;">총 ${fmt(totalSum)}원</span>`;
+        totalSpan.style.display = 'inline-block';
+      }
 };
 
 /**
