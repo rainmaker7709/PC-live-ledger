@@ -368,6 +368,11 @@
   .panel-resize-handle span{ width:26px; height:3px; border-radius:2px; background:var(--ink-soft); opacity:.55; }
   .panel-resize-handle:hover span, .panel-resize-handle.active span{ background:var(--purple-ink); opacity:.9; }
 
+  /* 💡 [신규] 실시간 판매내역 메뉴 숨김 시 표 영역 자동 확장 */
+  #sale-card.menu-collapsed .table-scroll-sale {
+    height: calc(100vh - 320px) !important;
+  }
+
   /* 💡 [신규] 입금정산 좌우 패널 리사이즈 핸들 스타일 */
   .panel-v-resize-handle {
     width: 12px;
@@ -473,6 +478,32 @@
     background-color: #FEE8E8 !important; 
     border-top: 2px solid #E05666 !important; 
     border-bottom: 2px solid #E05666 !important; 
+  }
+
+  /* 💡 [수정] 상품 적용 시 추가된 행 시선 집중 반짝임(형광펜 펄스) 효과 */
+  @keyframes row-pulse-highlight {
+    0% {
+      background-color: #FEF08A;
+      box-shadow: inset 0 0 0 999px #FEF08A;
+    }
+    30% {
+      background-color: #FDE047;
+      box-shadow: inset 0 0 0 999px #FDE047;
+    }
+    60% {
+      background-color: #FEF08A;
+      box-shadow: inset 0 0 0 999px #FEF08A;
+    }
+    100% {
+      background-color: transparent;
+      box-shadow: inset 0 0 0 999px transparent;
+    }
+  }
+
+  tr.row-pulse-flash td {
+    animation: row-pulse-highlight 1.8s ease-in-out !important;
+    border-top: 2px solid #EAB308 !important;
+    border-bottom: 2px solid #EAB308 !important;
   }
 
   .matrix-table th, .matrix-table td { border: 1px solid var(--line); padding: 8px 6px; text-align: center; }
@@ -995,6 +1026,9 @@
         </span>
       </span>
       <span class="count" id="count-prod">0개 등록됨</span>
+
+      <!-- 💡 [신규] 상품등록 상단 메뉴 숨기기/보이기 토글 버튼 -->
+      <button type="button" id="btn-toggle-prod-menu" class="btn" onclick="toggleProdMenu()" style="margin-left: 6px; padding: 2px 8px; font-size: 11px; font-weight: 800; background: #FFFDF0; border: 1px solid var(--accent); color: var(--accent-ink); cursor: pointer;" title="상품등록 상단 메뉴 숨기기/보이기">메뉴 숨기기 🔼</button>
       
       <!-- 신규: 독립 메모장 버튼 -->
       <button id="btn-global-memo" onclick="openGlobalMemoPopup()" style="margin-left: 10px; padding: 4px 10px; font-size: 12px; font-weight: bold; border: 1px solid var(--line); border-radius: 4px; cursor: pointer; transition: 0.2s; background: #F4F6F8; color: var(--ink-soft);">📝 메모장</button>
@@ -1002,68 +1036,73 @@
       <!-- 신규: 적립금&무배 모달 버튼 -->
       <button onclick="openRewardModal()" style="margin-left: 4px; padding: 4px 10px; font-size: 12px; font-weight: bold; border: 1px solid #B2DFFF; border-radius: 4px; cursor: pointer; transition: 0.2s; background: #E6F0FA; color: var(--blue);">🎁 적립금&무배</button>
 
+      <!-- 💡 [신규] 상품등록 전용 종이장부 모달 버튼 -->
+      <button type="button" onclick="openPaperProdModal()" class="btn btn-purple" style="margin-left: 4px; padding: 4px 10px; font-size: 12px; font-weight: 800;" title="상품 등록 목록을 종이장부 형태로 전체화면 보기">📄 종이장부</button>
+
       <button class="action-text text-del" onclick="clearAllProducts()" style="margin-left: auto; font-size: 12px;">⚠️ 상품대장 전체삭제</button>
     </h2>
     
-    <div class="search-container" style="display: flex; justify-content: space-between; align-items: center; width: 100%; flex-wrap: wrap;">
-      <div style="display: flex; align-items: center; gap: 8px;">
-        <div style="display: flex; align-items: center; gap: 4px;">
-          <input type="text" id="search-prod" class="search-input" style="width: 170px;" placeholder="🔍 상품 검색..." oninput="renderProducts()">
-          <button class="btn btn-history" onclick="clearProdFilter()" style="padding: 6px 10px; height: 28px; font-weight: bold;" title="상품 검색 필터 취소">✕</button>
-        </div>
-        <button class="btn btn-history" onclick="clearAllProdFilters()" style="padding: 6px 12px; height: 28px; background: #FFF0F0; border-color: #F5B0AD; color: var(--danger); font-weight: 800;">전체 필터 초기화 🔄</button>
-        <button class="btn btn-purple" onclick="sortProductsByContext()">품목정렬</button>
-        
-        <!-- 💡 [수정] 복사 기호 커스텀 박스 (기호 선택 팝업 & 빠른 단독 복사 추가) -->
-        <div style="display: inline-flex; align-items: center; gap: 3px; background: #fff; padding: 2px 6px; border: 1px solid var(--line); border-radius: 6px; margin-left: 4px;">
-          <span style="font-size: 11px; font-weight: 800; color: var(--ink-soft);">기호:</span>
-          <!-- 1~3번째: 일반 양식용 -->
-          <input type="text" id="symbol-num" value="✨" style="width: 26px; height: 22px; text-align: center; border: 1px solid var(--line); border-radius: 4px; font-size: 12px; padding: 0; cursor: pointer;" placeholder="품번" oninput="saveCopySymbols()" onclick="this.select(); openSymbolPicker(this)">
-          <input type="text" id="symbol-price" value="💲" style="width: 26px; height: 22px; text-align: center; border: 1px solid var(--line); border-radius: 4px; font-size: 12px; padding: 0; cursor: pointer;" placeholder="가격" oninput="saveCopySymbols()" onclick="this.select(); openSymbolPicker(this)">
-          <input type="text" id="symbol-specs" value="📌" style="width: 26px; height: 22px; text-align: center; border: 1px solid var(--line); border-radius: 4px; font-size: 12px; padding: 0; cursor: pointer;" placeholder="제원" oninput="saveCopySymbols()" onclick="this.select(); openSymbolPicker(this)">
+    <!-- 💡 [신규] 접었다 폈다 할 상품등록 상단 메뉴 전체 컨테이너 -->
+    <div id="prod-menu-area">
+      <div class="search-container" style="display: flex; justify-content: space-between; align-items: center; width: 100%; flex-wrap: wrap;">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <div style="display: flex; align-items: center; gap: 4px;">
+            <input type="text" id="search-prod" class="search-input" style="width: 170px;" placeholder="🔍 상품 검색..." oninput="renderProducts()">
+            <button class="btn btn-history" onclick="clearProdFilter()" style="padding: 6px 10px; height: 28px; font-weight: bold;" title="상품 검색 필터 취소">✕</button>
+          </div>
+          <button class="btn btn-history" onclick="clearAllProdFilters()" style="padding: 6px 12px; height: 28px; background: #FFF0F0; border-color: #F5B0AD; color: var(--danger); font-weight: 800;">전체 필터 초기화 🔄</button>
+          <button class="btn btn-purple" onclick="sortProductsByContext()">품목정렬</button>
           
-          <div style="width: 1px; height: 16px; background: var(--line); margin: 0 2px;"></div> <!-- 구분선 -->
-          
-          <!-- 4번째: 빠른 단독 복사용 (눈에 띄게 강조) -->
-          <div style="display: flex; align-items: center; gap: 2px; background: #F0F7FF; padding: 1px; border-radius: 4px; border: 2px solid var(--blue);">
-            <input type="text" id="symbol-stock" value="📢" style="width: 24px; height: 20px; text-align: center; border: none; background: transparent; color: var(--blue); font-weight: 900; font-size: 13px; padding: 0; cursor: pointer;" title="클릭하여 기호 변경" oninput="saveCopySymbols()" onclick="this.select(); openSymbolPicker(this)">
-            <button class="btn" style="padding: 0; width: 22px; height: 20px; background: var(--blue); color: #fff; font-size: 12px; border: none; border-radius: 3px; cursor: pointer; display: flex; align-items: center; justify-content: center;" onclick="copyQuickSymbol()" title="이 기호만 바로 복사">📋</button>
+          <!-- 💡 [수정] 복사 기호 커스텀 박스 (기호 선택 팝업 & 빠른 단독 복사 추가) -->
+          <div style="display: inline-flex; align-items: center; gap: 3px; background: #fff; padding: 2px 6px; border: 1px solid var(--line); border-radius: 6px; margin-left: 4px;">
+            <span style="font-size: 11px; font-weight: 800; color: var(--ink-soft);">기호:</span>
+            <!-- 1~3번째: 일반 양식용 -->
+            <input type="text" id="symbol-num" value="✨" style="width: 26px; height: 22px; text-align: center; border: 1px solid var(--line); border-radius: 4px; font-size: 12px; padding: 0; cursor: pointer;" placeholder="품번" oninput="saveCopySymbols()" onclick="this.select(); openSymbolPicker(this)">
+            <input type="text" id="symbol-price" value="💲" style="width: 26px; height: 22px; text-align: center; border: 1px solid var(--line); border-radius: 4px; font-size: 12px; padding: 0; cursor: pointer;" placeholder="가격" oninput="saveCopySymbols()" onclick="this.select(); openSymbolPicker(this)">
+            <input type="text" id="symbol-specs" value="📌" style="width: 26px; height: 22px; text-align: center; border: 1px solid var(--line); border-radius: 4px; font-size: 12px; padding: 0; cursor: pointer;" placeholder="제원" oninput="saveCopySymbols()" onclick="this.select(); openSymbolPicker(this)">
+            
+            <div style="width: 1px; height: 16px; background: var(--line); margin: 0 2px;"></div> <!-- 구분선 -->
+            
+            <!-- 4번째: 빠른 단독 복사용 (눈에 띄게 강조) -->
+            <div style="display: flex; align-items: center; gap: 2px; background: #F0F7FF; padding: 1px; border-radius: 4px; border: 2px solid var(--blue);">
+              <input type="text" id="symbol-stock" value="📢" style="width: 24px; height: 20px; text-align: center; border: none; background: transparent; color: var(--blue); font-weight: 900; font-size: 13px; padding: 0; cursor: pointer;" title="클릭하여 기호 변경" oninput="saveCopySymbols()" onclick="this.select(); openSymbolPicker(this)">
+              <button class="btn" style="padding: 0; width: 22px; height: 20px; background: var(--blue); color: #fff; font-size: 12px; border: none; border-radius: 3px; cursor: pointer; display: flex; align-items: center; justify-content: center;" onclick="copyQuickSymbol()" title="이 기호만 바로 복사">📋</button>
+            </div>
           </div>
         </div>
+        
+        <div style="margin-left: auto; display: flex; gap: 4px;">
+          <button class="btn btn-pink btn-undo" onclick="execUndo()" disabled title="되돌리기">되돌리기</button>
+          <button class="btn btn-pink btn-redo" onclick="execRedo()" disabled title="다시실행">다시실행</button>
+        </div>
       </div>
-      
-      <div style="margin-left: auto; display: flex; gap: 4px;">
-        <button class="btn btn-pink btn-undo" onclick="execUndo()" disabled title="되돌리기">되돌리기</button>
-        <button class="btn btn-pink btn-redo" onclick="execRedo()" disabled title="다시실행">다시실행</button>
-      </div>
-    </div>
 
-    <div id="prod-filter-tags" style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; align-items: center;"></div>
+      <div id="prod-filter-tags" style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; align-items: center;"></div>
 
-    <!-- 💡 [수정] 고정 상품등록 박스를 Flexbox 가변 레이아웃으로 변경 -->
-    <div class="fixed-add-box" style="display: flex; width: 100%; align-items: center; gap: 4px;">
-      <div style="width: 38px; flex-shrink: 0;"></div>
-      <div style="width: 45px; flex-shrink: 0;"><input type="text" id="new-prod-num" class="inline-input" style="background:#fff; border:1px solid var(--line);" placeholder="품번" onkeydown="handleFixedProdKeydown(event)"></div>
-      <div style="width: 65px; flex-shrink: 0;"><input type="text" id="new-prod-brand" class="inline-input" data-ac="brand" style="background:#fff; border:1px solid var(--line);" placeholder="브랜드" onkeydown="handleFixedProdKeydown(event)" oninput="acFilter(this,'brand')"></div>
-      <div style="width: 48px; flex-shrink: 0;"></div>
-      
-      <!-- 👇 아래부터 가변형(flex) 적용칸: 창 크기에 맞춰 유연하게 줄어듭니다 -->
-      <div style="flex: 1.5; min-width: 80px;"><input type="text" id="new-prod-features" class="inline-input" style="background:#fff; border:1px solid var(--line);" placeholder="특징 (소재 등)" onkeydown="handleFixedProdKeydown(event)"></div>
-      <div style="flex: 1; min-width: 60px;"><input type="text" id="new-prod-color" class="inline-input reduced-font" style="background:#fff; border:1px solid var(--line);" placeholder="색상" onkeydown="handleFixedProdKeydown(event)" oninput="syncStockWithTextInputs('new')" onclick="this.select(); openChipPicker(this, 'color', 'new')" onfocus="this.select(); openChipPicker(this, 'color', 'new')"></div>
-      <div style="flex: 0.8; min-width: 50px;"><input type="text" id="new-prod-size" class="inline-input reduced-font" style="background:#fff; border:1px solid var(--line);" placeholder="사이즈" onkeydown="handleFixedProdKeydown(event)" oninput="syncStockWithTextInputs('new')" onclick="this.select(); openChipPicker(this, 'size', 'new')" onfocus="this.select(); openChipPicker(this, 'size', 'new')"></div>
-      
-      <div style="width: 65px; flex-shrink: 0;"><input type="text" id="new-prod-price" class="inline-input num" style="background:#fff; border:1px solid var(--line); text-align: right;" placeholder="판매가" onkeydown="handleFixedProdKeydown(event)" onfocus="handlePCPriceFocus(this, 'new', 'price', true)" onclick="handlePCPriceFocus(this, 'new', 'price', true)"></div>
-      
-      <!-- 👇 가변형(flex) 적용칸: 세부제원 입력 + 📏 표 + 📋 복사 -->
-      <div style="flex: 1.5; min-width: 130px; display: flex; align-items: center; gap: 2px;">
-        <input type="text" id="new-prod-specs" class="inline-input reduced-font" style="background:#fff; border:1px solid var(--line); flex: 1; min-width: 50px;" placeholder="세부 제원 치수" onkeydown="handleFixedProdKeydown(event)">
-        <button type="button" class="btn btn-history" onclick="openSpecsPopup('new')" style="padding: 2px 5px; height: 26px; font-size: 11px; flex-shrink: 0;" title="제원 입력 표 열기">📏</button>
-        <button type="button" class="btn btn-history" onclick="copySpecsOnly('new')" style="padding: 2px 5px; height: 26px; font-size: 11px; flex-shrink: 0;" title="세부제원 복사">📋</button>
+      <!-- 💡 [수정] 고정 상품등록 박스를 Flexbox 가변 레이아웃으로 변경 -->
+      <div class="fixed-add-box" style="display: flex; width: 100%; align-items: center; gap: 4px;">
+        <div style="width: 38px; flex-shrink: 0;"></div>
+        <div style="width: 45px; flex-shrink: 0;"><input type="text" id="new-prod-num" class="inline-input" style="background:#fff; border:1px solid var(--line);" placeholder="품번" onkeydown="handleFixedProdKeydown(event)"></div>
+        <div style="width: 65px; flex-shrink: 0;"><input type="text" id="new-prod-brand" class="inline-input" data-ac="brand" style="background:#fff; border:1px solid var(--line);" placeholder="브랜드" onkeydown="handleFixedProdKeydown(event)" oninput="acFilter(this,'brand')" onclick="this.select(); openChipPicker(this, 'brand', 'new')" onfocus="this.select(); openChipPicker(this, 'brand', 'new')"></div>
+        
+        <!-- 👇 불필요한 빈칸(48px) 제거 후 브랜드 옆으로 붙이고 가로 길이 flex 확장 -->
+        <div style="flex: 2.2; min-width: 120px;"><input type="text" id="new-prod-features" class="inline-input" style="background:#fff; border:1px solid var(--line);" placeholder="특징 (소재 등)" onkeydown="handleFixedProdKeydown(event)"></div>
+        <div style="flex: 1; min-width: 60px;"><input type="text" id="new-prod-color" class="inline-input reduced-font" style="background:#fff; border:1px solid var(--line);" placeholder="색상" onkeydown="handleFixedProdKeydown(event)" oninput="syncStockWithTextInputs('new')" onclick="this.select(); openChipPicker(this, 'color', 'new')" onfocus="this.select(); openChipPicker(this, 'color', 'new')"></div>
+        <div style="flex: 0.8; min-width: 50px;"><input type="text" id="new-prod-size" class="inline-input reduced-font" style="background:#fff; border:1px solid var(--line);" placeholder="사이즈" onkeydown="handleFixedProdKeydown(event)" oninput="syncStockWithTextInputs('new')" onclick="this.select(); openChipPicker(this, 'size', 'new')" onfocus="this.select(); openChipPicker(this, 'size', 'new')"></div>
+        
+        <div style="width: 65px; flex-shrink: 0;"><input type="text" id="new-prod-price" class="inline-input num" style="background:#fff; border:1px solid var(--line); text-align: right;" placeholder="판매가" onkeydown="handleFixedProdKeydown(event)" onfocus="if(typeof closeChipPicker==='function')closeChipPicker(); if(typeof closeSaleAcBar==='function')closeSaleAcBar(true); handlePCPriceFocus(this, 'new', 'price', true)" onclick="if(typeof closeChipPicker==='function')closeChipPicker(); if(typeof closeSaleAcBar==='function')closeSaleAcBar(true); handlePCPriceFocus(this, 'new', 'price', true)"></div>
+        
+        <!-- 👇 가변형(flex) 적용칸: 세부제원 입력 + 📏 표 + 📋 복사 -->
+        <div style="flex: 1.5; min-width: 130px; display: flex; align-items: center; gap: 2px;">
+          <input type="text" id="new-prod-specs" class="inline-input reduced-font" style="background:#fff; border:1px solid var(--line); flex: 1; min-width: 50px;" placeholder="세부 제원 치수" onkeydown="handleFixedProdKeydown(event)">
+          <button type="button" class="btn btn-history" onclick="openSpecsPopup('new')" style="padding: 2px 5px; height: 26px; font-size: 11px; flex-shrink: 0;" title="제원 입력 표 열기">📏</button>
+          <button type="button" class="btn btn-history" onclick="copySpecsOnly('new')" style="padding: 2px 5px; height: 26px; font-size: 11px; flex-shrink: 0;" title="세부제원 복사">📋</button>
+        </div>
+        
+        <div style="width: 55px; flex-shrink: 0;"><button id="btn-fixed-stock" class="btn" onclick="openStockPopup('new')" style="width: 100%; padding: 6px 0; font-weight: bold; background: #fff; border: 1px solid var(--line); color: var(--ink);">테이블</button></div>
+        <div style="width: 90px; flex-shrink: 0;"><button class="btn btn-primary" onclick="addProductFromFixed()" style="width: 100%; padding: 6px 0; font-weight: bold;">상품등록</button></div>
       </div>
-      
-      <div style="width: 55px; flex-shrink: 0;"><button id="btn-fixed-stock" class="btn" onclick="openStockPopup('new')" style="width: 100%; padding: 6px 0; font-weight: bold; background: #fff; border: 1px solid var(--line); color: var(--ink);">테이블</button></div>
-      <div style="width: 90px; flex-shrink: 0;"><button class="btn btn-primary" onclick="addProductFromFixed()" style="width: 100%; padding: 6px 0; font-weight: bold;">상품등록</button></div>
-    </div>
+    </div> <!-- /#prod-menu-area -->
 
     <div class="table-responsive table-scroll-prod">
       <table>
@@ -1110,6 +1149,8 @@
         <button class="btn-purple" style="padding: 4px 7px; border-radius: 4px; font-size: 11.5px; font-weight: 800; background:#896BB5; color:#fff; height: auto;" onclick="addSetGroupRow('세트')">📦 세트</button>
 <button class="btn" style="padding: 4px 7px; border-radius: 4px; font-size: 11.5px; font-weight: 800; background:#E05666; color:#fff; border: 1px solid #C93B4C; height: auto;" onclick="addGiftRow()">🎁 선물</button>
         <span class="count" id="count-sale" style="font-size: 11.5px; margin-left: 2px;">0건</span>
+        <!-- 💡 [신규] 실시간 판매내역 상단 메뉴 숨기기/보이기 토글 버튼 -->
+        <button type="button" id="btn-toggle-sale-menu" class="btn" onclick="toggleSaleMenu()" style="margin-left: 4px; padding: 2px 8px; font-size: 11px; font-weight: 800; background: var(--purple-bg); border: 1px solid #DCD0EE; color: var(--purple-ink); cursor: pointer;" title="판매내역 상단 메뉴 숨기기/보이기">메뉴 숨기기 🔼</button>
       </div>
       
       <!-- 🎨 콤팩트 강조 파레트 (1줄 슬림화) -->
@@ -1128,54 +1169,58 @@
       </div>
     </h2>
 
-    <!-- 💡 저장/업로드 버튼 + 날짜/회차 입력칸이 모인 툴바 영역 -->
-    <div class="search-container" style="display: flex; justify-content: space-between; align-items: center; width: 100%; flex-wrap: nowrap; gap: 6px; overflow-x: auto; overflow-y: hidden;">
-      
-      <!-- 왼쪽 그룹 -->
-      <div style="display: flex; align-items: center; gap: 6px; flex-wrap: nowrap; flex-shrink: 1; min-width: 0;">
-        <button class="btn btn-history" onclick="loadAutocompleteData(false)" style="padding: 6px 10px; height: 28px; font-weight: bold; flex-shrink: 1; white-space: nowrap;" title="구글시트의 최신 회원명/브랜드 목록을 다시 불러옵니다">🔄 참고데이터 새로고침</button>
-        <button class="btn btn-purple" onclick="openPaperLedgerModal()" style="height: 28px; padding: 0 10px; font-size: 12px; font-weight: 800; flex-shrink: 1; white-space: nowrap;" title="깔끔한 종이 장부 형태로 전체화면 보기">📄 종이장부</button>
+    <!-- 💡 [신규] 접었다 폈다 할 실시간 판매내역 상단 메뉴 전체 컨테이너 -->
+    <div id="sale-menu-area">
+      <!-- 💡 저장/업로드 버튼 + 날짜/회차 입력칸이 모인 툴바 영역 -->
+      <div class="search-container" style="display: flex; justify-content: space-between; align-items: center; width: 100%; flex-wrap: nowrap; gap: 6px; overflow-x: auto; overflow-y: hidden;">
         
-        <!-- 💡 날짜/회차 입력칸이 압축되도록 min-width 설정 -->
-        <div style="display: flex; align-items: center; gap: 4px; margin-left: 8px; flex-shrink: 1; min-width: 0;">
-          <input type="text" id="ledger-date" class="search-input" style="width: 140px; min-width: 70px; flex-shrink: 1; height: 28px; font-size: 12px; text-align: center; padding: 2px; background: #FFFDF9; border-color: #E2D9C8; font-weight: bold;" placeholder="MM.DD.요일" oninput="saveToLocalStorage()">
-          <input type="text" id="ledger-session" class="search-input" style="width: 70px; min-width: 40px; flex-shrink: 1; height: 28px; font-size: 12px; text-align: center; padding: 2px; background: #FFFDF9; border-color: #E2D9C8; font-weight: bold;" placeholder="회차(예: 1부)" oninput="saveToLocalStorage()">
+        <!-- 왼쪽 그룹 -->
+        <div style="display: flex; align-items: center; gap: 6px; flex-wrap: nowrap; flex-shrink: 1; min-width: 0;">
+          <button class="btn btn-history" onclick="loadAutocompleteData(false)" style="padding: 6px 10px; height: 28px; font-weight: bold; flex-shrink: 1; white-space: nowrap;" title="구글시트의 최신 회원명/브랜드 목록을 다시 불러옵니다">🔄 참고데이터 새로고침</button>
+          <button class="btn btn-purple" onclick="openPaperLedgerModal()" style="height: 28px; padding: 0 10px; font-size: 12px; font-weight: 800; flex-shrink: 1; white-space: nowrap;" title="깔끔한 종이 장부 형태로 전체화면 보기">📄 종이장부</button>
           
-          <div id="sale-global-filter-alert" style="display: none; margin-left: 2px; flex-shrink: 1;">
-            <button class="btn btn-filter-blink" style="padding: 0 10px; height: 28px; font-size: 11.5px; border-radius: 4px; border: 2px solid #F5B0AD; cursor: pointer; display: flex; align-items: center; gap: 4px; box-shadow: 0 2px 6px rgba(220,53,69,0.15); flex-shrink: 1; white-space: nowrap;" onclick="clearAllSaleFilters()">
-              🚨 필터 적용 중 (전체보기 🔄)
-            </button>
+          <!-- 💡 날짜/회차 입력칸 축소 및 오늘 날짜 새로고침(🔄) 버튼 추가 -->
+          <div style="display: flex; align-items: center; gap: 4px; margin-left: 8px; flex-shrink: 1; min-width: 0;">
+            <button type="button" class="btn btn-history" onclick="resetLedgerDateToToday()" style="padding: 0; width: 28px; height: 28px; font-size: 13px; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center;" title="오늘 날짜로 변경">🔄</button>
+            <input type="text" id="ledger-date" class="search-input" style="width: 110px; min-width: 60px; flex-shrink: 1; height: 28px; font-size: 12px; text-align: center; padding: 2px; background: #FFFDF9; border-color: #E2D9C8; font-weight: bold;" placeholder="MM.DD.요일" oninput="saveToLocalStorage()">
+            <input type="text" id="ledger-session" class="search-input" style="width: 55px; min-width: 35px; flex-shrink: 1; height: 28px; font-size: 12px; text-align: center; padding: 2px; background: #FFFDF9; border-color: #E2D9C8; font-weight: bold;" placeholder="회차(예: 1부)" oninput="saveToLocalStorage()">
+            
+            <div id="sale-global-filter-alert" style="display: none; margin-left: 2px; flex-shrink: 1;">
+              <button class="btn btn-filter-blink" style="padding: 0 10px; height: 28px; font-size: 11.5px; border-radius: 4px; border: 2px solid #F5B0AD; cursor: pointer; display: flex; align-items: center; gap: 4px; box-shadow: 0 2px 6px rgba(220,53,69,0.15); flex-shrink: 1; white-space: nowrap;" onclick="clearAllSaleFilters()">
+                🚨 필터 적용 중 (전체보기 🔄)
+              </button>
+            </div>
           </div>
+        </div>
+        
+        <!-- 오른쪽 그룹 -->
+        <div style="display: flex; align-items: center; gap: 6px; flex-shrink: 0;">
+          <button class="btn btn-history" onclick="copyAllSalesData()" style="padding: 6px 10px; height: 28px; font-weight: bold; border-color:#2F80ED; color:#2F80ED; white-space: nowrap;" title="실시간 판매내역 전체를 클립보드에 복사합니다">📋 전체 복사</button>
+          <button class="btn btn-primary" onclick="sendSalesToSheet()" style="padding: 6px 12px; height: 28px; font-weight: 800; white-space: nowrap;" title="구글시트 전송 및 판매자 간 실시간 동기화를 진행합니다">☁️ API 전송 & 동기화</button>
         </div>
       </div>
       
-      <!-- 오른쪽 그룹 -->
-      <div style="display: flex; align-items: center; gap: 6px; flex-shrink: 0;">
-        <button class="btn btn-history" onclick="copyAllSalesData()" style="padding: 6px 10px; height: 28px; font-weight: bold; border-color:#2F80ED; color:#2F80ED; white-space: nowrap;" title="실시간 판매내역 전체를 클립보드에 복사합니다">📋 전체 복사</button>
-        <button class="btn btn-primary" onclick="sendSalesToSheet()" style="padding: 6px 12px; height: 28px; font-weight: 800; white-space: nowrap;" title="구글시트 전송 및 판매자 간 실시간 동기화를 진행합니다">☁️ API 전송 & 동기화</button>
+      <div class="search-container" style="display: flex; justify-content: space-between; align-items: center; width: 100%; flex-wrap: nowrap; gap: 8px;">
+        <!-- 좌측: 검색창 및 버튼 그룹 (화면이 줄어도 형태 고정) -->
+        <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
+          <div style="display: flex; align-items: center; gap: 4px;">
+            <input type="text" id="search-sale" class="search-input" style="width: 150px;" placeholder="🔍 품번, 상품명, 가격..." oninput="renderSales()">
+            <button class="btn btn-history" onclick="clearSaleFilter()" style="padding: 6px 10px; height: 28px; font-weight: bold;" title="품번/상품명 필터 취소">✕</button>
+          </div>
+          <button class="btn" style="background: #896BB5; color: #ffffff; border: 1px solid #75599C; padding: 4px 10px; font-size: 12px; font-weight: 800; transition: 0.15s;" onclick="sortSalesByContext()" onmouseover="this.style.background='#75599C'" onmouseout="this.style.background='#896BB5'">✨ 띄어쓰기 통일 ✨</button>
+          <button class="btn btn-pink btn-undo" onclick="execUndo()" disabled title="되돌리기">되돌리기</button>
+          <button class="btn btn-pink btn-redo" onclick="execRedo()" disabled title="다시실행">다시실행</button>
+        </div>
+
+        <!-- 우측: 고객명 검색 그룹 (우측 200px 여백 제거 및 공간 부족 시 자율 축소) -->
+        <div style="display: flex; align-items: center; gap: 4px; margin-left: auto; flex-shrink: 1; min-width: 80px;">
+          <input type="text" id="search-sale-nick" class="search-input" style="width: 100%; max-width: 120px; min-width: 50px; background: #FFFDF9; border-color: #E2D9C8;" placeholder="🔍 고객명 검색..." oninput="renderSales()">
+          <button class="btn btn-history" onclick="clearSaleNickFilter(event)" style="padding: 6px 10px; height: 28px; font-weight: bold; color: var(--danger); border-color: #F5D3D1; flex-shrink: 0;" title="고객명 필터 취소">✕</button>
+        </div>
       </div>
-    </div> <!-- 👈 💡 누락되었던 이 닫는 태그를 넣어주세요! -->
-    
-    <div class="search-container" style="display: flex; justify-content: space-between; align-items: center; width: 100%; flex-wrap: nowrap; gap: 8px;">
-  <!-- 좌측: 검색창 및 버튼 그룹 (화면이 줄어도 형태 고정) -->
-  <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
-    <div style="display: flex; align-items: center; gap: 4px;">
-      <input type="text" id="search-sale" class="search-input" style="width: 150px;" placeholder="🔍 품번, 상품명, 가격..." oninput="renderSales()">
-      <button class="btn btn-history" onclick="clearSaleFilter()" style="padding: 6px 10px; height: 28px; font-weight: bold;" title="품번/상품명 필터 취소">✕</button>
-    </div>
-    <button class="btn" style="background: #896BB5; color: #ffffff; border: 1px solid #75599C; padding: 4px 10px; font-size: 12px; font-weight: 800; transition: 0.15s;" onclick="sortSalesByContext()" onmouseover="this.style.background='#75599C'" onmouseout="this.style.background='#896BB5'">✨ 띄어쓰기 통일 ✨</button>
-    <button class="btn btn-pink btn-undo" onclick="execUndo()" disabled title="되돌리기">되돌리기</button>
-    <button class="btn btn-pink btn-redo" onclick="execRedo()" disabled title="다시실행">다시실행</button>
-  </div>
 
-  <!-- 우측: 고객명 검색 그룹 (우측 200px 여백 제거 및 공간 부족 시 자율 축소) -->
-  <div style="display: flex; align-items: center; gap: 4px; margin-left: auto; flex-shrink: 1; min-width: 80px;">
-    <input type="text" id="search-sale-nick" class="search-input" style="width: 100%; max-width: 120px; min-width: 50px; background: #FFFDF9; border-color: #E2D9C8;" placeholder="🔍 고객명 검색..." oninput="renderSales()">
-    <button class="btn btn-history" onclick="clearSaleNickFilter(event)" style="padding: 6px 10px; height: 28px; font-weight: bold; color: var(--danger); border-color: #F5D3D1; flex-shrink: 0;" title="고객명 필터 취소">✕</button>
-  </div>
-</div>
-
-    <div id="sale-filter-tags" style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; align-items: center;"></div>
+      <div id="sale-filter-tags" style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; align-items: center;"></div>
+    </div> <!-- /#sale-menu-area -->
 
     <!-- 🍒 플로팅(둥둥 뜨는) 복사 버튼 영역 -->
     <div style="position: relative; width: 100%;">
@@ -1252,7 +1297,7 @@
   </div>
 
   <div style="display:flex; gap:14px; flex:1; min-height:0;">
-    <div class="card" style="flex:1.1; display:flex; flex-direction:column; min-width:0;">
+    <div id="settle-left-panel" class="card" style="flex:1.1; display:flex; flex-direction:column; min-width:0;">
 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
     <span style="font-weight:800; font-size:13.5px; color:var(--ink-soft);">📋 전체 판매 목록 <span id="settle-left-count" class="count"></span></span>
     <!-- ⚠️ 이 부분에 div를 만들고 초기화 버튼을 추가했습니다 -->
@@ -1291,7 +1336,10 @@
       </div>
     </div>
 
-    <div class="card" style="flex:1; display:flex; flex-direction:column; min-width:0; border-left:1px dashed var(--line); padding-left:12px;">
+    <!-- 💡 [신규] 마감정산 좌우 패널 조절 핸들 -->
+    <div class="panel-v-resize-handle" id="settle-v-resize-handle" title="좌우로 드래그하여 패널 크기를 조절하세요"><span></span></div>
+
+    <div id="settle-right-panel" class="card" style="flex:1; display:flex; flex-direction:column; min-width:0;">
   <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; gap: 8px;">
     <span style="font-weight:800; font-size:13.5px; color:var(--ink-soft); white-space: nowrap;">🔍 그룹별 요약 (<span id="settle-group-label">상품명</span> 기준)</span>
     <input type="text" id="search-settle-group" class="search-input" style="width: 150px; padding: 4px 8px; height: 26px; margin-bottom: 0;" placeholder="그룹 검색..." oninput="renderSettleRightPanel()">
@@ -1471,8 +1519,63 @@
 </div>
 
 <!-- 독립 메모장 팝업 -->
+<!-- 💡 [신규] 📄 상품등록 전용 종이장부 (Clean View) 전체화면 모달 -->
+<div id="paper-prod-modal" class="modal-overlay">
+  <div class="modal-content paper-ledger-container" onclick="event.stopPropagation()">
+    <div class="modal-header" style="padding-bottom: 10px; margin-bottom: 12px; gap: 10px; flex-wrap: wrap;">
+      <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+        <h3 style="margin: 0; font-size: 16px; font-weight: 800; color: #1E293B;">📄 상품등록 종이장부 (Clean View)</h3>
+        <span id="paper-prod-summary" style="font-size: 12px; font-weight: 800; color: var(--accent-ink); background: #FFFDF0; border: 1px solid var(--accent); padding: 3px 8px; border-radius: 4px;">0개 등록됨</span>
+      </div>
+
+      <!-- 상단 실시간 검색창 -->
+      <div style="display: flex; align-items: center; gap: 4px; flex: 1; min-width: 220px; max-width: 420px;">
+        <input type="text" id="search-paper-prod" class="search-input" style="width: 100%; border: 2px solid var(--accent); padding: 5px 10px; font-size: 12.5px; background: #FFFDF9;" placeholder="🔍 품번, 브랜드, 특징, 색상, 사이즈..." oninput="renderPaperProd()">
+        <button type="button" class="btn btn-history" onclick="clearPaperProdSearch()" style="padding: 4px 9px; height: 28px; font-weight: 800; color: var(--danger); border-color: #F5B0AD;" title="검색어 지우기">✕</button>
+      </div>
+
+      <div style="display: flex; gap: 8px; align-items: center; margin-left: auto;">
+        <button type="button" class="btn btn-history" onclick="window.print()" style="font-size: 12px; font-weight: bold;">🖨️ 인쇄</button>
+        <button type="button" class="btn" onclick="closePaperProdModal()" style="background:#C0524A; color:#fff; border:none; padding:5px 14px; font-size:12px; font-weight:800; border-radius:4px; cursor:pointer;">닫기 ✕</button>
+        <button type="button" class="btn-close" onclick="closePaperProdModal()">×</button>
+      </div>
+    </div>
+    <div class="paper-scroll-area">
+      <table class="paper-table">
+        <colgroup>
+          <col style="width: 45px;">   <!-- No. -->
+          <col style="width: 55px;">   <!-- 품번 -->
+          <col style="width: 110px;">  <!-- 브랜드명 -->
+          <col style="width: auto;">   <!-- 특징 -->
+          <col style="width: 65px;">   <!-- 적용 -->
+          <col style="width: 90px;">   <!-- 색상 -->
+          <col style="width: 80px;">   <!-- 사이즈 -->
+          <col style="width: 90px;">   <!-- 판매가 -->
+          <col style="width: 120px;">  <!-- 세부치수 -->
+          <col style="width: 65px;">   <!-- 복사 -->
+        </colgroup>
+        <thead>
+          <tr>
+            <th style="text-align: center;">No.</th>
+            <th>품번</th>
+            <th>브랜드명</th>
+            <th>특징</th>
+            <th style="text-align: center;">적용</th>
+            <th>색상</th>
+            <th>사이즈</th>
+            <th style="text-align: right; padding-right: 8px;">판매가</th>
+            <th style="text-align: center;">세부치수</th>
+            <th style="text-align: center;">복사</th>
+          </tr>
+        </thead>
+        <tbody id="paper-prod-body"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
 <!-- 📄 종이장부 Clean View 전체화면 모달 -->
-<div id="paper-ledger-modal" class="modal-overlay" onclick="closePaperLedgerModal()">
+<div id="paper-ledger-modal" class="modal-overlay">
   <div class="modal-content paper-ledger-container" onclick="event.stopPropagation()">
     <div class="modal-header" style="padding-bottom: 10px; margin-bottom: 12px;">
       <div style="display: flex; align-items: center; gap: 10px;">
@@ -1481,6 +1584,7 @@
       </div>
       <div style="display: flex; gap: 8px; align-items: center;">
         <button class="btn btn-history" onclick="window.print()" style="font-size: 12px; font-weight: bold;">🖨️ 인쇄</button>
+        <button class="btn" onclick="closePaperLedgerModal()" style="background:#C0524A; color:#fff; border:none; padding:5px 12px; font-size:12px; font-weight:800; border-radius:4px; cursor:pointer;">닫기 ✕</button>
         <button class="btn-close" onclick="closePaperLedgerModal()">×</button>
       </div>
     </div>
@@ -1511,7 +1615,7 @@
     </div>
   </div>
 </div>
-<div id="global-memo-modal" class="modal-overlay" onclick="closeGlobalMemoPopup()">
+<div id="global-memo-modal" class="modal-overlay">
   <div class="modal-content" onclick="event.stopPropagation()" style="max-width: 450px;">
     <div class="modal-header">
       <h3 style="display: flex; align-items: center; gap: 6px;">📝 전용 메모장 (삭제 영향 없음)</h3>
@@ -1522,18 +1626,19 @@
       <textarea id="global-memo-text" oninput="saveGlobalMemo()" style="width: 100%; height: 250px; padding: 12px; border: 1px solid var(--line); border-radius: 6px; font-size: 13.5px; resize: none; font-family: inherit; line-height: 1.5; color: var(--ink);" placeholder="자유롭게 메모를 작성하세요... (입력 즉시 자동 저장됩니다)"></textarea>
     </div>
     <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 10px;">
-      <!-- 저장 버튼 삭제, 닫기 버튼만 유지 -->
-      <button class="btn btn-history" style="padding: 8px 16px;" onclick="closeGlobalMemoPopup()">닫기</button>
+      <!-- 빨간색 닫기 버튼으로 교체 -->
+      <button class="btn" style="padding: 8px 20px; font-size: 13px; font-weight: 800; background: #C0524A; color: #ffffff; border: none; border-radius: 4px; cursor: pointer;" onclick="closeGlobalMemoPopup()">닫기 ✕</button>
     </div>
   </div>
 </div>
 
 <!-- 👇👇 [여기 위치에 새로 추가] 👇👇 -->
-<div id="row-memo-modal" class="modal-overlay" onclick="closeRowMemoPopup()">
-  <div class="modal-content" onclick="event.stopPropagation()" style="max-width: 380px;">
+<!-- 👇👇 메모 및 상태 설정 모달 리셋 (완벽 수정본) 👇👇 -->
+<div id="row-memo-modal" class="modal-overlay">
+  <div class="modal-content" style="max-width: 380px;">
     <div class="modal-header">
       <h3 id="row-memo-modal-title" style="display: flex; align-items: center; gap: 6px;">📝 메모 및 상태 설정</h3>
-      <button class="btn-close" onclick="closeRowMemoPopup()">×</button>
+      <button type="button" class="btn-close" onclick="closeRowMemoPopup()">×</button>
     </div>
     
     <div style="display: flex; justify-content: space-around; align-items: center; padding: 12px; background: #FAFBFB; border-radius: 6px; border: 1px solid var(--line); margin-bottom: 10px;">
@@ -1550,20 +1655,25 @@
       <textarea id="pop-memo-textarea" oninput="saveRowMemoFromPopup()" style="width: 100%; height: 110px; padding: 10px; border: 1px solid var(--line); border-radius: 6px; font-size: 13px; resize: none; font-family: inherit; line-height: 1.4; color: var(--ink);" placeholder="메모를 입력하세요..."></textarea>
     </div>
     
-    <div style="display: flex; justify-content: flex-end; margin-top: 10px;">
-      <button class="btn btn-purple" style="padding: 6px 18px; font-weight: bold;" onclick="closeRowMemoPopup()">완료</button>
+    <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 10px;">
+      <button type="button" class="btn" style="padding: 6px 16px; font-size: 12.5px; font-weight: 800; background: #C0524A; color: #fff; border: none; border-radius: 4px; cursor: pointer;" onclick="closeRowMemoPopup()">닫기 ✕</button>
+      <button type="button" class="btn btn-purple" style="padding: 6px 18px; font-weight: bold;" onclick="closeRowMemoPopup()">완료</button>
     </div>
   </div>
 </div>
+<!-- 👆👆 여기까지 👆👆 -->
 
 <!-- 📏 세부 제원 치수 매트릭스 입력 모달 -->
-<div id="specs-modal" class="modal-overlay" onclick="if(event.target === this) closeSpecsPopup()">
+<div id="specs-modal" class="modal-overlay">
   <div class="modal-content" onclick="event.stopPropagation()" style="max-width: 540px; padding: 18px; border-radius: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.25);">
     <div class="modal-header" style="padding-bottom: 10px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;">
       <h3 id="specs-modal-title" style="margin: 0; font-size: 15px; font-weight: 800; color: #1E293B; display: flex; align-items: center; gap: 6px;">
         📏 세부 제원 치수 매트릭스 입력
       </h3>
-      <button class="btn-close" onclick="closeSpecsPopup()" style="font-size: 20px; font-weight: bold; background: none; border: none; cursor: pointer; color: var(--ink-soft);">✕</button>
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <button type="button" class="btn" onclick="closeSpecsPopup()" style="background: #C0524A; color: #ffffff; border: none; padding: 4px 12px; font-size: 12px; font-weight: 800; border-radius: 4px; cursor: pointer;">닫기 ✕</button>
+        <button class="btn-close" onclick="closeSpecsPopup()" style="font-size: 20px; font-weight: bold; background: none; border: none; cursor: pointer; color: var(--ink-soft);">✕</button>
+      </div>
     </div>
 
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
@@ -1712,8 +1822,8 @@
       <span style="font-size: 11.5px; color: #64748B; font-weight: 600;">(상단 장부 날짜·회차 기준)</span>
     </div>
 
-    <!-- 4가지 대형 선택 버튼 목록 -->
-    <div style="display: flex; flex-direction: column; gap: 10px;">
+    <!-- 1단계: 기본 전송/불러오기 메뉴 -->
+    <div id="pc-sync-step-1" style="display: flex; flex-direction: column; gap: 10px;">
       <!-- 1번 버튼 -->
       <button type="button" onclick="executeSyncAction('1')" style="background: #F0F7FF; border: 2px solid #93C5FD; text-align: left; padding: 12px 16px; border-radius: 8px; cursor: pointer; transition: 0.15s;">
         <div style="font-size: 15px; font-weight: 800; color: #1E40AF; margin-bottom: 3px;">
@@ -1744,19 +1854,50 @@
         </div>
       </button>
 
-      <!-- 4번 버튼 -->
-      <button type="button" onclick="executeSyncAction('4')" style="background: #FAF5FF; border: 2px solid #D8B4FE; text-align: left; padding: 12px 16px; border-radius: 8px; cursor: pointer; transition: 0.15s;">
+      <!-- 4번 버튼 (클릭 시 2단계 세부 설정 화면으로 전환) -->
+      <button type="button" onclick="openPcSyncStep2()" style="background: #FAF5FF; border: 2px solid #D8B4FE; text-align: left; padding: 12px 16px; border-radius: 8px; cursor: pointer; transition: 0.15s;">
         <div style="font-size: 15px; font-weight: 800; color: #5B21B6; margin-bottom: 3px;">
-          4. 📥 최신 실시간 장부 불러오기
+          4. 📥 최신 실시간 장부 불러오기 (세부 선택) ➔
         </div>
         <div style="font-size: 12.5px; color: #7C3AED; font-weight: 600; line-height: 1.4;">
-          동료 작업자(PC 또는 모바일)가 작업해 올린 <b>최신 장부를 내 화면으로 가져와 일치시킵니다.</b>
+          구글시트의 <b>날짜별 선택</b> 및 <b>덮어쓰기/이어붙이기</b> 옵션을 선택하여 가져옵니다.
         </div>
       </button>
+
+      <div style="display: flex; justify-content: flex-end; margin-top: 10px;">
+        <button type="button" class="btn btn-history" style="padding: 8px 24px; font-size: 13px; font-weight: bold;" onclick="closeSyncModal()">닫기 / 취소</button>
+      </div>
     </div>
 
-    <div style="display: flex; justify-content: flex-end; margin-top: 18px;">
-      <button type="button" class="btn btn-history" style="padding: 8px 24px; font-size: 13px; font-weight: bold;" onclick="closeSyncModal()">닫기 / 취소</button>
+    <!-- 2단계: 📥 불러오기 세부 선택 화면 (날짜 멀티선택 + 덮어쓰기/이어붙이기) -->
+    <div id="pc-sync-step-2" style="display: none; flex-direction: column; gap: 10px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--line); padding-bottom: 6px;">
+        <span style="font-size: 13.5px; font-weight: 800; color: #1E293B;">📅 가져올 방송 날짜 선택</span>
+        <button type="button" class="btn btn-history" onclick="toggleAllPcSyncDates()" style="padding: 2px 8px; font-size: 11px; font-weight: 800; border-color: var(--blue); color: var(--blue);">전체선택 / 해제</button>
+      </div>
+
+      <!-- 날짜 체크박스 목록 영역 -->
+      <div id="pc-sync-date-list" style="max-height: 170px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; padding: 8px; background: #F8FAFC; border: 1.5px solid var(--line); border-radius: 6px;">
+        <div style="text-align: center; color: var(--ink-soft); padding: 20px; font-size: 12px;">날짜 목록을 불러오는 중...</div>
+      </div>
+
+      <!-- 기기 반영 방식 선택 라디오 -->
+      <div style="background: #FFFDF9; border: 1.5px solid #E2D9C8; border-radius: 8px; padding: 10px;">
+        <div style="font-size: 12.5px; font-weight: 800; color: var(--ink); margin-bottom: 6px;">📥 현재 장부 반영 방식 선택:</div>
+        <div style="display: flex; gap: 18px; font-size: 13px; font-weight: bold;">
+          <label style="cursor: pointer; display: inline-flex; align-items: center; gap: 4px; color: var(--danger);">
+            <input type="radio" name="pc-import-mode" value="overwrite" checked style="accent-color: var(--danger);"> 덮어쓰기 (기존 장부 삭제)
+          </label>
+          <label style="cursor: pointer; display: inline-flex; align-items: center; gap: 4px; color: var(--blue);">
+            <input type="radio" name="pc-import-mode" value="append" style="accent-color: var(--blue);"> 이어서 붙이기 (기존 장부 유지)
+          </label>
+        </div>
+      </div>
+
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
+        <button type="button" class="btn btn-history" onclick="backToPcSyncStep1()" style="padding: 8px 16px; font-weight: bold;">↩ 이전으로</button>
+        <button type="button" class="btn" onclick="executePcDownloadWithConfig()" style="padding: 8px 22px; font-size: 13px; font-weight: 900; background: #6D28D9; color: #FFFFFF !important; border: 1px solid #5B21B6; border-radius: 4px; cursor: pointer; box-shadow: 0 2px 4px rgba(109, 40, 217, 0.25);">📥 선택한 장부 가져오기</button>
+      </div>
     </div>
   </div>
 </div>
@@ -2077,23 +2218,43 @@ function populateAutocompleteLists() {
   acBrandOptions = Array.from(brandSet);
 
   const nameSet = new Set();
-      products.forEach(p => {
-        const combined = `${p.brand || ''} ${p.features || ''}`.trim();
-        if (combined) nameSet.add(combined);
-      });
-      sales.forEach(s => { if (s.name && s.name.trim()) nameSet.add(s.name.trim()); });
-      acNameOptions = Array.from(nameSet);
+  products.forEach(p => {
+    const combined = `${p.brand || ''} ${p.features || ''}`.trim();
+    if (combined) nameSet.add(combined);
+  });
+  sales.forEach(s => { if (s.name && s.name.trim()) nameSet.add(s.name.trim()); });
+  acNameOptions = Array.from(nameSet);
 
-      const colorSet = new Set();
-      sales.forEach(s => { if (s.color && s.color.trim()) colorSet.add(s.color.trim()); });
-      // 상품등록 데이터 참조 부분 삭제 완료
-      acColorOptions = Array.from(colorSet);
-
-      const sizeSet = new Set();
-      sales.forEach(s => { if (s.size && s.size.trim()) sizeSet.add(s.size.trim()); });
-      // 상품등록 데이터 참조 부분 삭제 완료
-      acSizeOptions = Array.from(sizeSet);
+  // 💡 [수정] 상품등록(products)과 판매내역(sales)의 색상을 모두 수집 & 쉼표/공백 분리 등록
+  const colorSet = new Set();
+  products.forEach(p => {
+    if (p.color && p.color.trim()) {
+      p.color.split(/[,/\s]+/).filter(Boolean).forEach(c => colorSet.add(c.trim()));
     }
+  });
+  sales.forEach(s => {
+    if (s.color && s.color.trim()) {
+      s.color.split(/[,/\s]+/).filter(Boolean).forEach(c => colorSet.add(c.trim()));
+      colorSet.add(s.color.trim());
+    }
+  });
+  acColorOptions = Array.from(colorSet);
+
+  // 💡 [수정] 상품등록(products)과 판매내역(sales)의 사이즈를 모두 수집 & 쉼표/공백 분리 등록
+  const sizeSet = new Set();
+  products.forEach(p => {
+    if (p.size && p.size.trim()) {
+      p.size.split(/[,/\s]+/).filter(Boolean).forEach(sz => sizeSet.add(sz.trim()));
+    }
+  });
+  sales.forEach(s => {
+    if (s.size && s.size.trim()) {
+      s.size.split(/[,/\s]+/).filter(Boolean).forEach(sz => sizeSet.add(sz.trim()));
+      sizeSet.add(s.size.trim());
+    }
+  });
+  acSizeOptions = Array.from(sizeSet);
+}
 
 function acFilter(input, type) {
   const e = window.event;
@@ -2187,7 +2348,12 @@ function acFilter(input, type) {
 function acRenderDropdown() {
   const dd = document.getElementById('ac-dropdown');
   if (!dd || !acState.input) return;
-  const rect = acState.input.getBoundingClientRect();
+  let rect = acState.input.getBoundingClientRect();
+  // 💡 (0, 0) 튐 현상 방지 보정
+  if ((rect.left === 0 && rect.top === 0) || (rect.width === 0 && rect.height === 0)) {
+    const fallbackWrap = acState.input.closest('.cell-wrap') || acState.input.closest('td');
+    if (fallbackWrap) rect = fallbackWrap.getBoundingClientRect();
+  }
   dd.style.left = Math.round(rect.left) + 'px';
   dd.style.top = Math.round(rect.bottom + 2) + 'px';
   dd.style.width = Math.max(Math.round(rect.width), 120) + 'px';
@@ -3108,6 +3274,68 @@ window.toggleFullscreen = function(cardId) {
   adjustLongTexts();
 };
 
+// 💡 [신규] 상품등록 상단 메뉴 독립 접기/펼치기 함수
+window.toggleProdMenu = function() {
+  const area = document.getElementById('prod-menu-area');
+  const btn = document.getElementById('btn-toggle-prod-menu');
+  if (!area || !btn) return;
+  const isHidden = area.style.display === 'none';
+  area.style.display = isHidden ? 'block' : 'none';
+  btn.innerHTML = isHidden ? '메뉴 숨기기 🔼' : '메뉴 보이기 🔽';
+  btn.style.background = isHidden ? '#FFFDF0' : '#FFF0F0';
+  btn.style.borderColor = isHidden ? 'var(--accent)' : '#F5B0AD';
+  btn.style.color = isHidden ? 'var(--accent-ink)' : 'var(--danger)';
+  localStorage.setItem('live_prod_menu_collapsed', isHidden ? '0' : '1');
+};
+
+// 💡 [신규] 실시간 판매내역 상단 메뉴 독립 접기/펼치기 함수
+window.toggleSaleMenu = function() {
+  const card = document.getElementById('sale-card');
+  const area = document.getElementById('sale-menu-area');
+  const btn = document.getElementById('btn-toggle-sale-menu');
+  if (!area || !btn) return;
+  const isHidden = area.style.display === 'none';
+  area.style.display = isHidden ? 'block' : 'none';
+  btn.innerHTML = isHidden ? '메뉴 숨기기 🔼' : '메뉴 보이기 🔽';
+  btn.style.background = isHidden ? 'var(--purple-bg)' : '#FFF0F0';
+  btn.style.borderColor = isHidden ? '#DCD0EE' : '#F5B0AD';
+  btn.style.color = isHidden ? 'var(--purple-ink)' : 'var(--danger)';
+  if (card) {
+    card.classList.toggle('menu-collapsed', !isHidden);
+  }
+  localStorage.setItem('live_sale_menu_collapsed', isHidden ? '0' : '1');
+};
+
+// 💡 [신규] 페이지 로드 시 기존 메뉴 접힘 상태 자동 복원
+(function restoreMenuCollapseState() {
+  setTimeout(() => {
+    if (localStorage.getItem('live_prod_menu_collapsed') === '1') {
+      const area = document.getElementById('prod-menu-area');
+      const btn = document.getElementById('btn-toggle-prod-menu');
+      if (area) area.style.display = 'none';
+      if (btn) {
+        btn.innerHTML = '메뉴 보이기 🔽';
+        btn.style.background = '#FFF0F0';
+        btn.style.borderColor = '#F5B0AD';
+        btn.style.color = 'var(--danger)';
+      }
+    }
+    if (localStorage.getItem('live_sale_menu_collapsed') === '1') {
+      const card = document.getElementById('sale-card');
+      const area = document.getElementById('sale-menu-area');
+      const btn = document.getElementById('btn-toggle-sale-menu');
+      if (area) area.style.display = 'none';
+      if (card) card.classList.add('menu-collapsed');
+      if (btn) {
+        btn.innerHTML = '메뉴 보이기 🔽';
+        btn.style.background = '#FFF0F0';
+        btn.style.borderColor = '#F5B0AD';
+        btn.style.color = 'var(--danger)';
+      }
+    }
+  }, 50);
+})();
+
 function saveToLocalStorage() {
   localStorage.setItem('live_ledger_products', JSON.stringify(products));
   localStorage.setItem('live_ledger_sales', JSON.stringify(sales));
@@ -3142,6 +3370,20 @@ function initDefaultDate() {
   const dayName = week[now.getDay()];
   dateEl.value = `${mm}.${dd}${dayName}`;
 }
+
+// 💡 🔄 버튼 클릭 시 날짜 입력칸을 오늘 날짜로 즉시 갱신하고 저장하는 함수
+window.resetLedgerDateToToday = function() {
+  const dateEl = document.getElementById('ledger-date');
+  if (!dateEl) return;
+  const now = new Date();
+  const mm = String(now.getMonth() + 1).padStart(2, '0');
+  const dd = String(now.getDate()).padStart(2, '0');
+  const week = ['일요일', '월요일', '화요일', '수요일', '목요일', '금요일', '토요일'];
+  const dayName = week[now.getDay()];
+  dateEl.value = `${mm}.${dd}${dayName}`;
+  saveToLocalStorage();
+  toast(`📅 오늘 날짜(${dateEl.value})로 변경되었습니다.`);
+};
 
 function loadFromLocalStorage() {
   const storedProducts = localStorage.getItem('live_ledger_products');
@@ -3234,7 +3476,16 @@ function updateHistoryButtons() {
 
 function scrollToRow(rowId) {
   const el = document.getElementById(rowId);
-  if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }
+  if (el) { 
+    // 💡 화면 가장자리가 아닌 화면 정중앙(center)으로 이동시켜 시야 확보
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' }); 
+
+    // 💡 추가된 행에 1.8초간 밝은 형광펜 반짝임 효과 적용
+    el.classList.remove('row-pulse-flash');
+    void el.offsetWidth; // 애니메이션 강제 재실행 트리거
+    el.classList.add('row-pulse-flash');
+    setTimeout(() => { el.classList.remove('row-pulse-flash'); }, 1800);
+  }
 }
 
 window.execUndo = function() {
@@ -3339,11 +3590,16 @@ window.enterEditMode = function(event, id, field, isPopup = false, isUserInitiat
       if (field === 'color' || field === 'size') {
         if (typeof openChipPicker === 'function') openChipPicker(input, field, 'sale', id);
       } else if (field === 'salePrice' || field === 'depositPrice') {
+        // 💡 사이즈에서 판매가로 넘어올 때 열려 있던 칩스 및 자동완성 툴바 완전 제거
+        if (typeof closeChipPicker === 'function') closeChipPicker();
+        if (typeof closeSaleAcBar === 'function') closeSaleAcBar(true);
+        if (typeof acClose === 'function') acClose();
         if (typeof handlePCPriceFocus === 'function') handlePCPriceFocus(input, id, field, false);
       } else {
         // 💡 색상/사이즈/가격이 아닌 칸(고객명, 품번 등)으로 이동하면 가로 바 닫기
-        if (typeof closeSaleAcBar === 'function') closeSaleAcBar();
+        if (typeof closeSaleAcBar === 'function') closeSaleAcBar(true);
         if (typeof closeChipPicker === 'function') closeChipPicker();
+        if (typeof acClose === 'function') acClose();
         const pdd = document.getElementById('ac-price-dropdown');
         if (pdd) pdd.style.display = 'none';
       }
@@ -3386,8 +3642,7 @@ window.enterProdEditMode = function(event, id, field, isPopup = false) {
     const input = wrap.querySelector('input');
     if (input) {
       setTimeout(() => {
-        // input.select(); 👈 이 줄을 삭제하거나 주석 처리합니다.
-        if (field === 'color' || field === 'size') {
+        if (field === 'color' || field === 'size' || field === 'brand') {
           openChipPicker(input, field, 'prod', id);
         } else if (field === 'price') {
           if (typeof handlePCPriceFocus === 'function') handlePCPriceFocus(input, id, field, true);
@@ -3409,12 +3664,11 @@ window.enterProdEditMode = function(event, id, field, isPopup = false) {
 
     setTimeout(() => {
       input.select();
-      if (field === 'color' || field === 'size') {
+      if (field === 'color' || field === 'size' || field === 'brand') {
         // 💡 판매가 칩스 바가 열려있다면 즉시 닫기
         if (typeof closeSaleAcBar === 'function') closeSaleAcBar(true);
         openChipPicker(input, field, 'prod', id);
       } else if (field === 'price') {
-        // 💡 색상/사이즈 팝업이 열려있다면 즉시 닫기
         if (typeof closeChipPicker === 'function') closeChipPicker();
         if (typeof handlePCPriceFocus === 'function') handlePCPriceFocus(input, id, field, true);
       } else {
@@ -3620,32 +3874,96 @@ window.closeSpecsPopup = function(showToast = false) {
   activeSpecsContext = { type: 'new', prodId: null };
 };
 
+// 💡 [신규] 치수 표 사이즈별 색상 블록 구분 계산 함수 (프리 / S~2XL / 44~77)
+function getSpecsRowColorBlock(sizeStr) {
+  const sz = (sizeStr || '').trim().toUpperCase();
+
+  // 1. 프리 (FREE / F) ➔ 따뜻한 파스텔 옐로우 블록
+  if (sz === '프리' || sz === 'FREE' || sz === 'F') {
+    return {
+      rowBg: '#FFFDF2',
+      cellBg: '#FEF3C7',
+      textBg: '#FFFBEB',
+      borderColor: '#FDE68A',
+      textColor: '#92400E'
+    };
+  }
+
+  // 2. S ~ 2XL (영문 규격) ➔ 산뜻한 파스텔 블루 블록
+  if (['XS', 'S', 'M', 'L', 'XL', '2XL', 'XXL', '3XL', 'XXXL'].includes(sz)) {
+    return {
+      rowBg: '#F4F9FF',
+      cellBg: '#E0F2FE',
+      textBg: '#EFF6FF',
+      borderColor: '#BAE6FD',
+      textColor: '#0369A1'
+    };
+  }
+
+  // 3. 44 ~ 77 (숫자 규격) ➔ 우아한 파스텔 라벤더/퍼플 블록
+  if (/^(44|55|66|77|88|99)$/.test(sz)) {
+    return {
+      rowBg: '#FAF5FF',
+      cellBg: '#F3E8FF',
+      textBg: '#FAF5FF',
+      borderColor: '#E9D5FF',
+      textColor: '#7E22CE'
+    };
+  }
+
+  // 기타/임의 사이즈 ➔ 기본 뉴트럴 톤
+  return {
+    rowBg: '#FFFFFF',
+    cellBg: '#F1F5F9',
+    textBg: '#FFFFFF',
+    borderColor: '#CBD5E1',
+    textColor: '#334155'
+  };
+}
+
 function renderSpecsRows() {
   const tbody = document.getElementById('specs-modal-tbody');
   if (!tbody) return;
 
-  tbody.innerHTML = specsRowsData.map((row, idx) => `
-    <tr style="border-bottom: 1px solid var(--line);">
-      <td style="padding: 4px; text-align: center; background: #FAFBFB;">
-        <input type="text" class="inline-input" value="${escapeHtml(row.size)}" style="text-align: center; font-weight: bold; background: #fff; border: 1px solid var(--line); padding: 3px;" oninput="updateSpecsRowVal(${idx}, 'size', this.value)" placeholder="사이즈">
-      </td>
-      <td style="padding: 4px;">
-        <input type="text" class="inline-input num" value="${escapeHtml(row.chong)}" style="text-align: right; background: #fff; border: 1px solid var(--line); padding: 3px;" oninput="updateSpecsRowVal(${idx}, 'chong', this.value)" placeholder="0">
-      </td>
-      <td style="padding: 4px;">
-        <input type="text" class="inline-input num" value="${escapeHtml(row.ga)}" style="text-align: right; background: #fff; border: 1px solid var(--line); padding: 3px;" oninput="updateSpecsRowVal(${idx}, 'ga', this.value)" placeholder="0">
-      </td>
-      <td style="padding: 4px;">
-        <input type="text" class="inline-input num" value="${escapeHtml(row.heo)}" style="text-align: right; background: #fff; border: 1px solid var(--line); padding: 3px;" oninput="updateSpecsRowVal(${idx}, 'heo', this.value)" placeholder="0">
-      </td>
-      <td style="padding: 4px;">
-        <input type="text" class="inline-input num" value="${escapeHtml(row.eong)}" style="text-align: right; background: #fff; border: 1px solid var(--line); padding: 3px;" oninput="updateSpecsRowVal(${idx}, 'eong', this.value)" placeholder="0">
-      </td>
-      <td style="padding: 4px; text-align: center;">
-        <button type="button" class="action-text text-del" onclick="removeSpecsRow(${idx})" style="font-size: 13px;">✕</button>
-      </td>
-    </tr>
-  `).join('');
+  tbody.innerHTML = specsRowsData.map((row, idx) => {
+    const color = getSpecsRowColorBlock(row.size);
+
+    return `
+      <tr style="border-bottom: 1.5px solid ${color.borderColor}; background-color: ${color.rowBg};">
+        <!-- 사이즈 칸: 해당 그룹 포인트 컬러 및 또렷한 굵은 글자 적용 -->
+        <td style="padding: 4px; text-align: center; background-color: ${color.cellBg}; border-right: 1px solid ${color.borderColor};">
+          <input type="text" class="inline-input" value="${escapeHtml(row.size)}" 
+            style="text-align: center; font-weight: 800; color: ${color.textColor}; background: ${color.textBg}; border: 1.5px solid ${color.borderColor}; padding: 3px; border-radius: 4px;" 
+            oninput="updateSpecsRowVal(${idx}, 'size', this.value)" 
+            onchange="renderSpecsRows()" 
+            placeholder="사이즈">
+        </td>
+        <td style="padding: 4px;">
+          <input type="text" class="inline-input num" value="${escapeHtml(row.chong)}" 
+            style="text-align: right; background: #fff; border: 1px solid var(--line); padding: 3px; border-radius: 4px;" 
+            oninput="updateSpecsRowVal(${idx}, 'chong', this.value)" placeholder="0">
+        </td>
+        <td style="padding: 4px;">
+          <input type="text" class="inline-input num" value="${escapeHtml(row.ga)}" 
+            style="text-align: right; background: #fff; border: 1px solid var(--line); padding: 3px; border-radius: 4px;" 
+            oninput="updateSpecsRowVal(${idx}, 'ga', this.value)" placeholder="0">
+        </td>
+        <td style="padding: 4px;">
+          <input type="text" class="inline-input num" value="${escapeHtml(row.heo)}" 
+            style="text-align: right; background: #fff; border: 1px solid var(--line); padding: 3px; border-radius: 4px;" 
+            oninput="updateSpecsRowVal(${idx}, 'heo', this.value)" placeholder="0">
+        </td>
+        <td style="padding: 4px;">
+          <input type="text" class="inline-input num" value="${escapeHtml(row.eong)}" 
+            style="text-align: right; background: #fff; border: 1px solid var(--line); padding: 3px; border-radius: 4px;" 
+            oninput="updateSpecsRowVal(${idx}, 'eong', this.value)" placeholder="0">
+        </td>
+        <td style="padding: 4px; text-align: center;">
+          <button type="button" class="action-text text-del" onclick="removeSpecsRow(${idx})" style="font-size: 13px;">✕</button>
+        </td>
+      </tr>
+    `;
+  }).join('');
 
   updateSpecsPreview();
 }
@@ -4571,7 +4889,8 @@ function renderSales(){
    Part 1의 마지막 부분과 중복되는 구간입니다.
    여기서부터 복사하여 Part 1의 renderSales() 끝나는 중괄호(}) 부분부터 이어서 붙여넣으세요.
    ========================================== */
-  if (currentEditingCell && currentEditingCell.type === 'sale' && !currentEditingCell.isPopup) {
+  // 💡 메모 팝업(!activeRowMemoId)이 열려있지 않을 때만 셀 포커스 유지
+  if (!activeRowMemoId && currentEditingCell && currentEditingCell.type === 'sale' && !currentEditingCell.isPopup) {
     const { id, field } = currentEditingCell; const wrap = document.getElementById(`wrap-${id}-${field}`);
     if (wrap) { wrap.classList.add('editing'); const input = wrap.querySelector('input'); if (input && document.activeElement !== input) { input.focus(); input.select(); } }
   }
@@ -4589,11 +4908,17 @@ if (settleView && settleView.style.display !== 'none') {
   const style = document.createElement('style');
   style.innerHTML = `
     @keyframes flash-overwrite {
-      0% { background-color: #B2DFFF !important; box-shadow: inset 0 0 0 2px #2F80ED; }
-      100% { background-color: transparent; }
+      0% { 
+        background-color: #B2DFFF; 
+        box-shadow: inset 0 0 0 999px #B2DFFF, inset 0 0 0 2px #2F80ED; 
+      }
+      100% { 
+        background-color: transparent; 
+        box-shadow: inset 0 0 0 999px transparent; 
+      }
     }
     .flash-overwrite-active {
-      animation: flash-overwrite 0.7s ease-out-in;
+      animation: flash-overwrite 0.7s ease-in-out;
     }
   `;
   document.head.appendChild(style);
@@ -4634,6 +4959,17 @@ function getRowMemoStatus(s) {
 }
 
 function openRowMemoPopup(id) {
+  // 💡 1. 열려 있던 모든 가격 툴바, 칩스 팝업, 자동완성 드롭다운 즉시 강제 종료
+  if (typeof closeSaleAcBar === 'function') closeSaleAcBar(true);
+  if (typeof closeChipPicker === 'function') closeChipPicker();
+  if (typeof acClose === 'function') acClose();
+  const pdd = document.getElementById('ac-price-dropdown');
+  if (pdd) pdd.style.display = 'none';
+
+  // 💡 2. 기존 셀 편집 상태를 완전히 해제하여 메모 입력 중 판매가 칸으로 커서가 튀는 현상 원천 차단
+  currentEditingCell = null;
+  document.querySelectorAll('.cell-wrap.editing').forEach(w => w.classList.remove('editing'));
+
   const s = sales.find(x => x.id === id);
   if (!s) return;
   activeRowMemoId = id;
@@ -4659,17 +4995,26 @@ function openRowMemoPopup(id) {
   }
 
   const textarea = document.getElementById('pop-memo-textarea');
-  if (textarea) textarea.value = s.memo || '';
+  if (textarea) {
+    textarea.value = s.memo || '';
+    setTimeout(() => textarea.focus(), 50); // 메모 입력창으로 즉시 포커스 이동
+  }
 
   const modal = document.getElementById('row-memo-modal');
   if (modal) modal.style.display = 'flex';
 }
 
-function closeRowMemoPopup() {
+// 💡 메모 팝업 닫기 함수 정상 분리 완료
+window.closeRowMemoPopup = function() {
   activeRowMemoId = null;
   const modal = document.getElementById('row-memo-modal');
-  if (modal) modal.style.display = 'none';
-}
+  if (modal) {
+    modal.style.display = 'none';
+  }
+  if (document.activeElement) {
+    document.activeElement.blur(); 
+  }
+};
 
 function toggleRowMemoTagInPopup(tag) {
   if (!activeRowMemoId) return;
@@ -5433,7 +5778,16 @@ window.settleDeleteGroup = function(idsParam) {
   renderSales();
 };
 
-window.handleFixedProdKeydown = function(e) { if (acHandleKeydown(e)) return; if (e.key === 'Enter') { e.preventDefault(); addProductFromFixed(); } };
+window.handleFixedProdKeydown = function(e) { 
+  if (acHandleKeydown(e)) return; 
+  if (e.key === 'Tab') {
+    // 💡 Tab 이동 시 열려있던 사이즈/색상 칩 및 자동완성 툴바 즉시 종료
+    if (typeof closeChipPicker === 'function') closeChipPicker();
+    if (typeof closeSaleAcBar === 'function') closeSaleAcBar(true);
+    if (typeof acClose === 'function') acClose();
+  }
+  if (e.key === 'Enter') { e.preventDefault(); addProductFromFixed(); } 
+};
 
 window.handleProdKeydown = function(e, id, isPopup = false) {
   if (acHandleKeydown(e)) return; const input = e.target; const field = input.getAttribute('data-field'); const toggleFields = ['prodNum', 'brand', 'features', 'color', 'size', 'price', 'specs'];
@@ -5471,6 +5825,11 @@ window.handleProdKeydown = function(e, id, isPopup = false) {
 window.handleSaleKeydown = function(e, id, isPopup = false) {
   if (acHandleKeydown(e)) return; const input = e.target; const field = input.getAttribute('data-field'); const toggleFields = ['rowDate', 'prodNum', 'name', 'color', 'size', 'nickname', 'qty', 'salePrice', 'depositPrice', 'memo'];
   if (e.key === 'Tab') {
+    // 💡 Tab 누를 때 기존 칩스 팝업 및 자동완성 바 닫기
+    if (typeof closeChipPicker === 'function') closeChipPicker();
+    if (typeof closeSaleAcBar === 'function') closeSaleAcBar(true);
+    if (typeof acClose === 'function') acClose();
+    
     e.preventDefault(); const tr = input.closest('tr'); const tbody = input.closest('tbody'); const rows = Array.from(tbody.querySelectorAll('tr')); const currRowIdx = rows.indexOf(tr);
     const allFields = ['rowDate', 'prodNum', 'name', 'color', 'size', 'nickname', 'qty', 'salePrice', 'depositPrice', 'memo']; let currFieldIdx = allFields.indexOf(field);
     let nextFieldIdx = currFieldIdx + (e.shiftKey ? -1 : 1); let nextRowIdx = currRowIdx;
@@ -5524,6 +5883,10 @@ window.addProductFromFixed = function() {
   renderProducts();
   const copyText = formatProductCopyText(newProd); navigator.clipboard.writeText(copyText);
   document.getElementById('new-prod-num').value = ''; document.getElementById('new-prod-brand').value = ''; document.getElementById('new-prod-features').value = ''; document.getElementById('new-prod-color').value = ''; document.getElementById('new-prod-size').value = ''; document.getElementById('new-prod-price').value = ''; document.getElementById('new-prod-specs').value = '';
+  
+  // 💡 상품 등록이 정상 완료되었을 때만, 임시 저장되어 있던 입력값을 비워줍니다.
+  localStorage.removeItem('live_ledger_temp_fixed_prod');
+  
   document.getElementById('new-prod-brand').focus(); updateMainStockStatus(); saveToLocalStorage(); 
 };
 
@@ -5580,8 +5943,25 @@ window.applyProductToSale = function(prodId) {
   const targetName = `${p.brand || ''} ${p.features || ''}`.trim();
   
   if (selectedCells.size > 0) {
-    saveState();
     let uniqueRowIds = new Set(Array.from(selectedCells).map(c => c.split(':::')[0]));
+
+    // 💡 [안전장치] 선택한 행에 기존 데이터(품번, 상품명, 고객명, 가격 등)가 있는지 사전 검사
+    const hasExistingData = Array.from(uniqueRowIds).some(id => {
+      const targetRow = sales.find(x => x.id === id);
+      return targetRow && (checkRowCoreDataExists(targetRow) || (targetRow.nickname && targetRow.nickname.trim() !== ''));
+    });
+
+    // 기존 데이터가 있다면 덮어쓸 것인지 확인창 출력
+    if (hasExistingData) {
+      if (!confirm('⚠️ 선택한 셀(행)에 이미 기존 판매 데이터가 존재합니다.\n기존 내용을 덮어쓰시겠습니까?\n\n[확인] : 기존 데이터에 덮어쓰기\n[취소] : 안전하게 취소 (선택 해제)')) {
+        selectedCells.clear();
+        updateCellSelectionVisuals();
+        toast('🛡️ 기존 데이터 보호를 위해 덮어쓰기가 취소되었습니다.');
+        return;
+      }
+    }
+
+    saveState();
     for (let id of uniqueRowIds) {
       const targetRow = sales.find(x => x.id === id);
       if (targetRow) {
@@ -6166,7 +6546,7 @@ document.getElementById('btn-exp-wh').addEventListener('click', () => {
   }
 });
 
-// 🚚 기타창고 다운로드 (신규)
+// 🚚 통합창고 다운로드
 document.getElementById('btn-exp-other-wh').addEventListener('click', () => {
   if (typeof XLSX === 'undefined') {
     toast('⚠️ 엑셀 라이브러리(XLSX)를 불러오지 못했습니다. 인터넷 연결을 확인하세요.');
@@ -6197,6 +6577,10 @@ document.getElementById('btn-exp-other-wh').addEventListener('click', () => {
       if (s.memo && s.memo.trim() !== '') excelMemoParts.push(s.memo);
       let combinedExcelMemo = excelMemoParts.join(', ');
 
+      // 💡 [수정] 태그와 메모를 하나로 합침
+      let tagsStatus = `${s.tags?.yt ? '[유튜브]' : ''}${s.tags?.tt ? '[틱톡]' : ''}${s.tags?.fs ? '[무배]' : ''}${s.tags?.kp ? '[킵]' : ''}${s.tags?.nw ? '[신규]' : ''}`;
+      let combinedStatusAndMemo = [tagsStatus, combinedExcelMemo].filter(Boolean).join(' ');
+
       return {
         '구분': getGroupLabelText(s, false),
         '품번': s.prodNum || '',
@@ -6208,12 +6592,13 @@ document.getElementById('btn-exp-other-wh').addEventListener('click', () => {
         '판매가': pSale * q,
         '개당입금가': pDep,
         '입금가': pDep * q,
-        '태그/상태': `${s.tags?.yt ? '[유튜브]' : ''}${s.tags?.tt ? '[틱톡]' : ''}${s.tags?.fs ? '[무배]' : ''}${s.tags?.kp ? '[킵]' : ''}${s.tags?.nw ? '[신규]' : ''}`,
-        '메모': combinedExcelMemo
+        '입금확인': '', // 💡 K열 빈칸 처리
+        '채널': '',     // 💡 L열 빈칸 처리
+        '종합메모': combinedStatusAndMemo // 💡 M열에 합쳐서 입력
       };
     });
 
-    // 총계 행 추가
+    // 💡 총계 행도 양식에 맞춰 칼럼 추가
     summaryData.push({
       '구분': '총계',
       '품번': '-',
@@ -6225,24 +6610,35 @@ document.getElementById('btn-exp-other-wh').addEventListener('click', () => {
       '판매가': totalSalePrice,
       '개당입금가': '-',
       '입금가': totalDepositPrice,
-      '태그/상태': '-',
-      '메모': '-'
+      '입금확인': '-',
+      '채널': '-',
+      '종합메모': '-'
     });
     
     const ws = XLSX.utils.json_to_sheet(summaryData); 
     const wb = XLSX.utils.book_new(); 
-    XLSX.utils.book_append_sheet(wb, ws, '기타창고_다운로드'); 
+    XLSX.utils.book_append_sheet(wb, ws, '통합창고_다운로드'); 
     
-    const dateVal = (document.getElementById('ledger-date')?.value || '').trim();
+    let dateVal = (document.getElementById('ledger-date')?.value || '').trim();
     const whVal = (document.getElementById('wh-name-input')?.value || '').trim();
-    const filePrefix = dateVal ? dateVal : '기타창고';
-    const fileMiddle = whVal ? ` [${whVal}]` : '';
     
-    XLSX.writeFile(wb, `${filePrefix}${fileMiddle} 기타창고_다운로드.xlsx`);
-    toast('✅ 기타창고 엑셀 다운로드가 완료되었습니다.');
+    // 💡 '09.12토요일'처럼 '26.' 또는 '2026.'으로 시작하지 않는 경우 맨 앞에 '26.' 강제 추가
+    if (dateVal && !dateVal.startsWith('26.') && !dateVal.startsWith('2026.')) {
+      dateVal = '26.' + dateVal;
+    }
+
+    // 💡 파일명 조합 로직
+    let fileNameParts = [];
+    if (dateVal) fileNameParts.push(dateVal); // 예: 26.09.12토요일
+    if (whVal) fileNameParts.push(whVal);     // 예: 갱블맨창고
+    fileNameParts.push('판매내역.xlsx');      // 끝에 '판매내역.xlsx' 고정
+    const finalFileName = fileNameParts.join(' '); // 띄어쓰기로 연결
+    
+    XLSX.writeFile(wb, finalFileName);
+    toast('✅ 통합창고 엑셀 다운로드가 완료되었습니다.');
   } catch (err) {
-    console.error('기타창고 엑셀 생성 중 오류:', err);
-    toast('⚠️ 기타창고 엑셀 생성 중 오류가 발생했습니다: ' + err.message);
+    console.error('통합창고 엑셀 생성 중 오류:', err);
+    toast('⚠️ 통합창고 엑셀 생성 중 오류가 발생했습니다: ' + err.message);
   }
 });
 
@@ -6400,100 +6796,159 @@ window.sendSalesToSheet = function() {
 window.closeSyncModal = function() {
   const modal = document.getElementById('pc-sync-modal');
   if (modal) modal.style.display = 'none';
+  // 모달 닫을 때 항상 1단계 화면으로 리셋
+  backToPcSyncStep1();
 };
 
-// 2. [신규] 버튼 클릭 시 동작 및 2단계 확인 안전장치
+window.backToPcSyncStep1 = function() {
+  const s1 = document.getElementById('pc-sync-step-1');
+  const s2 = document.getElementById('pc-sync-step-2');
+  if (s1 && s2) {
+    s1.style.display = 'flex';
+    s2.style.display = 'none';
+  }
+};
+
+// 💡 4번 클릭 시 구글시트 날짜 목록을 조회하여 2단계 체크박스 화면 생성
+window.openPcSyncStep2 = async function() {
+  const s1 = document.getElementById('pc-sync-step-1');
+  const s2 = document.getElementById('pc-sync-step-2');
+  const listEl = document.getElementById('pc-sync-date-list');
+  if (!s1 || !s2 || !listEl) return;
+
+  s1.style.display = 'none';
+  s2.style.display = 'flex';
+  listEl.innerHTML = '<div style="text-align: center; color: var(--purple-ink); padding: 20px; font-size: 12px; font-weight: bold;">🔄 구글시트의 방송 날짜 목록을 조회하는 중...</div>';
+
+  const res = await callGAS('getAvailableSyncDates', []);
+  if (!res || !res.success) {
+    listEl.innerHTML = '<div style="text-align: center; color: var(--danger); padding: 20px; font-size: 12px;">⚠️ 날짜 목록을 불러오지 못했습니다. (' + (res && res.message ? res.message : '네트워크 오류') + ')</div>';
+    return;
+  }
+
+  const dates = res.dates || [];
+  if (dates.length === 0) {
+    listEl.innerHTML = '<div style="text-align: center; color: var(--ink-soft); padding: 20px; font-size: 12px;">구글시트에 등록된 방송 데이터가 없습니다.</div>';
+    return;
+  }
+
+  // 상단 장부에 적혀있는 날짜와 일치하는 항목 자동 체크
+  const curLedgerDate = (document.getElementById('ledger-date')?.value || '').trim();
+
+  listEl.innerHTML = dates.map((d, idx) => {
+    const isMatched = curLedgerDate && d.includes(curLedgerDate);
+    return `
+      <label style="display: flex; align-items: center; gap: 8px; padding: 6px 10px; background: #FFFFFF; border: 1px solid var(--line); border-radius: 4px; cursor: pointer; font-size: 13px; font-weight: 700;">
+        <input type="checkbox" class="pc-sync-date-chk" value="${escapeHtml(d)}" ${isMatched ? 'checked' : ''} style="width: 16px; height: 16px; accent-color: var(--purple-ink); cursor: pointer;">
+        <span>📅 ${escapeHtml(d)}</span>
+      </label>
+    `;
+  }).join('');
+};
+
+window.toggleAllPcSyncDates = function() {
+  const chks = document.querySelectorAll('.pc-sync-date-chk');
+  if (chks.length === 0) return;
+  const anyUnchecked = Array.from(chks).some(c => !c.checked);
+  chks.forEach(c => c.checked = anyUnchecked);
+};
+
+// 💡 2단계에서 날짜 및 덮어쓰기/이어붙이기 모드 확정 후 실행하는 최종 다운로드 엔진
+window.executePcDownloadWithConfig = async function() {
+  const chks = document.querySelectorAll('.pc-sync-date-chk:checked');
+  if (chks.length === 0) {
+    alert('⚠️ 가져올 방송 날짜를 최소 1개 이상 선택해주세요.');
+    return;
+  }
+
+  const selectedDates = Array.from(chks).map(c => c.value);
+  const importModeEl = document.querySelector('input[name="pc-import-mode"]:checked');
+  const importMode = importModeEl ? importModeEl.value : 'overwrite';
+  const modeText = importMode === 'overwrite' ? '덮어쓰기' : '이어서 붙이기';
+
+  const confirmMsg = `📥 [실시간 장부 가져오기 실행]\n\n선택 날짜: ${selectedDates.join(', ')}\n반영 방식: [${modeText}]\n\n${importMode === 'overwrite' ? '⚠️ 기존 장부 내용은 삭제되고 새로 채워집니다.' : '➕ 기존 장부 데이터 아래에 선택한 날짜 기록이 추가됩니다.'}\n계속하시겠습니까?`;
+  if (!confirm(confirmMsg)) return;
+
+  closeSyncModal();
+  toast(`📥 구글시트에서 선택한 날짜(${selectedDates.length}개) 데이터를 가져오는 중...`);
+
+  const res = await callGAS('loadLiveSalesRecords', [selectedDates]);
+
+  // 적립금&무배 데이터 동시 동기화
+  try {
+    const rewardRes = await callGAS('loadRewardTable2', []);
+    if (rewardRes && rewardRes.success) {
+      rewardTableData = rewardRes.records || [];
+      if (typeof renderRewardTable === 'function') renderRewardTable();
+    }
+  } catch (e) {}
+
+  if (res && res.success) {
+    if (!res.records || res.records.length === 0) {
+      toast(`⚠️ 선택한 날짜에 해당하는 실시간 장부 데이터가 없습니다.`);
+      return;
+    }
+    saveState();
+
+    const seenIds = new Set();
+    const newRecords = res.records.map(r => {
+      let rowId = (importMode === 'append') ? uid() : (r.id || uid());
+      if (seenIds.has(rowId)) rowId = uid();
+      seenIds.add(rowId);
+
+      let pName = (r.name || '').trim();
+      let pNum = (r.prodNum || '').trim();
+      const isGiftItem = !!(r.isGift || r.groupType === 'gift' || (r.name && /^\[선물\]/.test(r.name.trim())));
+
+      const match = pName.match(/^(\[[^\]]+\]\s*)?(\d+(?:-\d+)?)(?:번\s*|\s+)(.*)$/);
+      if (match) {
+        const matchedNum = match[2];
+        if (!pNum || pNum === matchedNum) {
+          pNum = matchedNum;
+          pName = (match[1] || '') + match[3].trim();
+        }
+      }
+
+      if (isGiftItem) {
+        if (/^\[선물\]/.test(pName)) {}
+        else if (pName === '선물' || pName === '') pName = '[선물] ';
+        else pName = `[선물] ${pName}`.trim();
+      }
+
+      return {
+        ...r,
+        id: rowId,
+        prodNum: pNum,
+        name: pName,
+        isGift: isGiftItem
+      };
+    });
+
+    if (importMode === 'append') {
+      const isOnlyEmpty = (sales.length === 1 && !sales[0].prodNum && !sales[0].name && !sales[0].nickname);
+      if (isOnlyEmpty) sales = [];
+      sales = sales.concat(newRecords);
+    } else {
+      sales = newRecords;
+    }
+
+    sales = sortSalesGroupPreserved(sales);
+    if (sales.length === 0) sales.push(createEmptySaleObject());
+
+    saveToLocalStorage();
+    populateAutocompleteLists();
+    renderSales();
+    toast(`✅ 선택한 날짜 장부(${newRecords.length}건)를 [${modeText}] 완료했습니다!`);
+  } else {
+    toast(`⚠️ 불러오기 실패: ` + (res && res.message ? res.message : '오류'));
+  }
+};
+
+// 2. [신규] API 전송 버튼 클릭 시 동작 및 2단계 확인 안전장치
 window.executeSyncAction = async function(modeChoice) {
   const menuDate = (document.getElementById('ledger-date')?.value || '').trim();
   const menuSession = (document.getElementById('ledger-session')?.value || '').trim();
   const combinedMenuDate = [menuDate, menuSession].filter(Boolean).join(' ');
-
-  // [옵션 4: 최신 장부 불러오기]
-  if (modeChoice === "4") {
-    if (!confirm(`📥 [옵션 4: 실시간 장부 불러오기]\n\n적용 기준: [${combinedMenuDate || '전체'}]\n\n서버에 올라온 최신 데이터를 화면에 불러오시겠습니까?\n(기존 화면 내용은 되돌리기(Ctrl+Z)로 복원 가능합니다)`)) return;
-
-    closeSyncModal();
-    toast(`📥 실시간동기화 시트에서 최신 데이터를 가져오는 중...`);
-
-    const res = await callGAS('loadLiveSalesRecords', [combinedMenuDate]);
-    
-    // 👇👇👇 추가되는 부분: 적립금&무배 데이터 동시 불러오기 👇👇👇
-    try {
-      const rewardRes = await callGAS('loadRewardTable2', []);
-      if (rewardRes && rewardRes.success) {
-        rewardTableData = rewardRes.records || [];
-        if (typeof renderRewardTable === 'function') renderRewardTable(); // 모달창 즉시 갱신
-      }
-    } catch (e) {
-      console.log('적립금 데이터 동기화 실패', e);
-    }
-    // 👆👆👆 여기까지 👆👆👆
-
-    // [수정 후]
-if (res && res.success) {
-  if (!res.records || res.records.length === 0) {
-    toast(`⚠️ 불러올 수 있는 실시간 장부 데이터가 없습니다.`);
-    return;
-  }
-  saveState();
-
-  // 💡 [핵심 해결] ID 중복 방지, 품번 자동 분리, 선물(isGift) 엄격 판별 적용
-      const seenIds = new Set();
-      sales = res.records.map(r => {
-        let rowId = r.id;
-        if (!rowId || seenIds.has(rowId)) {
-          rowId = uid();
-        }
-        seenIds.add(rowId);
-
-        let pName = (r.name || '').trim();
-        let pNum = (r.prodNum || '').trim();
-
-        // 💡 선물 여부 3중 엄격 판별 (플래그, 그룹타입, 머리말 검사)
-        const isGiftItem = !!(r.isGift || r.groupType === 'gift' || (r.name && /^\[선물\]/.test(r.name.trim())));
-
-        const match = pName.match(/^(\[[^\]]+\]\s*)?(\d+(?:-\d+)?)(?:번\s*|\s+)(.*)$/);
-        
-        if (match) {
-          const matchedNum = match[2];
-          if (!pNum || pNum === matchedNum) {
-            pNum = matchedNum;
-            pName = (match[1] || '') + match[3].trim(); 
-          }
-        }
-
-        // 🎁 선물 항목일 때 상품명에 [선물] 대괄호 머리말 강제 조립
-        if (isGiftItem) {
-          if (/^\[선물\]/.test(pName)) {
-            // 이미 [선물]로 시작하면 그대로 유지
-          } else if (pName === '선물' || pName === '') {
-            pName = '[선물] ';
-          } else {
-            pName = `[선물] ${pName}`.trim();
-          }
-        }
-
-        return {
-          ...r,
-          id: rowId,
-          prodNum: pNum,
-          name: pName,
-          isGift: isGiftItem
-        };
-      });
-
-  sales = sortSalesGroupPreserved(sales);
-  if (sales.length === 0) sales.push(createEmptySaleObject());
-
-  saveToLocalStorage();
-  populateAutocompleteLists();
-  renderSales();
-  toast(`✅ 최신 실시간 장부(${sales.length}건)를 화면에 반영했습니다!`);
-} else {
-      toast(`⚠️ 불러오기 실패: ` + (res && res.message ? res.message : '오류'));
-    }
-    return;
-  }
 
   // [옵션 1, 2, 3: 구글 시트 전송]
   const targets = sales.filter(s => (s.nickname || '').trim() !== '' && !s.isExcluded);
@@ -7419,6 +7874,72 @@ window.addEventListener('mousemove', function(e) {
   });
 })();
 
+/* 💡 [신규] 마감정산 좌/우 패널 너비 실시간 리사이즈 엔진 */
+(function initSettlePanelResizeHandle(){
+  const handle = document.getElementById('settle-v-resize-handle');
+  const leftPanel = document.getElementById('settle-left-panel');
+  const rightPanel = document.getElementById('settle-right-panel');
+  const viewSettle = document.getElementById('view-settle');
+  
+  if(!handle || !leftPanel || !rightPanel || !viewSettle) return;
+
+  // 저장된 패널 비율 복원
+  const savedLeftFlex = localStorage.getItem('live_settle_flex_left');
+  const savedRightFlex = localStorage.getItem('live_settle_flex_right');
+
+  if(savedLeftFlex && savedRightFlex) {
+    leftPanel.style.flex = savedLeftFlex;
+    rightPanel.style.flex = savedRightFlex;
+  } else {
+    leftPanel.style.flex = '1.1 1 0px';
+    rightPanel.style.flex = '1 1 0px';
+  }
+
+  let startX = 0, startLeftW = 0, startRightW = 0, dragging = false;
+
+  handle.addEventListener('mousedown', function(e){
+    dragging = true;
+    startX = e.clientX;
+    startLeftW = leftPanel.getBoundingClientRect().width;
+    startRightW = rightPanel.getBoundingClientRect().width;
+    handle.classList.add('active');
+    document.body.classList.add('dragging-mode');
+    e.preventDefault();
+  });
+
+  window.addEventListener('mousemove', function(e){
+    if(!dragging) return;
+    
+    const deltaX = e.clientX - startX;
+    let newLeftW = startLeftW + deltaX;
+    let newRightW = startRightW - deltaX;
+
+    // 패널 최소 너비(200px) 제한
+    const minW = 200;
+    if (newLeftW < minW) {
+      newLeftW = minW;
+      newRightW = startLeftW + startRightW - minW;
+    } else if (newRightW < minW) {
+      newRightW = minW;
+      newLeftW = startLeftW + startRightW - minW;
+    }
+
+    leftPanel.style.flex = `${newLeftW} 1 0px`;
+    rightPanel.style.flex = `${newRightW} 1 0px`;
+  });
+
+  window.addEventListener('mouseup', function(){
+    if(!dragging) return;
+    dragging = false;
+    handle.classList.remove('active');
+    document.body.classList.remove('dragging-mode');
+
+    // 조절된 비율 상태를 브라우저에 저장
+    localStorage.setItem('live_settle_flex_left', leftPanel.style.flex);
+    localStorage.setItem('live_settle_flex_right', rightPanel.style.flex);
+  });
+})();
+
 loadFromLocalStorage(); loadAutocompleteCache(); renderProducts(); renderSales(); updateHistoryButtons();
 loadAutocompleteData(true); syncColorPickerUI(); loadCopySymbols();
 syncDepositColorPickerUI();
@@ -8025,6 +8546,105 @@ function sortSalesGroupPreserved(salesArray, sortField = null) {
 
 // 👇👇👇 여기에 5-2번 코드를 붙여넣습니다 👇👇👇
 
+// =========================================================================
+// 💡 [신규] 📄 상품등록 전용 종이장부 (Clean View) 제어 및 렌더링 엔진
+// =========================================================================
+window.openPaperProdModal = function() {
+  const modal = document.getElementById('paper-prod-modal');
+  if (!modal) return;
+  const searchInput = document.getElementById('search-paper-prod');
+  if (searchInput) searchInput.value = '';
+  renderPaperProd();
+  modal.style.display = 'flex';
+  if (searchInput) setTimeout(() => searchInput.focus(), 50);
+};
+
+window.closePaperProdModal = function() {
+  const modal = document.getElementById('paper-prod-modal');
+  if (modal) modal.style.display = 'none';
+};
+
+window.clearPaperProdSearch = function() {
+  const searchInput = document.getElementById('search-paper-prod');
+  if (searchInput) searchInput.value = '';
+  renderPaperProd();
+  if (searchInput) searchInput.focus();
+};
+
+window.renderPaperProd = function() {
+  const body = document.getElementById('paper-prod-body');
+  const summaryEl = document.getElementById('paper-prod-summary');
+  if (!body) return;
+
+  const q = (document.getElementById('search-paper-prod')?.value || '').toLowerCase().trim();
+  const sorted = [...products];
+
+  const filtered = sorted.filter(p => {
+    if (!q) return true;
+    const matchCore = (p.prodNum || '').toLowerCase().includes(q) ||
+                      (p.brand || '').toLowerCase().includes(q) ||
+                      (p.features || '').toLowerCase().includes(q) ||
+                      (p.color || '').toLowerCase().includes(q) ||
+                      (p.size || '').toLowerCase().includes(q) ||
+                      (p.specs || '').toLowerCase().includes(q) ||
+                      String(p.price || '').includes(q);
+    return matchCore;
+  });
+
+  if (summaryEl) {
+    if (!q) {
+      summaryEl.textContent = `총 ${products.length}개 등록됨`;
+    } else {
+      summaryEl.innerHTML = `검색결과: <b>${filtered.length}개</b> / 전체 ${products.length}개`;
+    }
+  }
+
+  if (filtered.length === 0) {
+    body.innerHTML = `<tr><td colspan="10" style="text-align:center; padding:50px; color:#94A3B8;">${q ? '검색 결과와 일치하는 상품이 없습니다.' : '등록된 상품이 없습니다.'}</td></tr>`;
+    return;
+  }
+
+  body.innerHTML = filtered.map((p, i) => {
+    const reverseNo = filtered.length - i;
+    const hasSpecs = p.specs && p.specs.trim() !== '';
+
+    // 세부치수 열: 내용이 길어도 표가 망가지지 않게 콤팩트 버튼식 제공 + 호버 시 툴팁 미리보기
+    const specsHtml = hasSpecs
+      ? `<div style="display:inline-flex; align-items:center; justify-content:center; gap:3px;">
+          <button type="button" class="btn btn-history" onclick="openSpecsPopup('edit', '${p.id}')" title="${escapeHtml(p.specs)}" style="padding:2px 7px; font-size:11px; font-weight:800; color:var(--purple-ink); border-color:#D8C7ED; background:#F6F0FC; white-space:nowrap;">📏 치수보기</button>
+          <button type="button" class="btn btn-history" onclick="copySpecsOnly('edit', '${p.id}')" style="padding:2px 5px; font-size:11px;" title="세부치수만 클립보드에 복사">📋</button>
+        </div>`
+      : `<span style="color:#CBD5E1;">-</span>`;
+
+    return `
+      <tr>
+        <td style="text-align:center; font-weight:bold; color:#64748B;">${reverseNo}</td>
+        <td style="font-weight:800; color:#0F172A;">${escapeHtml(p.prodNum) || '-'}</td>
+        <td style="font-weight:800; color:var(--purple-ink);">${escapeHtml(p.brand) || '-'}</td>
+        <td style="color:#1E293B; word-break:break-all;">${escapeHtml(p.features) || '-'}</td>
+        <td style="text-align:center; white-space:nowrap;">
+          <button type="button" class="btn btn-purple" style="padding:3px 8px; font-size:11px; font-weight:800; white-space:nowrap; display:inline-flex; align-items:center; justify-content:center;" onclick="applyProductFromPaperModal('${p.id}')">적용</button>
+        </td>
+        <td style="font-size:12px; color:#475569;">${escapeHtml(p.color) || '-'}</td>
+        <td style="font-size:12px; color:#475569;">${escapeHtml(p.size) || '-'}</td>
+        <td class="num" style="text-align:right; padding-right:8px; font-weight:800; color:#0F172A;">${p.price ? fmt(p.price) : '-'}</td>
+        <td style="text-align:center;">${specsHtml}</td>
+        <td style="text-align:center;">
+          <button type="button" class="btn btn-history" style="padding:3px 8px; font-size:11px; font-weight:800; color:var(--blue); border-color:#BFDBFE;" onclick="copyProductToClipboard('${p.id}'); toast('📋 상품 정보 복사 완료!');">복사</button>
+        </td>
+      </tr>
+    `;
+  }).join('');
+};
+
+// 💡 종이장부 모달에서 [적용] 클릭 시: 종이장부 자동 닫힘 ➔ 판매장부 자동 등록 & 반짝임 연동
+window.applyProductFromPaperModal = function(prodId) {
+  closePaperProdModal();
+  setTimeout(() => {
+    applyProductToSale(prodId);
+  }, 50);
+};
+
 // 📄 종이장부(Clean View) 모달 제어 및 통합 렌더링 엔진
 window.openPaperLedgerModal = function() {
   const modal = document.getElementById('paper-ledger-modal');
@@ -8215,11 +8835,33 @@ function renderPaperLedger() {
 // =========================================================================
 // 🎨 스마트 플로팅 칩 바 (색상 26종 원형 칩 + 사이즈 10종 다중 선택 엔진)
 // =========================================================================
+// 전역 변수로 진/연 상태 관리
+window.activeColorMod = ''; 
+
+window.toggleColorMod = function(mod, event) {
+  if(event) { event.preventDefault(); event.stopPropagation(); }
+  window.activeColorMod = (window.activeColorMod === mod) ? '' : mod;
+  
+  // UI 업데이트 (팝업창, 가로바 공통 적용)
+  document.querySelectorAll('.btn-color-mod').forEach(btn => {
+    if(btn.dataset.mod === window.activeColorMod) {
+      btn.style.background = 'var(--purple-ink)';
+      btn.style.color = '#fff';
+      btn.style.borderColor = 'var(--purple-ink)';
+    } else {
+      btn.style.background = '#F8FAFC';
+      btn.style.color = 'var(--ink)';
+      btn.style.borderColor = '#CBD5E1';
+    }
+  });
+};
+
 const CHIP_COLORS = [
   { name: '블랙', dot: '#111111' },
   { name: '화이트', dot: '#FFFFFF', border: true },
   { name: '크림', dot: '#FFFDD0', border: true },
   { name: '그레이', dot: '#9E9E9E' },
+  { name: '멜란지', dot: '#B5B5C0' },
   { name: '베이지', dot: '#E8D8C8' },
   { name: '네이비', dot: '#0F2547' },
   { name: '차콜', dot: '#3E444C' },
@@ -8298,9 +8940,16 @@ window.openChipPicker = function(inputEl, type, contextType = 'sale', rowId = nu
 
   // 💡 사용자가 직접 마우스로 옮긴 적이 없을 때 자동 위치 계산
   if (!popup.dataset.userMoved) {
-    const rect = inputEl.getBoundingClientRect();
+    let rect = inputEl.getBoundingClientRect();
+    // 💡 input이 아직 화면에 표시되지 않아 좌표가 (0, 0)으로 잡히는 타이밍 오류 방지
+    if ((rect.left === 0 && rect.top === 0) || (rect.width === 0 && rect.height === 0)) {
+      const fallbackWrap = inputEl.closest('.cell-wrap') || inputEl.closest('td') || inputEl.parentElement;
+      if (fallbackWrap) {
+        rect = fallbackWrap.getBoundingClientRect();
+      }
+    }
     let left = rect.left;
-    let top = rect.bottom + 4; // 입력칸 바로 밑 4px 간격
+    let top = rect.bottom + 4;
 
     // 💡 [핵심] 사이즈일 경우 시작선을 바로 왼쪽의 [색상] 항목 좌측에 맞춤
     if (type === 'size') {
@@ -8350,6 +8999,7 @@ window.closeChipPicker = function(resetPosition = true) {
     if (resetPosition) delete popup.dataset.userMoved; // 닫힐 때만 위치 기억 리셋
   }
   activeChipContext = { input: null, type: null, contextType: null, rowId: null, replaceOnFirstClick: false };
+  window.activeColorMod = ''; // [추가] 진/연 모디파이어 초기화
 };
 
 // 💡 [추가] 테이블 팝업 전용 색상/사이즈 자동완성 칩스 엔진
@@ -8371,8 +9021,22 @@ window.openStockHeaderChipPicker = function(inputEl, type, idx) {
       <span>⠿ ${titleText}</span>
       <span style="cursor:pointer; color:var(--ink-soft); font-size:14px;" onclick="closeChipPicker()">✕</span>
     </div>
-    <div class="chip-picker-grid" style="${gridWrapStyle}">
   `;
+
+  if (isColor) {
+    const getModStyle = (mod) => (window.activeColorMod === mod) 
+      ? 'background:var(--purple-ink); color:#fff; border-color:var(--purple-ink);' 
+      : 'background:#F8FAFC; color:var(--ink); border-color:#CBD5E1;';
+    
+    html += `
+    <div style="display:flex; gap:6px; margin: 4px 0 8px 0; padding-bottom:8px; border-bottom:1px dashed var(--line);">
+      <button class="btn btn-color-mod" data-mod="진" style="flex:1; padding:4px; font-size:12px; font-weight:800; border:1px solid #CBD5E1; border-radius:4px; cursor:pointer; transition:0.15s; ${getModStyle('진')}" onclick="toggleColorMod('진', event)">진 (Dark)</button>
+      <button class="btn btn-color-mod" data-mod="연" style="flex:1; padding:4px; font-size:12px; font-weight:800; border:1px solid #CBD5E1; border-radius:4px; cursor:pointer; transition:0.15s; ${getModStyle('연')}" onclick="toggleColorMod('연', event)">연 (Light)</button>
+    </div>
+    `;
+  }
+  
+  html += `<div class="chip-picker-grid" style="${gridWrapStyle}">`;
 
   if (isColor) {
     CHIP_COLORS.forEach(c => {
@@ -8401,7 +9065,6 @@ window.openStockHeaderChipPicker = function(inputEl, type, idx) {
   html += `</div>`;
   popup.innerHTML = html;
 
-  // 테이블 팝업창 위치를 고려한 화면 안전 배치
   const rect = inputEl.getBoundingClientRect();
   let left = rect.left;
   let top = rect.bottom + 4;
@@ -8424,6 +9087,9 @@ window.openStockHeaderChipPicker = function(inputEl, type, idx) {
 };
 
 window.selectStockHeaderChip = function(type, idx, val) {
+  if (type === 'color' && window.activeColorMod) {
+    val = window.activeColorMod + val;
+  }
   saveStockHeader(type, idx, val);
   closeChipPicker(false);
 };
@@ -8435,10 +9101,79 @@ function renderChipPickerContent() {
   const currentVal = (activeChipContext.input.value || '').trim();
   const currentTokens = currentVal.split(/[\s,]+/).filter(Boolean);
 
-  const isColor = activeChipContext.type === 'color';
+  const type = activeChipContext.type;
+
+  // -----------------------------------------------------------
+  // 🏷️ [신규] 브랜드 칩스 렌더링 (상단 15개 고정 + 하단 가나다순 스크롤)
+  // -----------------------------------------------------------
+  if (type === 'brand') {
+    popup.style.maxWidth = '420px';
+    popup.style.width = '420px';
+
+    // 1. 구글 시트 상단 15개 추출
+    const top15 = [];
+    const top15Set = new Set();
+    (autoBrands || []).forEach(b => {
+      const s = String(b || '').trim();
+      if (s && !top15Set.has(s) && top15.length < 15) {
+        top15Set.add(s);
+        top15.push(s);
+      }
+    });
+
+    // 2. 나머지 브랜드 수집 (시트 16번째 이후 + 상품등록 대장 브랜드)
+    const restSet = new Set();
+    (autoBrands || []).forEach(b => {
+      const s = String(b || '').trim();
+      if (s && !top15Set.has(s)) restSet.add(s);
+    });
+    (products || []).forEach(p => {
+      const s = String(p.brand || '').trim();
+      if (s && !top15Set.has(s)) restSet.add(s);
+    });
+    const restBrands = Array.from(restSet).sort((a, b) => a.localeCompare(b, 'ko-KR', { numeric: true }));
+
+    let html = `
+      <div class="chip-picker-header" title="마우스로 잡고 원하는 위치로 이동할 수 있습니다">
+        <span>⠿ 🏷️ 브랜드 선택</span>
+        <span style="cursor:pointer; color:var(--ink-soft); font-size:14px;" onclick="closeChipPicker()">✕</span>
+      </div>
+      <div style="max-height: 320px; overflow-y: auto; padding-right: 2px;">
+        <!-- 상단: 자주 쓰는 브랜드 (15개) -->
+        <div style="font-size: 11px; font-weight: 800; color: var(--accent-ink); background: #FFFDF0; border: 1px solid var(--accent); padding: 3px 6px; border-radius: 4px; margin-bottom: 6px;">
+          ⭐ 자주 쓰는 브랜드 (상단 15개)
+        </div>
+        <div class="chip-picker-grid" style="flex-wrap: wrap; margin-bottom: 10px;">
+          ${top15.map(b => `
+            <div class="chip-item ${currentVal === b ? 'active' : ''}" style="border-color: #E2A63B; font-weight: 800;" onmousedown="event.preventDefault()" onclick="selectBrandChip('${escapeHtml(b)}', event)">
+              <span>${escapeHtml(b)}</span>
+            </div>
+          `).join('')}
+        </div>
+
+        <!-- 하단: 전체 브랜드 (가나다순) -->
+        <div style="font-size: 11px; font-weight: 800; color: var(--ink-soft); background: #F1F5F9; border: 1px solid var(--line); padding: 3px 6px; border-radius: 4px; margin-bottom: 6px;">
+          📜 전체 브랜드 (가나다순)
+        </div>
+        <div class="chip-picker-grid" style="flex-wrap: wrap;">
+          ${restBrands.map(b => `
+            <div class="chip-item ${currentVal === b ? 'active' : ''}" onmousedown="event.preventDefault()" onclick="selectBrandChip('${escapeHtml(b)}', event)">
+              <span>${escapeHtml(b)}</span>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `;
+    popup.innerHTML = html;
+    return;
+  }
+
+  // -----------------------------------------------------------
+  // 기존 색상 / 사이즈 렌더링 유지
+  // -----------------------------------------------------------
+  const isColor = type === 'color';
   const titleText = isColor ? '🎨 색상 다중 선택' : '📏 사이즈 다중 선택';
 
-  // 💡 [핵심] 색상은 바둑판(380px), 사이즈는 1줄로 나열되도록 폭 제한 해제
   if (isColor) {
     popup.style.maxWidth = '380px';
     popup.style.width = 'auto';
@@ -8447,7 +9182,6 @@ function renderChipPickerContent() {
     popup.style.width = 'max-content';
   }
 
-  // 💡 사이즈는 1줄(nowrap), 색상은 여러줄(wrap)
   const gridWrapStyle = isColor ? 'flex-wrap: wrap;' : 'flex-wrap: nowrap;';
 
   let html = `
@@ -8487,6 +9221,23 @@ function renderChipPickerContent() {
   popup.innerHTML = html;
 }
 
+// 💡 브랜드 칩 클릭 시 즉시 입력 및 팝업 닫기
+window.selectBrandChip = function(brandName, event) {
+  if (event) {
+    event.preventDefault();
+    event.stopPropagation();
+  }
+  if (!activeChipContext.input) return;
+
+  activeChipContext.input.value = brandName;
+  activeChipContext.input.dispatchEvent(new Event('input', { bubbles: true }));
+
+  if (activeChipContext.rowId) {
+    updateProdField(activeChipContext.rowId, 'brand', brandName);
+  }
+  closeChipPicker(false);
+};
+
 // =========================================================
 // 🎨 색상/사이즈 토글 엔진 (팝업창 및 가로바 점등/점멸 완벽 동기화)
 // =========================================================
@@ -8499,7 +9250,13 @@ window.toggleChipItem = function(val, event) {
   const rId = (activeSaleBarContext && activeSaleBarContext.rowId) || (activeChipContext && activeChipContext.rowId);
   const f = (activeSaleBarContext && activeSaleBarContext.field) || (activeChipContext && activeChipContext.type);
 
-  // 💡 화면에 현재 살아있는 실제 input을 DOM에서 직접 찾음 (마감정산 칸 추가 보완)
+  // 💡 [수정됨] 클릭한 값에 현재 켜져있는 진/연 텍스트 강제 결합
+  const isColorType = (f === 'color');
+  let finalVal = val;
+  if (isColorType && window.activeColorMod) {
+    finalVal = window.activeColorMod + val;
+  }
+
   let inputEl = (rId && f) ? (document.querySelector(`#wrap-${rId}-${f} input`) || document.querySelector(`#wrap-prod-${rId}-${f} input`) || document.querySelector(`#wrap-settle-${rId}-${f} input`)) : null;
   if (!inputEl) inputEl = activeChipContext.input;
   if (!inputEl) return;
@@ -8510,32 +9267,29 @@ window.toggleChipItem = function(val, event) {
   let currentVal = (inputEl.value || '').trim();
   let tokens = currentVal.split(/[\s,]+/).filter(Boolean);
 
-  // 💡 [핵심 추가] 실시간 판매내역(sale) 및 정산(settle)의 '사이즈'는 중복 방지 및 즉시 단일 선택
   const isSaleSize = (activeChipContext.contextType === 'sale' || activeChipContext.contextType === 'settle') && f === 'size';
 
   if (isSaleSize) {
-    tokens = [val]; // 기존 내용 무시하고 클릭한 값 하나만 확정
+    tokens = [finalVal]; 
   } else {
-    // 💡 기존 점등(추가) / 점멸(제거) 토글 (상품등록, 색상 등에서는 다중 선택 유지)
-    const idx = tokens.indexOf(val);
+    // 선택 취소/추가 토글
+    const idx = tokens.indexOf(finalVal);
     if (idx > -1) {
-      tokens.splice(idx, 1); // 켜져 있던 항목이면 제거
+      tokens.splice(idx, 1); 
     } else {
-      tokens.push(val); // 꺼져 있던 항목이면 추가
+      tokens.push(finalVal); 
     }
   }
 
   const resultStr = tokens.join(' ');
-  inputEl.value = resultStr; // 입력창 즉시 반영
+  inputEl.value = resultStr; 
 
-  // 셀 보기 텍스트(span)도 즉시 동기화
   const wrap = inputEl.closest('.cell-wrap');
   if (wrap) {
     const viewSpan = wrap.querySelector('.view-text');
     if (viewSpan) viewSpan.textContent = resultStr || '';
   }
 
-  // 장부 데이터 배열 동기화
   if (activeChipContext.contextType === 'new') {
     syncStockWithTextInputs('new');
   } else if (rId) {
@@ -8546,28 +9300,31 @@ window.toggleChipItem = function(val, event) {
     }
   }
 
-  // 💡 [추가] 사이즈 단일 선택인 경우, 값 입력 후 가로 바/팝업창 즉시 닫기
   if (isSaleSize) {
     if (typeof closeSaleAcBar === 'function') closeSaleAcBar(true);
     if (typeof closeChipPicker === 'function') closeChipPicker(true);
-    return; // 아래 UI 점멸 로직은 실행할 필요 없이 종료
+    return; 
   }
 
-  // 💡 1. 팝업창(chip-picker-popup) 안의 칩 아이템 점등/점멸(active) 실시간 동기화
+  // 💡 팝업창 UI 동기화 (진/연 붙은 글자도 원래 칩 이름으로 불 들어오게 수정)
   const popup = document.getElementById('chip-picker-popup');
   if (popup && popup.style.display !== 'none') {
     popup.querySelectorAll('.chip-item').forEach(item => {
       const chipText = item.querySelector('span:last-child')?.textContent.trim() || item.textContent.trim();
-      item.classList.toggle('active', tokens.includes(chipText));
+      const isActive = tokens.some(t => t.replace(/^(진|연)/, '') === chipText);
+      item.classList.toggle('active', isActive);
     });
   }
 
-  // 💡 2. 가로 툴바(sale-ac-bar) 안의 바 아이템 점등/점멸(active) 실시간 동기화
+  // 💡 가로바 UI 동기화
   const bar = document.getElementById('sale-ac-bar');
   if (bar && bar.style.display !== 'none') {
     bar.querySelectorAll('.bar-item').forEach(item => {
       const chipText = item.querySelector('span:last-child')?.textContent.trim() || item.textContent.trim();
-      item.classList.toggle('active', tokens.includes(chipText));
+      if (chipText !== '진' && chipText !== '연') {
+        const isActive = tokens.some(t => t.replace(/^(진|연)/, '') === chipText);
+        item.classList.toggle('active', isActive);
+      }
     });
   }
 };
@@ -8578,9 +9335,9 @@ document.addEventListener('mousedown', function(e) {
   if (!popup || popup.style.display === 'none') return;
   if (popup.contains(e.target)) return;
 
-  // 💡 다른 행의 색상 셀을 클릭했을 때는 팝업을 닫지 않고 위치 유지
-  const isColorCell = e.target.closest('[id*="-color"], #new-prod-color');
-  if (isColorCell) return;
+  // 💡 색상이나 브랜드 셀을 클릭했을 때는 팝업을 닫지 않고 위치 유지
+  const isColorOrBrandCell = e.target.closest('[id*="-color"], #new-prod-color, [id*="-brand"], #new-prod-brand');
+  if (isColorOrBrandCell) return;
 
   if (activeChipContext.input && (e.target === activeChipContext.input || activeChipContext.input.closest('.cell-wrap')?.contains(e.target))) {
     return;
@@ -8724,6 +9481,7 @@ window.closeSaleAcBar = function(resetPosition = true) {
     if (resetPosition) delete bar.dataset.userMoved;
   }
   activeSaleBarContext = { type: null, field: null, rowId: null, input: null, isProd: false };
+  window.activeColorMod = ''; // [추가] 진/연 모디파이어 초기화
 };
 
 // 💡 [핵심 수정] 바깥 클릭 감지기: 상품등록 색상/사이즈 클릭 시 판매가 칩스 즉시 닫기
@@ -8751,27 +9509,125 @@ document.addEventListener('mousedown', function (e) {
 });
 
 // 💡 가로 바 렌더링: 색상 / 사이즈
-window.renderSaleBarChips = function(type, rowId, inputEl) {
-  const bar = document.getElementById('sale-ac-bar');
-  if (!bar || !inputEl) return;
+function renderChipPickerContent() {
+  const popup = document.getElementById('chip-picker-popup');
+  if (!popup || !activeChipContext.input) return;
 
-  activeSaleBarContext = { type, field: type, rowId, input: inputEl, isProd: false };
-  activeChipContext = { input: inputEl, type, contextType: 'sale', rowId };
+  const currentVal = (activeChipContext.input.value || '').trim();
+  const currentTokens = currentVal.split(/[\s,]+/).filter(Boolean);
 
-  const prevScrollLeft = bar.scrollLeft;
-  const currentTokens = (inputEl.value || '').trim().split(/[\s,]+/).filter(Boolean);
-  const titleText = (type === 'color') ? '🎨 색상' : '📏 사이즈';
+  const type = activeChipContext.type;
 
-  let html = `<span class="bar-title" title="마우스로 잡고 창 위치 이동">${titleText}</span>`;
+  // -----------------------------------------------------------
+  // 브랜드 칩스 렌더링
+  // -----------------------------------------------------------
+  if (type === 'brand') {
+    popup.style.maxWidth = '420px';
+    popup.style.width = '420px';
 
-  if (type === 'color') {
+    const top15 = [];
+    const top15Set = new Set();
+    (autoBrands || []).forEach(b => {
+      const s = String(b || '').trim();
+      if (s && !top15Set.has(s) && top15.length < 15) {
+        top15Set.add(s);
+        top15.push(s);
+      }
+    });
+
+    const restSet = new Set();
+    (autoBrands || []).forEach(b => {
+      const s = String(b || '').trim();
+      if (s && !top15Set.has(s)) restSet.add(s);
+    });
+    (products || []).forEach(p => {
+      const s = String(p.brand || '').trim();
+      if (s && !top15Set.has(s)) restSet.add(s);
+    });
+    const restBrands = Array.from(restSet).sort((a, b) => a.localeCompare(b, 'ko-KR', { numeric: true }));
+
+    let html = `
+      <div class="chip-picker-header" title="마우스로 잡고 원하는 위치로 이동할 수 있습니다">
+        <span>⠿ 🏷️ 브랜드 선택</span>
+        <span style="cursor:pointer; color:var(--ink-soft); font-size:14px;" onclick="closeChipPicker()">✕</span>
+      </div>
+      <div style="max-height: 320px; overflow-y: auto; padding-right: 2px;">
+        <div style="font-size: 11px; font-weight: 800; color: var(--accent-ink); background: #FFFDF0; border: 1px solid var(--accent); padding: 3px 6px; border-radius: 4px; margin-bottom: 6px;">
+          ⭐ 자주 쓰는 브랜드 (상단 15개)
+        </div>
+        <div class="chip-picker-grid" style="flex-wrap: wrap; margin-bottom: 10px;">
+          ${top15.map(b => `
+            <div class="chip-item ${currentVal === b ? 'active' : ''}" style="border-color: #E2A63B; font-weight: 800;" onmousedown="event.preventDefault()" onclick="selectBrandChip('${escapeHtml(b)}', event)">
+              <span>${escapeHtml(b)}</span>
+            </div>
+          `).join('')}
+        </div>
+
+        <div style="font-size: 11px; font-weight: 800; color: var(--ink-soft); background: #F1F5F9; border: 1px solid var(--line); padding: 3px 6px; border-radius: 4px; margin-bottom: 6px;">
+          📜 전체 브랜드 (가나다순)
+        </div>
+        <div class="chip-picker-grid" style="flex-wrap: wrap;">
+          ${restBrands.map(b => `
+            <div class="chip-item ${currentVal === b ? 'active' : ''}" onmousedown="event.preventDefault()" onclick="selectBrandChip('${escapeHtml(b)}', event)">
+              <span>${escapeHtml(b)}</span>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `;
+    popup.innerHTML = html;
+    return;
+  }
+
+  // -----------------------------------------------------------
+  // 색상 / 사이즈 렌더링
+  // -----------------------------------------------------------
+  const isColor = type === 'color';
+  const titleText = isColor ? '🎨 색상 다중 선택' : '📏 사이즈 다중 선택';
+
+  if (isColor) {
+    popup.style.maxWidth = '380px';
+    popup.style.width = 'auto';
+  } else {
+    popup.style.maxWidth = 'none';
+    popup.style.width = 'max-content';
+  }
+
+  const gridWrapStyle = isColor ? 'flex-wrap: wrap;' : 'flex-wrap: nowrap;';
+
+  let html = `
+    <div class="chip-picker-header" title="마우스로 잡고 원하는 위치로 이동할 수 있습니다">
+      <span>⠿ ${titleText}</span>
+      <span style="cursor:pointer; color:var(--ink-soft); font-size:14px;" onclick="closeChipPicker()">✕</span>
+    </div>
+  `;
+
+  if (isColor) {
+    // 💡 [수정됨] 상품등록 팝업창 상단에 진/연 토글 버튼 추가
+    const getModStyle = (mod) => (window.activeColorMod === mod) 
+      ? 'background:var(--purple-ink); color:#fff; border-color:var(--purple-ink);' 
+      : 'background:#F8FAFC; color:var(--ink); border-color:#CBD5E1;';
+    
+    html += `
+    <div style="display:flex; gap:6px; margin: 4px 0 8px 0; padding-bottom:8px; border-bottom:1px dashed var(--line);">
+      <button class="btn btn-color-mod" data-mod="진" style="flex:1; padding:4px; font-size:12px; font-weight:800; border:1px solid #CBD5E1; border-radius:4px; cursor:pointer; transition:0.15s; ${getModStyle('진')}" onclick="toggleColorMod('진', event)">진 (Dark)</button>
+      <button class="btn btn-color-mod" data-mod="연" style="flex:1; padding:4px; font-size:12px; font-weight:800; border:1px solid #CBD5E1; border-radius:4px; cursor:pointer; transition:0.15s; ${getModStyle('연')}" onclick="toggleColorMod('연', event)">연 (Light)</button>
+    </div>
+    `;
+  }
+
+  html += `<div class="chip-picker-grid" style="${gridWrapStyle}">`;
+
+  if (isColor) {
     CHIP_COLORS.forEach(c => {
-      const isActive = currentTokens.includes(c.name);
+      // 진/연이 붙어있어도 칩스에 불이 들어오게 인식
+      const isActive = currentTokens.some(t => t.replace(/^(진|연)/, '') === c.name);
       const isGrad = c.dot.includes('gradient');
       const dotStyle = isGrad ? `background: ${c.dot};` : `background-color: ${c.dot};`;
       const borderStyle = c.border ? 'border: 1px solid #CBD5E1;' : '';
+
       html += `
-        <div class="bar-item ${isActive ? 'active' : ''}" onmousedown="event.preventDefault()" onclick="toggleChipItem('${c.name}', event);">
+        <div class="chip-item ${isActive ? 'active' : ''}" onmousedown="event.preventDefault()" onclick="toggleChipItem('${c.name}', event)">
           <span class="chip-color-dot" style="${dotStyle} ${borderStyle}"></span>
           <span>${c.name}</span>
         </div>
@@ -8781,18 +9637,16 @@ window.renderSaleBarChips = function(type, rowId, inputEl) {
     CHIP_SIZES.forEach(sz => {
       const isActive = currentTokens.includes(sz);
       html += `
-        <div class="bar-item ${isActive ? 'active' : ''}" onmousedown="event.preventDefault()" onclick="toggleChipItem('${sz}', event);">
+        <div class="chip-item ${isActive ? 'active' : ''}" onmousedown="event.preventDefault()" onclick="toggleChipItem('${sz}', event)">
           <span>${sz}</span>
         </div>
       `;
     });
   }
 
-  html += `<span class="bar-close" onclick="closeSaleAcBar()">✕ 닫기</span>`;
-  bar.innerHTML = html;
-  bar.scrollLeft = prevScrollLeft;
-  showFloatingSaleBar(bar);
-};
+  html += `</div>`;
+  popup.innerHTML = html;
+}
 
 // 💡 가로 바 렌더링: 가격 1단계 (상품등록 소수점 모드 & 장부 원단위 모드 완벽 분기)
 window.renderSaleBarPriceStep1 = function(field, id, inputEl, isProd = false) {
@@ -8920,15 +9774,59 @@ window.selectSaleBarPriceFinal = function(id, field, finalValue, isProd = false)
 
   closeSaleAcBar();
 };
+
+// 👇👇👇 상품등록 고정입력창 실시간 임시저장 및 자동 복원 기능 👇👇👇
+(function initFixedProdAutoSave() {
+  const FIXED_PROD_INPUTS = ['new-prod-num', 'new-prod-brand', 'new-prod-features', 'new-prod-color', 'new-prod-size', 'new-prod-price', 'new-prod-specs'];
+
+  // 입력값을 실시간으로 로컬 스토리지에 저장
+  function saveFixedProdState() {
+    const tempData = {};
+    FIXED_PROD_INPUTS.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) tempData[id] = el.value;
+    });
+    localStorage.setItem('live_ledger_temp_fixed_prod', JSON.stringify(tempData));
+  }
+
+  // 저장되어 있던 입력값 불러와서 채우기
+  function loadFixedProdState() {
+    const stored = localStorage.getItem('live_ledger_temp_fixed_prod');
+    if (stored) {
+      try {
+        const tempData = JSON.parse(stored);
+        FIXED_PROD_INPUTS.forEach(id => {
+          const el = document.getElementById(id);
+          if (el && tempData[id]) el.value = tempData[id];
+        });
+      } catch (e) {}
+    }
+  }
+
+  // 각각의 입력칸에 타이핑/선택/칩스 클릭 이벤트가 발생할 때마다 자동 저장 등록
+  FIXED_PROD_INPUTS.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.addEventListener('input', saveFixedProdState);
+      el.addEventListener('change', saveFixedProdState);
+    }
+  });
+
+  // 페이지(앱)가 새로 로딩될 때 저장된 값 즉시 복원
+  loadFixedProdState();
+})();
+// 👆👆👆 여기까지 👆👆👆
+
 </script>
 
 <!-- 적립금&무배 모달창 HTML -->
-<div id="reward-modal" class="modal-overlay" onclick="closeRewardModal()">
+<div id="reward-modal" class="modal-overlay">
   <div class="modal-content" onclick="event.stopPropagation()" style="max-width: 680px;">
     <div class="modal-header">
       <h3 style="display: flex; align-items: center; gap: 6px;">🎁 적립금 & 무배 관리 (구글시트 I~L열 연동)</h3>
       <div style="display: flex; gap: 6px; align-items: center;">
         <button type="button" class="btn btn-history" onclick="addRewardRow(true)" style="padding: 4px 10px; font-weight: bold; border-color: var(--blue); color: var(--blue);">+ 항목 추가</button>
+        <button class="btn" onclick="closeRewardModal()" style="background:#C0524A; color:#fff; border:none; padding:5px 12px; font-size:12.5px; font-weight:800; border-radius:4px; cursor:pointer;">닫기 ✕</button>
         <button type="button" class="btn-close" onclick="closeRewardModal()">×</button>
       </div>
     </div>
