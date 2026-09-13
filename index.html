@@ -863,7 +863,7 @@
     color: #1E293B;
     vertical-align: middle;
   }
-  .paper-table tr:hover td {
+  .paper-table tr:not([style*="background"]):hover td {
     background-color: #F8FAFC;
   }
   .paper-badge {
@@ -1229,7 +1229,7 @@
           <button type="button" class="btn" onclick="copyFilteredBuyers()" style="padding: 4px 10px; height: 26px; font-size: 11px; font-weight: 800; background: #FFF0F5; color: #D86B8A; border: 1px solid #F5C6D3; border-radius: 4px; cursor: pointer; white-space: nowrap; box-shadow: 0 2px 6px rgba(216,107,138,0.3);" title="현재 필터된 상품의 구매고객 목록 복사">🍒 구매고객 복사</button>
         </div>
         <div id="btn-copy-customer-wrap" style="display: none;">
-          <button type="button" class="btn" onclick="copyCustomerHistory()" style="padding: 4px 10px; height: 26px; font-size: 11px; font-weight: 800; background: #EFF6FF; color: #2563EB; border: 1px solid #BFDBFE; border-radius: 4px; cursor: pointer; white-space: nowrap; box-shadow: 0 2px 6px rgba(37,99,235,0.25);" title="현재 필터된 고객의 전체 구매내역 복사">👤 고객별 내역</button>
+          <button type="button" class="btn" onclick="copyCustomerHistory()" style="padding: 4px 10px; height: 26px; font-size: 11px; font-weight: 800; background: #EFF6FF; color: #2563EB; border: 1px solid #BFDBFE; border-radius: 4px; cursor: pointer; white-space: nowrap; box-shadow: 0 2px 6px rgba(37,99,235,0.25);" title="현재 필터된 고객의 전체 구매내역 복사">🍒 고객별 내역</button>
         </div>
       </div>
     </div>
@@ -1535,7 +1535,7 @@
       </div>
 
       <div style="display: flex; gap: 8px; align-items: center; margin-left: auto;">
-        <button type="button" class="btn btn-history" onclick="window.print()" style="font-size: 12px; font-weight: bold;">🖨️ 인쇄</button>
+        <button type="button" id="btn-paper-brand-sort" class="btn btn-purple" onclick="togglePaperProdBrandSort()" style="font-size: 12px; font-weight: 800; padding: 4px 10px;" title="같은 브랜드끼리 묶어서 정렬합니다">🏷️ 브랜드 정렬</button>
         <button type="button" class="btn" onclick="closePaperProdModal()" style="background:#C0524A; color:#fff; border:none; padding:5px 14px; font-size:12px; font-weight:800; border-radius:4px; cursor:pointer;">닫기 ✕</button>
         <button type="button" class="btn-close" onclick="closePaperProdModal()">×</button>
       </div>
@@ -1545,11 +1545,10 @@
         <colgroup>
           <col style="width: 45px;">   <!-- No. -->
           <col style="width: 55px;">   <!-- 품번 -->
-          <col style="width: 110px;">  <!-- 브랜드명 -->
-          <col style="width: auto;">   <!-- 특징 -->
+          <col style="width: auto;">   <!-- 상품명 -->
+          <col style="width: 150px;">  <!-- 색상 (기존 90px에서 약 30% 증가) -->
+          <col style="width: 80px;">   <!-- 사이즈 (기존 80px 유지) -->
           <col style="width: 65px;">   <!-- 적용 -->
-          <col style="width: 90px;">   <!-- 색상 -->
-          <col style="width: 80px;">   <!-- 사이즈 -->
           <col style="width: 90px;">   <!-- 판매가 -->
           <col style="width: 120px;">  <!-- 세부치수 -->
           <col style="width: 65px;">   <!-- 복사 -->
@@ -1558,11 +1557,10 @@
           <tr>
             <th style="text-align: center;">No.</th>
             <th>품번</th>
-            <th>브랜드명</th>
-            <th>특징</th>
-            <th style="text-align: center;">적용</th>
+            <th>상품명</th>
             <th>색상</th>
             <th>사이즈</th>
+            <th style="text-align: center;">적용</th>
             <th style="text-align: right; padding-right: 8px;">판매가</th>
             <th style="text-align: center;">세부치수</th>
             <th style="text-align: center;">복사</th>
@@ -1577,12 +1575,22 @@
 <!-- 📄 종이장부 Clean View 전체화면 모달 -->
 <div id="paper-ledger-modal" class="modal-overlay">
   <div class="modal-content paper-ledger-container" onclick="event.stopPropagation()">
-    <div class="modal-header" style="padding-bottom: 10px; margin-bottom: 12px;">
+    <div class="modal-header" style="padding-bottom: 10px; margin-bottom: 12px; gap: 10px; flex-wrap: wrap;">
       <div style="display: flex; align-items: center; gap: 10px;">
         <h3 style="margin: 0; font-size: 16px; font-weight: 800; color: #1E293B;">📄 실시간 판매 종이장부 (Clean View)</h3>
-        <span id="paper-ledger-summary" style="font-size: 12.5px; font-weight: 700; color: var(--purple-ink); background: #F1EFF7; padding: 3px 8px; border-radius: 4px;"></span>
+        <span id="paper-ledger-summary" style="font-size: 12px; font-weight: 700; color: var(--purple-ink); background: #F1EFF7; padding: 3px 8px; border-radius: 4px;"></span>
       </div>
-      <div style="display: flex; gap: 8px; align-items: center;">
+
+      <!-- 💡 상단 실시간 검색창 -->
+      <div style="display: flex; align-items: center; gap: 4px; flex: 1; min-width: 220px; max-width: 360px;">
+        <input type="text" id="search-paper-sale" class="search-input" style="width: 100%; border: 2px solid var(--purple-ink); padding: 5px 10px; font-size: 12.5px; background: #FFFDF9;" placeholder="🔍 품번, 상품명, 고객명, 옵션, 메모..." oninput="renderPaperLedger()">
+        <button type="button" class="btn btn-history" onclick="clearPaperSaleSearch()" style="padding: 4px 9px; height: 28px; font-weight: 800; color: var(--danger); border-color: #F5B0AD;" title="검색어 지우기">✕</button>
+      </div>
+
+      <!-- 💡 필터 태그 및 복사 버튼(구매고객 복사 / 고객별 내역) 동적 표시 영역 -->
+      <div id="paper-ledger-filter-actions" style="display: flex; align-items: center; gap: 6px;"></div>
+
+      <div style="display: flex; gap: 8px; align-items: center; margin-left: auto;">
         <button class="btn btn-history" onclick="window.print()" style="font-size: 12px; font-weight: bold;">🖨️ 인쇄</button>
         <button class="btn" onclick="closePaperLedgerModal()" style="background:#C0524A; color:#fff; border:none; padding:5px 12px; font-size:12px; font-weight:800; border-radius:4px; cursor:pointer;">닫기 ✕</button>
         <button class="btn-close" onclick="closePaperLedgerModal()">×</button>
@@ -2019,9 +2027,29 @@ function cycleRowHighlight(id, listType = 'sale') {
     }
   }
 
+  // 💡 [추가] 1+1 / 세트 그룹인 경우 짝꿍 행도 동일 색상으로 동시 동기화
+  if (listType === 'sale' && target.groupId) {
+    sales.forEach(s => {
+      if (s.groupId === target.groupId) {
+        s.highlighted = target.highlighted;
+      }
+    });
+  }
+
   saveToLocalStorage();
-  if (listType === 'prod') renderProducts();
-  else { renderSales(); renderSettleDetail(); }
+  if (listType === 'prod') {
+    renderProducts();
+    if (typeof renderPaperProd === 'function' && document.getElementById('paper-prod-modal')?.style.display === 'flex') {
+      renderPaperProd();
+    }
+  } else {
+    renderSales();
+    renderSettleDetail();
+    // 💡 [추가] 실시간 판매 종이장부 모달이 열려 있다면 즉시 화면 동시 갱신
+    if (typeof renderPaperLedger === 'function' && document.getElementById('paper-ledger-modal')?.style.display === 'flex') {
+      renderPaperLedger();
+    }
+  }
 }
 
 let lastAutofill = { id: null, field: null, dir: 'up' };
@@ -3333,6 +3361,7 @@ function saveToLocalStorage() {
   localStorage.setItem('live_ledger_products', JSON.stringify(products));
   localStorage.setItem('live_ledger_sales', JSON.stringify(sales));
   localStorage.setItem('live_master_highlight_color', masterHighlightColor);
+  localStorage.setItem('live_active_colors', JSON.stringify(activeHighlightColors)); // 💡 다중 선택 파레트 색상 저장 추가
   localStorage.setItem('live_deposit_global_shipping', String(depositGlobalShipping));
   localStorage.setItem('live_deposit_deduction_map', JSON.stringify(depositDeductionMap));
   localStorage.setItem('live_deposit_row_highlights', JSON.stringify(depositRowHighlights));
@@ -3384,6 +3413,7 @@ function loadFromLocalStorage() {
   const storedDate = localStorage.getItem('live_ledger_date');
   const storedSession = localStorage.getItem('live_ledger_session');
   const storedColor = localStorage.getItem('live_master_highlight_color');
+  const storedActiveColors = localStorage.getItem('live_active_colors'); // 💡 저장된 다중 선택 파레트 색상 불러오기
   const storedWh = localStorage.getItem('live_ledger_wh_name');
 
   if (storedProducts) products = JSON.parse(storedProducts);
@@ -3410,7 +3440,13 @@ function loadFromLocalStorage() {
   }
   if (storedSession && document.getElementById('ledger-session')) { document.getElementById('ledger-session').value = storedSession; }
   else if (document.getElementById('ledger-session')) { document.getElementById('ledger-session').value = ''; }
-  if (storedColor) { masterHighlightColor = storedColor; syncColorPickerUI(); }
+  
+  if (storedColor) { masterHighlightColor = storedColor; }
+  if (storedActiveColors) { 
+    try { activeHighlightColors = JSON.parse(storedActiveColors); } catch(e) {} 
+  }
+  syncColorPickerUI(); // 💡 단일/다중 색상을 모두 불러온 후 UI 동기화
+  
   if (storedWh && document.getElementById('wh-name-input')) { document.getElementById('wh-name-input').value = storedWh; }
   const storedDepShip = localStorage.getItem('live_deposit_global_shipping');
   if (storedDepShip) {
@@ -5869,21 +5905,52 @@ window.addProductFromFixed = function() {
   const prodNum = document.getElementById('new-prod-num').value.trim(); const brand = document.getElementById('new-prod-brand').value.trim(); const features = document.getElementById('new-prod-features').value.trim();
   const color = document.getElementById('new-prod-color').value.trim(); const size = document.getElementById('new-prod-size').value.trim(); const price = document.getElementById('new-prod-price').value.trim(); const specs = document.getElementById('new-prod-specs').value.trim();
   if(!brand && !features && !prodNum){ toast('⚠️ 품번, 브랜드명 또는 특징을 기입한 후 등록해주세요.'); return; }
+  
+  // 💡 신규 등록 시 품번 중복 검사
+  if (prodNum && products.some(p => p.prodNum === prodNum)) {
+    toast(`⚠️ 이미 등록된 품번(${prodNum})입니다. 중복을 피해주세요.`);
+    return;
+  }
+
   saveState(); const stockToSave = currentNewStock ? JSON.parse(JSON.stringify(currentNewStock)) : null;
   const newProd = { id: uid(), prodNum, brand, features, color, size, price, specs, createdAt: Date.now(), stock: stockToSave, highlighted: false };
   products.unshift(newProd); currentNewStock = null; 
   populateAutocompleteLists();
   renderProducts();
+  
+  // 💡 [추가] 방금 등록된 신규 상품 행으로 스크롤 이동 및 1.8초간 형광펜 펄스(반짝임) 효과 실행
+  scrollToRow(`prod-row-${newProd.id}`);
+
   const copyText = formatProductCopyText(newProd); navigator.clipboard.writeText(copyText);
   document.getElementById('new-prod-num').value = ''; document.getElementById('new-prod-brand').value = ''; document.getElementById('new-prod-features').value = ''; document.getElementById('new-prod-color').value = ''; document.getElementById('new-prod-size').value = ''; document.getElementById('new-prod-price').value = ''; document.getElementById('new-prod-specs').value = '';
   
-  // 💡 상품 등록이 정상 완료되었을 때만, 임시 저장되어 있던 입력값을 비워줍니다.
+  // 💡 임시 저장 데이터 비우기
   localStorage.removeItem('live_ledger_temp_fixed_prod');
   
-  document.getElementById('new-prod-brand').focus(); updateMainStockStatus(); saveToLocalStorage(); 
+  // 💡 [수정] 브랜드 자동 포커스를 제거하고 커서를 완전히 밖으로 뺌 + 열려있던 칩스 팝업 강제 종료
+  if (document.activeElement) document.activeElement.blur();
+  if (typeof closeChipPicker === 'function') closeChipPicker();
+  
+  updateMainStockStatus(); saveToLocalStorage(); 
 };
 
-window.updateProdField = function(id, field, value) { const target = products.find(x => x.id === id); if(target) { target[field] = value; if (field === 'color' || field === 'size') { syncStockWithTextInputs('edit', id); } } };
+window.updateProdField = function(id, field, value) { 
+  // 💡 [추가] 직접 수정 시 품번 중복 검사
+  if (field === 'prodNum' && value.trim() !== '') {
+    const isDuplicate = products.some(p => p.id !== id && p.prodNum === value.trim());
+    if (isDuplicate) {
+      toast(`⚠️ 이미 등록된 품번(${value.trim()})입니다. 이전 값으로 되돌립니다.`);
+      renderProducts(); // 수정하기 이전 값으로 화면 되돌림
+      return;
+    }
+  }
+
+  const target = products.find(x => x.id === id); 
+  if(target) { 
+    target[field] = value; 
+    if (field === 'color' || field === 'size') { syncStockWithTextInputs('edit', id); } 
+  } 
+};
 
 window.updateRowField = function(id, field, value) { 
   const target = sales.find(x => x.id === id); 
@@ -5934,6 +6001,14 @@ window.applyProductToSale = function(prodId) {
   const p = products.find(x => x.id === prodId); 
   if(!p) return; 
   const targetName = `${p.brand || ''} ${p.features || ''}`.trim();
+  
+  // 💡 [추가] 적용 시 파레트 첫 번째 색상을 상품에 자동 부여 및 양쪽 화면 동시 반영
+  const colorToApply = (activeHighlightColors && activeHighlightColors.length > 0) ? activeHighlightColors[0] : masterHighlightColor;
+  p.highlighted = colorToApply;
+  renderProducts();
+  if (typeof renderPaperProd === 'function' && document.getElementById('paper-prod-modal')?.style.display === 'flex') {
+    renderPaperProd();
+  }
   
   if (selectedCells.size > 0) {
     let uniqueRowIds = new Set(Array.from(selectedCells).map(c => c.split(':::')[0]));
@@ -8483,9 +8558,19 @@ function sortSalesGroupPreserved(salesArray, sortField = null) {
 // =========================================================================
 // 💡 [신규] 📄 상품등록 전용 종이장부 (Clean View) 제어 및 렌더링 엔진
 // =========================================================================
+// 💡 종이장부 전용 독립 정렬 상태 변수
+let isPaperBrandSorted = false;
+
+window.togglePaperProdBrandSort = function() {
+  isPaperBrandSorted = !isPaperBrandSorted;
+  renderPaperProd();
+  toast(isPaperBrandSorted ? '🏷️ 종이장부를 브랜드별로 묶어 정렬했습니다.' : '🔄 종이장부를 원래 등록 순서로 되돌렸습니다.');
+};
+
 window.openPaperProdModal = function() {
   const modal = document.getElementById('paper-prod-modal');
   if (!modal) return;
+  isPaperBrandSorted = false; // 모달이 새로 열릴 때는 기본 순서로 시작
   const searchInput = document.getElementById('search-paper-prod');
   if (searchInput) searchInput.value = '';
   renderPaperProd();
@@ -8496,6 +8581,7 @@ window.openPaperProdModal = function() {
 window.closePaperProdModal = function() {
   const modal = document.getElementById('paper-prod-modal');
   if (modal) modal.style.display = 'none';
+  isPaperBrandSorted = false;
 };
 
 window.clearPaperProdSearch = function() {
@@ -8505,13 +8591,70 @@ window.clearPaperProdSearch = function() {
   if (searchInput) searchInput.focus();
 };
 
+// 💡 브랜드 고유 색상 추출 함수 (24가지 고대비 딥 팔레트)
+function getBrandDistinctColor(brandName) {
+  if (!brandName || !brandName.trim()) return '#1D4ED8';
+  const brandPalette = [
+    '#1D4ED8', // 로열 블루
+    '#7C3AED', // 딥 바이올렛
+    '#059669', // 에메랄드 그린
+    '#E11D48', // 로즈 레드
+    '#D97706', // 앰버 오렌지
+    '#0284C7', // 오션 블루
+    '#9333EA', // 퍼플
+    '#C2410C', // 브릭 오렌지
+    '#0F766E', // 딥 틸
+    '#B91C1C', // 크림슨
+    '#4338CA', // 인디고
+    '#A21CAF', // 마젠타
+    '#15803D', // 포레스트 그린
+    '#6D28D9', // 다크 퍼플
+    '#B45309', // 골든 브라운
+    '#BE123C', // 루비 레드
+    '#0369A1', // 스카이 딥블루
+    '#4D7C0F', // 올리브 그린
+    '#86198F', // 딥 핑크
+    '#9A3412', // 러스트 레드
+    '#1E40AF', // 다크 네이비블루
+    '#047857', // 제이드 그린
+    '#6B21A8', // 플럼 퍼플
+    '#374151'  // 다크 슬레이트
+  ];
+  let hash = 0;
+  const str = brandName.trim();
+  for (let i = 0; i < str.length; i++) {
+    hash = str.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const colorIndex = Math.abs(hash) % brandPalette.length;
+  return brandPalette[colorIndex];
+}
+
 window.renderPaperProd = function() {
   const body = document.getElementById('paper-prod-body');
   const summaryEl = document.getElementById('paper-prod-summary');
   if (!body) return;
 
   const q = (document.getElementById('search-paper-prod')?.value || '').toLowerCase().trim();
-  const sorted = [...products];
+
+  // 💡 버튼 활성화 스타일 동적 업데이트
+  const sortBtn = document.getElementById('btn-paper-brand-sort');
+  if (sortBtn) {
+    sortBtn.style.background = isPaperBrandSorted ? '#2563EB' : 'var(--purple-bg)';
+    sortBtn.style.color = isPaperBrandSorted ? '#FFFFFF' : 'var(--purple-ink)';
+    sortBtn.style.borderColor = isPaperBrandSorted ? '#1D4ED8' : '#D8C7ED';
+    sortBtn.innerHTML = isPaperBrandSorted ? '🏷️ 브랜드 정렬 중 (복원 🔄)' : '🏷️ 브랜드 정렬';
+  }
+
+  // 💡 메인 상품등록 데이터(products)는 건드리지 않고 종이장부 전용 복사본만 정렬
+  let sorted = [...products];
+  if (isPaperBrandSorted) {
+    sorted.sort((a, b) => {
+      const bA = (a.brand || '').trim();
+      const bB = (b.brand || '').trim();
+      if (bA !== bB) return bA.localeCompare(bB, 'ko-KR', { numeric: true });
+      return (a.prodNum || '').localeCompare(b.prodNum || '', 'ko-KR', { numeric: true });
+    });
+  }
 
   const filtered = sorted.filter(p => {
     if (!q) return true;
@@ -8550,17 +8693,54 @@ window.renderPaperProd = function() {
         </div>`
       : `<span style="color:#CBD5E1;">-</span>`;
 
+    const customBg = p.highlighted ? ` style="background-color: ${p.highlighted} !important;"` : '';
+
+    // 💡 브랜드별 고유 색상 자동 추출 및 특징(차콜) 결합
+    const brandColor = getBrandDistinctColor(p.brand);
+    const brandPart = p.brand && p.brand.trim() !== '' 
+      ? `<span style="color: ${brandColor}; font-weight: 900; margin-right: 5px;">${escapeHtml(p.brand)}</span>` 
+      : '';
+    const featuresPart = p.features && p.features.trim() !== '' 
+      ? `<span style="color: #334155; font-weight: 700;">${escapeHtml(p.features)}</span>` 
+      : '';
+    const combinedNameHtml = (brandPart || featuresPart) ? `${brandPart}${featuresPart}` : '-';
+
+    // 💡 150px 너비에 맞춘 색상 텍스트 글자 크기 자동 복원 연산
+    const colorVal = (p.color || '').trim();
+    let colorStyle = 'font-size: 12px;';
+    if (colorVal.length > 18) {
+      colorStyle = 'font-size: 9.5px; letter-spacing: -0.6px;';
+    } else if (colorVal.length > 13) {
+      colorStyle = 'font-size: 10.5px; letter-spacing: -0.3px;';
+    }
+
+    // 💡 사이즈 텍스트 길이에 따른 글자 크기 및 자간 자동 축소 연산
+    const sizeVal = (p.size || '').trim();
+    let sizeStyle = 'font-size: 12px;';
+    if (sizeVal.length > 6) {
+      sizeStyle = 'font-size: 9.5px; letter-spacing: -0.6px;';
+    } else if (sizeVal.length > 4) {
+      sizeStyle = 'font-size: 10.5px; letter-spacing: -0.3px;';
+    }
+
+    // 💡 [추가] 품번이 숫자만 있을 경우 '번' 자동 결합
+    let displayProdNum = (p.prodNum || '').trim();
+    if (/^\d+$/.test(displayProdNum)) {
+      displayProdNum += '번';
+    }
+
     return `
-      <tr>
-        <td style="text-align:center; font-weight:bold; color:#64748B;">${reverseNo}</td>
-        <td style="font-weight:800; color:#0F172A;">${escapeHtml(p.prodNum) || '-'}</td>
-        <td style="font-weight:800; color:var(--purple-ink);">${escapeHtml(p.brand) || '-'}</td>
-        <td style="color:#1E293B; word-break:break-all;">${escapeHtml(p.features) || '-'}</td>
+      <tr${customBg}>
+        <td style="text-align:center;">
+          <div class="row-num-btn" onclick="cycleRowHighlight('${p.id}', 'prod')" title="클릭 시 순차 강조색 변경/취소">${reverseNo}</div>
+        </td>
+        <td style="font-weight:800; color:#0F172A;">${escapeHtml(displayProdNum) || '-'}</td>
+        <td style="word-break:break-all; line-height: 1.35;">${combinedNameHtml}</td>
+        <td style="${colorStyle} color:#475569; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${escapeHtml(colorVal)}">${escapeHtml(colorVal) || '-'}</td>
+        <td style="${sizeStyle} color:#475569; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${escapeHtml(sizeVal)}">${escapeHtml(sizeVal) || '-'}</td>
         <td style="text-align:center; white-space:nowrap;">
           <button type="button" class="btn btn-purple" style="padding:3px 8px; font-size:11px; font-weight:800; white-space:nowrap; display:inline-flex; align-items:center; justify-content:center;" onclick="applyProductFromPaperModal('${p.id}')">적용</button>
         </td>
-        <td style="font-size:12px; color:#475569;">${escapeHtml(p.color) || '-'}</td>
-        <td style="font-size:12px; color:#475569;">${escapeHtml(p.size) || '-'}</td>
         <td class="num" style="text-align:right; padding-right:8px; font-weight:800; color:#0F172A;">${p.price ? fmt(p.price) : '-'}</td>
         <td style="text-align:center;">${specsHtml}</td>
         <td style="text-align:center;">
@@ -8579,10 +8759,41 @@ window.applyProductFromPaperModal = function(prodId) {
   }, 50);
 };
 
-// 📄 종이장부(Clean View) 모달 제어 및 통합 렌더링 엔진
+// 💡 [신규] 실시간 판매 종이장부 전용 독립 필터 상태
+let paperSaleFilter = { type: null, value: '' };
+
+window.setPaperSaleFilter = function(type, val) {
+  if (!val || val.trim() === '') return;
+  const cleanVal = val.trim();
+  if (paperSaleFilter.type === type && paperSaleFilter.value === cleanVal) {
+    paperSaleFilter = { type: null, value: '' };
+    toast('✕ 필터가 해제되었습니다.');
+  } else {
+    paperSaleFilter = { type, value: cleanVal };
+    toast(`🔍 [${cleanVal}] ${type === 'product' ? '상품' : '고객'}만 필터링되었습니다.`);
+  }
+  renderPaperLedger();
+};
+
+window.clearPaperSaleFilter = function() {
+  paperSaleFilter = { type: null, value: '' };
+  renderPaperLedger();
+  toast('🔄 종이장부 필터가 초기화되었습니다.');
+};
+
+window.clearPaperSaleSearch = function() {
+  const input = document.getElementById('search-paper-sale');
+  if (input) input.value = '';
+  renderPaperLedger();
+  if (input) input.focus();
+};
+
 window.openPaperLedgerModal = function() {
   const modal = document.getElementById('paper-ledger-modal');
   if (!modal) return;
+  paperSaleFilter = { type: null, value: '' };
+  const searchInput = document.getElementById('search-paper-sale');
+  if (searchInput) searchInput.value = '';
   renderPaperLedger();
   modal.style.display = 'flex';
 };
@@ -8590,17 +8801,243 @@ window.openPaperLedgerModal = function() {
 window.closePaperLedgerModal = function() {
   const modal = document.getElementById('paper-ledger-modal');
   if (modal) modal.style.display = 'none';
+  paperSaleFilter = { type: null, value: '' };
+};
+
+// 💡 종이장부 전용: [🍒 구매고객 복사] (메인 장부와 100% 동일 양식)
+window.copyPaperFilteredBuyers = function() {
+  const prodName = paperSaleFilter.value;
+  if (!prodName) {
+    toast('⚠️ 상품명 필터가 적용되어 있지 않습니다.');
+    return;
+  }
+
+  const cleanTarget = prodName.replace(/^\[?(1\+1|세트)(\s*단품)?\]?\s*/i, '').trim().toLowerCase();
+  const targets = sales.filter(s => {
+    if (s.isExcluded || !(s.nickname || '').trim()) return false;
+    const sName = (s.name || '').replace(/^\[?(1\+1|세트)(\s*단품)?\]?\s*/i, '').trim().toLowerCase();
+    return sName === cleanTarget || (s.name || '').trim().toLowerCase() === prodName.toLowerCase();
+  });
+
+  if (targets.length === 0) {
+    toast('⚠️ 복사할 구매고객 내역이 없습니다.');
+    return;
+  }
+
+  let pNum = '';
+  const itemWithNum = targets.find(t => (t.prodNum || '').trim() !== '');
+  if (itemWithNum) {
+    pNum = (itemWithNum.prodNum || '').trim();
+    if (/^\d+$/.test(pNum)) pNum += '번';
+  }
+
+  let typePrefix = '';
+  const groupSample = targets.find(t => t.groupId && t.groupType);
+  let hasFullGroup = false;
+
+  if (groupSample) {
+    const gType = groupSample.groupType;
+    let hasSingleGroup = false;
+    const checkedGroupIds = new Set();
+
+    targets.forEach(t => {
+      if (t.groupId && !checkedGroupIds.has(t.groupId)) {
+        checkedGroupIds.add(t.groupId);
+        const activeRows = sales.filter(r => r.groupId === t.groupId && !r.isExcluded);
+        if (activeRows.length >= 2) hasFullGroup = true;
+        else if (activeRows.length === 1) hasSingleGroup = true;
+      }
+    });
+
+    if (hasSingleGroup && !hasFullGroup) typePrefix = `${gType} 단품 `;
+    else typePrefix = `${gType} `;
+  }
+
+  let cleanPName = prodName.replace(/^\[?(1\+1|세트)(\s*단품)?\]?\s*/i, '').trim();
+  if (typePrefix && cleanPName.startsWith(typePrefix.trim())) typePrefix = '';
+
+  const title = `✅${typePrefix}${pNum ? pNum + ' ' : ''}${cleanPName} 구매확정`.replace(/\s+/g, ' ').trim();
+
+  const processedGroupIds = new Set();
+  const buyerList = [];
+
+  targets.forEach(s => {
+    if (s.groupId) {
+      if (processedGroupIds.has(s.groupId)) return;
+      processedGroupIds.add(s.groupId);
+
+      const groupRows = sales.filter(t => t.groupId === s.groupId && !t.isExcluded);
+      if (groupRows.length === 0) return;
+
+      const nick = (groupRows.find(r => (r.nickname || '').trim())?.nickname || '').trim();
+      if (!nick) return;
+
+      const groupType = s.groupType || groupRows[0].groupType;
+      const q = Number(groupRows[0].qty || s.qty) || 1;
+      const qTxt = q > 1 ? `×${q}개` : '';
+      const isSingleRow = (groupRows.length === 1);
+
+      if (groupType === '세트') {
+        const parts = groupRows.map(r => {
+          const roleLabel = (r.groupRole === 'start') ? '상' : ((r.groupRole === 'end') ? '하' : '');
+          const opt = [roleLabel, (r.color || '').trim(), (r.size || '').trim()].filter(Boolean).join(' ').trim();
+          return opt ? `(${opt})` : '';
+        }).filter(Boolean).join(' ');
+        const singleNotice = (hasFullGroup && isSingleRow) ? '(단품) ' : '';
+        const buyerStr = parts ? `${nick} ${singleNotice}${parts}${qTxt ? ' ' + qTxt : ''}` : `${nick}${qTxt ? ' (' + qTxt + ')' : ''}`;
+        buyerList.push(buyerStr.trim());
+      } else if (groupType === '1+1') {
+        const parts = groupRows.map(r => {
+          let rawRName = (r.name || '').replace(/^\[?(1\+1|세트)(\s*단품)?\]?\s*/i, '').trim();
+          let model = rawRName.replace(cleanPName, '').trim();
+          const opt = [model, (r.color || '').trim(), (r.size || '').trim()].filter(Boolean).join(' ').trim();
+          return opt ? `(${opt})` : '';
+        }).filter(Boolean).join(' ');
+        const singleNotice = (hasFullGroup && isSingleRow) ? '(단품) ' : '';
+        const buyerStr = parts ? `${nick} ${singleNotice}${parts}${qTxt ? ' ' + qTxt : ''}` : `${nick}${qTxt ? ' (' + qTxt + ')' : ''}`;
+        buyerList.push(buyerStr.trim());
+      }
+    } else {
+      const nick = (s.nickname || '').trim();
+      if (!nick) return;
+      const color = (s.color || '').trim();
+      const size = (s.size || '').trim();
+      const q = Number(s.qty) || 1;
+      const optPart = [color, size].filter(Boolean).join(' ').trim();
+      let insideBracket = optPart;
+      if (q > 1) insideBracket = optPart ? `${optPart}×${q}개` : `×${q}개`;
+      const buyerStr = insideBracket ? `${nick} (${insideBracket})` : nick;
+      buyerList.push(buyerStr.trim());
+    }
+  });
+
+  if (buyerList.length === 0) {
+    toast('⚠️ 구매고객명이 입력된 유효 내역이 없습니다.');
+    return;
+  }
+
+  const redHeart = '\u2764\uFE0F';
+  const thanksMsg = ` [구매완료 감사합니다${redHeart}]`;
+  const resultText = `${title}${redHeart}${buyerList.join(' ' + redHeart)}${thanksMsg}`;
+
+  navigator.clipboard.writeText(resultText).then(() => {
+    toast(`📋 구매확정 명단 복사 완료: ${resultText}`);
+  });
+};
+
+// 💡 종이장부 전용: [👤 고객별 내역] (메인 장부와 100% 동일 양식)
+window.copyPaperCustomerHistory = function() {
+  const customerNick = paperSaleFilter.value;
+  if (!customerNick) {
+    toast('⚠️ 고객명 필터가 적용되어 있지 않습니다.');
+    return;
+  }
+
+  const targets = sales.filter(s => {
+    if (s.isExcluded) return false;
+    if (s.groupId) {
+      const groupRows = sales.filter(t => t.groupId === s.groupId && !t.isExcluded);
+      return groupRows.some(r => (r.nickname || '').trim().toLowerCase() === customerNick.toLowerCase());
+    }
+    return (s.nickname || '').trim().toLowerCase() === customerNick.toLowerCase();
+  });
+
+  if (targets.length === 0) {
+    toast('⚠️ 복사할 구매내역이 없습니다.');
+    return;
+  }
+
+  const processedGroupIds = new Set();
+  let totalQty = 0;
+  let totalPrice = 0;
+  const itemsList = [];
+
+  targets.forEach(s => {
+    if (s.groupId) {
+      if (processedGroupIds.has(s.groupId)) return;
+      processedGroupIds.add(s.groupId);
+
+      const groupRows = sales.filter(t => t.groupId === s.groupId && !t.isExcluded);
+      if (groupRows.length === 0) return;
+
+      const repRow = groupRows[0];
+      const groupType = s.groupType || repRow.groupType;
+      const q = Number(repRow.qty || s.qty) || 1;
+      totalQty += q;
+
+      let pNum = (repRow.prodNum || s.prodNum || '').trim();
+      if (pNum && /^\d+$/.test(pNum)) pNum += '번';
+
+      let rawName = (repRow.name || s.name || '').replace(/^\[?(1\+1|세트)\]?\s*/i, '').trim();
+      let fullTitle = `${pNum ? pNum + ' ' : ''}${rawName}`.trim();
+
+      if (groupType === '세트') {
+        let groupTotal = 0;
+        const parts = groupRows.map(r => {
+          const roleLabel = (r.groupRole === 'start') ? '상' : ((r.groupRole === 'end') ? '하' : '');
+          const opt = [(r.color || '').trim(), (r.size || '').trim()].filter(Boolean).join(' ').trim();
+          const rPrice = (Number(r.salePrice) || 0) * (Number(r.qty) || 1);
+          groupTotal += rPrice;
+          const optStr = [roleLabel, opt].filter(Boolean).join(' ').trim();
+          return `(${optStr ? optStr + '=' : ''}${fmt(rPrice)}원)`;
+        }).join('');
+        totalPrice += groupTotal;
+        const qTxt = q > 1 ? `×${q}개` : '';
+        itemsList.push(`📍세트 ${fullTitle} ${parts}${qTxt}`);
+      } else if (groupType === '1+1') {
+        let groupTotal = 0;
+        const parts = groupRows.map(r => {
+          let rawRName = (r.name || '').replace(/^\[?(1\+1|세트)\]?\s*/i, '').trim();
+          let model = rawRName.replace(rawName, '').trim();
+          const opt = [model, (r.color || '').trim(), (r.size || '').trim()].filter(Boolean).join(' ').trim();
+          const rPrice = (Number(r.salePrice) || 0) * (Number(r.qty) || 1);
+          groupTotal += rPrice;
+          return opt ? `(${opt})` : '';
+        }).filter(Boolean).join('');
+        totalPrice += groupTotal;
+        const qTxt = q > 1 ? `×${q}개` : '';
+        itemsList.push(`📍1+1${fullTitle} ${parts}${qTxt}=${fmt(groupTotal)}원`);
+      }
+    } else {
+      let pNum = (s.prodNum || '').trim();
+      if (pNum && /^\d+$/.test(pNum)) pNum += '번';
+      let rawName = (s.name || '').trim();
+      let fullTitle = `${pNum ? pNum + ' ' : ''}${rawName}`.trim();
+
+      const q = Number(s.qty) || 1;
+      totalQty += q;
+      const itemPrice = (Number(s.salePrice) || 0) * q;
+      totalPrice += itemPrice;
+
+      const color = (s.color || '').trim();
+      const size = (s.size || '').trim();
+      let opt = [color, size].filter(Boolean).join(' ').trim();
+      if (q > 1) opt = opt ? `${opt}×${q}개` : `×${q}개`;
+
+      const optStr = opt ? ` ${opt}` : '';
+      itemsList.push(`📍${fullTitle}${optStr}=${fmt(itemPrice)}원`);
+    }
+  });
+
+  const redHeart = '\u2764\uFE0F';
+  const checkMark = '\u2705';
+  const header = `${checkMark}${redHeart}${customerNick}님 구매내역 수량${totalQty}개, 총금액 ${fmt(totalPrice)}원${checkMark}`;
+  const thanksMsg = ` [구매완료 감사합니다${redHeart}]`;
+  const resultText = `${header} ${itemsList.join(' ')}${thanksMsg}`;
+
+  navigator.clipboard.writeText(resultText).then(() => {
+    toast(`📋 [${customerNick}]님 구매내역 복사 완료: ${resultText}`);
+  });
 };
 
 function renderPaperLedger() {
   const body = document.getElementById('paper-ledger-body');
   const summaryEl = document.getElementById('paper-ledger-summary');
+  const filterActionsEl = document.getElementById('paper-ledger-filter-actions');
   if (!body) return;
 
-  // 1. 유효한 데이터 추출 (고객명이 기입된 데이터만 취급 + 제외/취소 항목 제외)
   const validSales = sales.filter(s => (s.nickname || '').trim() !== '' && !s.isExcluded);
 
-  // 2. 개별 상품 문자열 생성 헬퍼 함수 (상품명 + 색상 + 사이즈)
   const formatItemDetail = (item) => {
     let cleanName = (item.name || '').replace(/^\[(1\+1|세트|선물)\]\s*/, '').trim();
     let pNum = (item.prodNum || '').trim();
@@ -8612,7 +9049,6 @@ function renderPaperLedger() {
     return [cleanName, colorSize].filter(Boolean).join(' ');
   };
 
-  // 3. 그룹 묶음(1+1, 세트) 1행 통합 처리
   const processedGroups = new Set();
   const displayItems = [];
 
@@ -8621,15 +9057,12 @@ function renderPaperLedger() {
       if (processedGroups.has(s.groupId)) return;
       processedGroups.add(s.groupId);
 
-      // 전체 장부에서 해당 그룹의 모든 항목 추출
       const allGroupRows = sales.filter(x => x.groupId === s.groupId);
       const activeRows = allGroupRows.filter(x => !x.isExcluded);
-
-      if (activeRows.length === 0) return; // 전체 취소된 그룹 제외
+      if (activeRows.length === 0) return;
 
       if (s.groupType === '1+1') {
         if (activeRows.length >= 2) {
-          // 🎁 정상 1+1 (실물: 2개 반영)
           const r1 = activeRows[0];
           const r2 = activeRows[1];
           const text1 = formatItemDetail(r1) || '(1번 상품)';
@@ -8639,32 +9072,36 @@ function renderPaperLedger() {
           displayItems.push({
             badge: '<span class="paper-badge badge-1plus1">1+1</span>',
             detailText: `${text1} / ${text2}`,
+            cleanProdName: (r1.name || r2.name || '').replace(/^\[(1\+1|세트|선물)\]\s*/, '').trim(),
             nickname: r1.nickname || r2.nickname || '',
             qty: Number(r1.qty) || 1,
             unitPrice: totalP,
             totalPrice: totalP * (Number(r1.qty) || 1),
             memo: [r1.memo, r2.memo].filter(Boolean).join(' | '),
             tags: r1.tags || r2.tags,
-            autoReward: Math.max(r1.autoReward || 0, r2.autoReward || 0)
+            autoReward: Math.max(r1.autoReward || 0, r2.autoReward || 0),
+            id: r1.id,
+            highlighted: r1.highlighted || r2.highlighted || false
           });
         } else {
-          // 🎁 1+1 중 1개 취소 -> [1+1 단품] (실물: 1개 반영)
           const act = activeRows[0];
           displayItems.push({
             badge: '<span class="paper-badge badge-single">1+1 단품</span>',
             detailText: formatItemDetail(act) || '(상품명 없음)',
+            cleanProdName: (act.name || '').replace(/^\[(1\+1|세트|선물)\]\s*/, '').trim(),
             nickname: act.nickname || '',
             qty: Number(act.qty) || 1,
             unitPrice: Number(act.salePrice) || 0,
             totalPrice: (Number(act.salePrice) || 0) * (Number(act.qty) || 1),
             memo: act.memo || '',
             tags: act.tags,
-            autoReward: act.autoReward || 0
+            autoReward: act.autoReward || 0,
+            id: act.id,
+            highlighted: act.highlighted || false
           });
         }
       } else if (s.groupType === '세트') {
         if (activeRows.length >= 2) {
-          // 📦 정상 세트 (실물: 2개 반영)
           const top = activeRows.find(x => x.groupRole === 'start') || activeRows[0];
           const btm = activeRows.find(x => x.groupRole === 'end') || activeRows[1];
           const textTop = formatItemDetail(top) || '(상의)';
@@ -8674,16 +9111,18 @@ function renderPaperLedger() {
           displayItems.push({
             badge: '<span class="paper-badge badge-set">세트</span>',
             detailText: `[상의] ${textTop} / [하의] ${textBtm}`,
+            cleanProdName: (top.name || btm.name || '').replace(/^\[(1\+1|세트|선물)\]\s*/, '').trim(),
             nickname: top.nickname || btm.nickname || '',
             qty: Number(top.qty) || 1,
             unitPrice: totalP,
             totalPrice: totalP * (Number(top.qty) || 1),
             memo: [top.memo, btm.memo].filter(Boolean).join(' | '),
             tags: top.tags || btm.tags,
-            autoReward: Math.max(top.autoReward || 0, btm.autoReward || 0)
+            autoReward: Math.max(top.autoReward || 0, btm.autoReward || 0),
+            id: top.id,
+            highlighted: top.highlighted || btm.highlighted || false
           });
         } else {
-          // 📦 세트 중 1개 취소 -> [세트 상의만] 또는 [세트 하의만] (실물: 1개 반영)
           const act = activeRows[0];
           const isTopOnly = (act.groupRole === 'start');
           const badgeHtml = isTopOnly ? '<span class="paper-badge badge-part">세트 상의만</span>' : '<span class="paper-badge badge-part">세트 하의만</span>';
@@ -8691,18 +9130,20 @@ function renderPaperLedger() {
           displayItems.push({
             badge: badgeHtml,
             detailText: formatItemDetail(act) || '(상품명 없음)',
+            cleanProdName: (act.name || '').replace(/^\[(1\+1|세트|선물)\]\s*/, '').trim(),
             nickname: act.nickname || '',
             qty: Number(act.qty) || 1,
             unitPrice: Number(act.salePrice) || 0,
             totalPrice: (Number(act.salePrice) || 0) * (Number(act.qty) || 1),
             memo: act.memo || '',
             tags: act.tags,
-            autoReward: act.autoReward || 0
+            autoReward: act.autoReward || 0,
+            id: act.id,
+            highlighted: act.highlighted || false
           });
         }
       }
     } else {
-      // 📋 일반 단품 주문 (선물 배지 판별 적용)
       const isGift = !!(s.isGift || (s.name && s.name.startsWith('[선물]')));
       const badgeHtml = isGift ? '<span class="paper-badge badge-gift">선물</span>' : '';
       const p = Number(s.salePrice) || 0;
@@ -8710,33 +9151,78 @@ function renderPaperLedger() {
       displayItems.push({
         badge: badgeHtml,
         detailText: formatItemDetail(s) || (isGift ? '(선물 상품)' : '(상품명 없음)'),
+        cleanProdName: (s.name || '').replace(/^\[(1\+1|세트|선물)\]\s*/, '').trim(),
         nickname: s.nickname || '',
         qty: q,
         unitPrice: p,
         totalPrice: p * q,
         memo: s.memo || '',
         tags: s.tags,
-        autoReward: s.autoReward || 0
+        autoReward: s.autoReward || 0,
+        id: s.id,
+        highlighted: s.highlighted || false
       });
     }
   });
 
-  if (displayItems.length === 0) {
-    body.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:50px; color:#94A3B8;">표시할 판매 내역이 없습니다.</td></tr>`;
+  // 💡 검색창 텍스트 및 클릭 필터 동시 적용
+  const q = (document.getElementById('search-paper-sale')?.value || '').toLowerCase().trim();
+
+  const filteredItems = displayItems.filter(item => {
+    if (paperSaleFilter.type === 'product') {
+      const targetVal = paperSaleFilter.value.toLowerCase();
+      const matchProd = (item.cleanProdName || '').toLowerCase() === targetVal || item.detailText.toLowerCase().includes(targetVal);
+      if (!matchProd) return false;
+    } else if (paperSaleFilter.type === 'customer') {
+      const targetVal = paperSaleFilter.value.toLowerCase();
+      if ((item.nickname || '').toLowerCase() !== targetVal) return false;
+    }
+
+    if (q) {
+      const matchAll = item.detailText.toLowerCase().includes(q) ||
+                       item.nickname.toLowerCase().includes(q) ||
+                       (item.memo || '').toLowerCase().includes(q);
+      if (!matchAll) return false;
+    }
+    return true;
+  });
+
+  // 💡 필터 태그 및 복사 버튼 렌더링
+  if (filterActionsEl) {
+    let actionsHtml = '';
+    if (paperSaleFilter.type === 'product') {
+      actionsHtml += `
+        <button type="button" class="btn" onclick="copyPaperFilteredBuyers()" style="padding: 4px 10px; height: 28px; font-size: 11.5px; font-weight: 800; background: #FFF0F5; color: #D86B8A; border: 1px solid #F5C6D3; border-radius: 4px; cursor: pointer; white-space: nowrap; box-shadow: 0 2px 6px rgba(216,107,138,0.25);" title="현재 필터된 상품의 구매고객 명단 복사">🍒 구매고객 복사</button>
+        <span class="filter-tag" style="background:#FFF0F5; color:#D86B8A; border-color:#F5C6D3; cursor:pointer;" onclick="clearPaperSaleFilter()">
+          상품: ${escapeHtml(paperSaleFilter.value)} <span class="close-btn">✕</span>
+        </span>
+      `;
+    } else if (paperSaleFilter.type === 'customer') {
+      actionsHtml += `
+        <button type="button" class="btn" onclick="copyPaperCustomerHistory()" style="padding: 4px 10px; height: 28px; font-size: 11.5px; font-weight: 800; background: #EFF6FF; color: #2563EB; border: 1px solid #BFDBFE; border-radius: 4px; cursor: pointer; white-space: nowrap; box-shadow: 0 2px 6px rgba(37,99,235,0.25);" title="현재 필터된 고객의 구매내역 복사">🍒 고객별 내역</button>
+        <span class="filter-tag" style="background:#EFF6FF; color:#2563EB; border-color:#BFDBFE; cursor:pointer;" onclick="clearPaperSaleFilter()">
+          고객: ${escapeHtml(paperSaleFilter.value)} <span class="close-btn">✕</span>
+        </span>
+      `;
+    }
+    filterActionsEl.innerHTML = actionsHtml;
+  }
+
+  if (filteredItems.length === 0) {
+    body.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:50px; color:#94A3B8;">${(q || paperSaleFilter.type) ? '검색/필터 결과와 일치하는 내역이 없습니다.' : '표시할 판매 내역이 없습니다.'}</td></tr>`;
     if (summaryEl) summaryEl.textContent = '총 0건';
     return;
   }
 
-  // 💡 상단 요약 통계 계산: 유효한 모든 개별 실물 행(validSales)의 수량을 합산하여 1+1/세트는 2개씩 연산
-  const totalSum = displayItems.reduce((acc, cur) => acc + cur.totalPrice, 0);
-  const totalPhysicalQty = validSales.reduce((acc, cur) => acc + (Number(cur.qty) || 1), 0);
-  
+  const totalSum = filteredItems.reduce((acc, cur) => acc + cur.totalPrice, 0);
+  const totalQty = filteredItems.reduce((acc, cur) => acc + cur.qty, 0);
+
   if (summaryEl) {
-    summaryEl.innerHTML = `총 <b>${displayItems.length}건</b> (실물: <b>${totalPhysicalQty}개</b>) | 총 판매금액: <b>${fmt(totalSum)}원</b>`;
+    const isFiltered = (q !== '' || paperSaleFilter.type !== null);
+    summaryEl.innerHTML = `${isFiltered ? '필터결과: ' : '총 '}<b>${filteredItems.length}건</b> (수량: <b>${totalQty}개</b>) | 판매합계: <b>${fmt(totalSum)}원</b>`;
   }
 
-  // 테이블 렌더링
-  body.innerHTML = displayItems.map((item, idx) => {
+  body.innerHTML = filteredItems.map((item, idx) => {
     let tagsList = [];
     if (item.tags?.yt) tagsList.push('[유]');
     if (item.tags?.tt) tagsList.push('[틱]');
@@ -8746,16 +9232,26 @@ function renderPaperLedger() {
 
     const fullMemo = [tagsList.join(' '), item.memo].filter(Boolean).join(' | ');
 
+    // 💡 강조 배경색 적용 연산
+    const customBg = item.highlighted ? ` style="background-color: ${item.highlighted} !important;"` : '';
+
     return `
-      <tr>
-        <td style="text-align:center; font-weight:bold; color:#64748B;">${idx + 1}</td>
-        <td style="font-weight:700; color:#0F172A;">
+      <tr${customBg}>
+        <!-- 💡 [신규] 당구공 모양 입체 번호 버튼 (클릭 시 실시간 판매장부 파레트 색상 릴레이 순환) -->
+        <td style="text-align:center;">
+          <div class="row-num-btn" onclick="cycleRowHighlight('${item.id}', 'sale')" title="클릭 시 순차 강조색 변경/취소">${idx + 1}</div>
+        </td>
+        <!-- 💡 상품명 클릭 시 해당 상품만 필터링 -->
+        <td style="font-weight:700; color:#0F172A; cursor:pointer;" onclick="setPaperSaleFilter('product', '${escapeHtml(item.cleanProdName)}')" title="클릭 시 [${escapeHtml(item.cleanProdName)}] 상품만 필터링">
           <div style="display:flex; align-items:center;">
             ${item.badge}
-            <span>${escapeHtml(item.detailText)}</span>
+            <span style="text-decoration: underline dotted; text-underline-offset: 3px;">${escapeHtml(item.detailText)}</span>
           </div>
         </td>
-        <td style="font-weight:700; color:#1E293B;">${escapeHtml(item.nickname) || '-'}</td>
+        <!-- 💡 고객명 클릭 시 해당 고객만 필터링 -->
+        <td style="font-weight:800; color:var(--purple-ink); cursor:pointer;" onclick="setPaperSaleFilter('customer', '${escapeHtml(item.nickname)}')" title="클릭 시 [${escapeHtml(item.nickname)}] 고객님 내역만 필터링">
+          <span style="text-decoration: underline dotted; text-underline-offset: 3px;">${escapeHtml(item.nickname) || '-'}</span>
+        </td>
         <td style="text-align:center; font-weight:700; color:var(--blue);">${item.qty}</td>
         <td class="num" style="text-align:right; padding-right:8px; color:#475569;">${item.unitPrice ? fmt(item.unitPrice) : '-'}</td>
         <td class="num" style="text-align:right; padding-right:8px; font-weight:800; color:var(--purple-ink);">${item.totalPrice ? fmt(item.totalPrice) + '원' : '-'}</td>
